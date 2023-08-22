@@ -1,42 +1,29 @@
 from airflow import DAG
-from airflow.operators.python import PythonOperator, BranchPythonOperator
-from airflow.operators.bash import BashOperator
-from datetime import datetime
-from random import randint
-def _choosing_best_model(ti):
-accuracies = ti.xcom_pull(task_ids=[
-'training_model_A',
-'training_model_B',
-'training_model_C'
-])
-if max(accuracies) > 8:
-return 'accurate'
-return 'inaccurate'
-def _training_model(model):
-return randint(1, 10)
-with DAG("my_dag",
-start_date=datetime(2021, 1 ,1), 
-schedule_interval='@daily', 
-catchup=False) as dag:
-training_model_tasks = [
-PythonOperator(
-task_id=f"training_model_{model_id}",
-python_callable=_training_model,
-op_kwargs={
-"model": model_id
+from airflow.operators.bash_operator import BashOperator
+from airflow.utils.dates import days_ago
+default_args = {
+    'owner': 'airflow',
+    'start_date': days_ago(5),
+    'email': ['airflow@my_first_dag.com'],
+    'email_on_failure': False,
+    'email_on_retry': False,
+    'retries': 1,
+    'retry_delay': timedelta(minutes=5),
 }
-) for model_id in ['A', 'B', 'C']
-]
-choosing_best_model = BranchPythonOperator(
-task_id="choosing_best_model",
-python_callable=_choosing_best_model
+my_first_dag = DAG(
+    'first_dag',
+    default_args=default_args,
+    description='Our first DAG',
+    schedule_interval=timedelta(days=1),
 )
-accurate = BashOperator(
-task_id="accurate",
-bash_command="echo 'accurate'"
+task_1 = BashOperator(
+    task_id='first_task',
+    bash_command='echo 1',
+    dag=my_first_dag,
 )
-inaccurate = BashOperator(
-task_id="inaccurate",
-bash_command=" echo 'inaccurate'"
+task_2 = BashOperator(
+    task_id='second_task',
+    bash_command='echo 2',
+    dag=my_first_dag,
 )
-training_model_tasks >> choosing_best_model >> [accurate, inaccurate]
+task_1.set_downstream(task_2)
