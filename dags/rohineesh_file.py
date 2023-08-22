@@ -21,7 +21,7 @@ def max_query(**context):
 
 def count_query(**context):
     hook = SnowflakeHook(snowflake_conn_id="snowflake_conn")
-    result = hook.get_first("select count(*) from db1.schema1.users)")
+    result = hook.get_first("select count(*) from db1.schema1.users")
     logging.info("Number of rows in `abcd_db.public.test3`  - %s", result[0])
 
 with DAG(
