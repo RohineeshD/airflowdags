@@ -42,7 +42,7 @@ with DAG(
 
     query_table_1 = PythonOperator(
         task_id="count_query",
-        python_callable=max_query
+        python_callable=count_query
     )
 
 query_table >> query_table_1
