@@ -22,9 +22,9 @@ dag = DAG(dag_id='DAG-1',
 
 # Step 4: Creating task
 # Creating first task
- start = DummyOperator(task_id = 'start', dag = dag)
+start = DummyOperator(task_id = 'start', dag = dag)
 # Creating second task 
- end = DummyOperator(task_id = 'end', dag = dag)
+end = DummyOperator(task_id = 'end', dag = dag)
 
  # Step 5: Setting up dependencies 
 start >> end 
