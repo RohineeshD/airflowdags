@@ -16,7 +16,7 @@ default_args = {
 # Step 3: Creating DAG Object
 dag = DAG(dag_id='harsha_dag',
         default_args=default_args,
-        schedule_interval='@hour', 
+        schedule_interval='@once', 
         catchup=False
     )
 
