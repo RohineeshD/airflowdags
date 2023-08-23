@@ -16,7 +16,7 @@ def print_hello():
 dag = DAG(
     dag_id='harsha_dag',
     default_args=default_args,
-    schedule_interval=@once,  
+    schedule_interval='@once',  
     catchup=False,
 )
 
