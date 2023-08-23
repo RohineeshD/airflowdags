@@ -23,7 +23,7 @@ start = DummyOperator(task_id='start', dag=dag)
 # Retrieving the maximum patient ID using SnowflakeOperator
 retrieve_max_patient_id = SnowflakeOperator(
     task_id='retrieve_max_patient_id',
-    sql="SELECT MAX(patient_id) FROM patients;",
+    sql="SELECT MAX(patient_id) FROM exusia_db.exusia_schema.patients;",
     snowflake_conn_id='snowflake_conn',  # Specify your Snowflake connection ID
     autocommit=True,  # Auto-commit the transaction
     dag=dag,
