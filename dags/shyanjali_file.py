@@ -25,7 +25,7 @@ default_args = {
 
 # Create the DAG instance
 dag = DAG(
-    'shyanjali_dag',
+    'shyanjali',
     default_args=default_args,
     schedule_interval=None,  # Set to a specific interval (e.g., '0 0 * * *') if needed
 )
