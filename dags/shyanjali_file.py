@@ -1,61 +1,48 @@
-# Step 1: Importing Modules
-# To initiate the DAG Object
-from airflow import DAG
-# Importing datetime and timedelta modules for scheduling the DAGs
-from datetime import timedelta, datetime
-# Importing operators 
-# from airflow.operators.dummy_operator import DummyOperator
-from airflow.operators.python_operator import PythonOperator
+try:
+    import logging
+    from datetime import timedelta
+    from airflow import DAG
+    from airflow.operators.python_operator import PythonOperator
+    from datetime import datetime
+    import pandas as pd
+    from airflow.contrib.hooks.snowflake_hook import SnowflakeHook
+    from airflow.contrib.operators.snowflake_operator import SnowflakeOperator
 
-def add_numbers(**kwargs):
-    num1 = kwargs['num1']
-    num2 = kwargs['num2']
-    result = num1 + num2
-    print(f"Addition Result: {num1} + {num2} = {result}")
+    print("All Dag modules are ok ......")
+except Exception as e:
+    print("Error  {} ".format(e))
 
-def multiply_numbers(**kwargs):
-    num1 = kwargs['num1']
-    num2 = kwargs['num2']
-    result = num1 * num2
-    print(f"Multiplication Result: {num1} * {num2} = {result}")
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+def max_query(**context):
+    hook = SnowflakeHook(snowflake_conn_id="snowflake_conn")
+    result = hook.get_first("select max(age) from db1.schema1.users")
+    logging.info("Number of rows in `abcd_db.public.test3`  - %s", result[0])
 
-# Step 2: Initiating the default_args
-default_args = {
-        'owner' : 'airflow',
-        'start_date' : datetime(2022, 11, 12),
+def count_query(**context):
+    hook = SnowflakeHook(snowflake_conn_id="snowflake_conn")
+    result = hook.get_first("select count(*) from db1.schema1.users")
+    logging.info("Number of rows in `abcd_db.public.test3`  - %s", result[0])
 
-}
+with DAG(
+        dag_id="shyanjali_dag",
+        schedule_interval="@hourly",
+        default_args={
+            "owner": "airflow",
+            "retries": 1,
+            "retry_delay": timedelta(minutes=5),
+            "start_date": datetime(2021, 1, 1),
+        },
+        catchup=False) as f:
 
-# Step 3: Creating DAG Object
-dag = DAG(dag_id='shyanjali_dag',
-        default_args=default_args,
-        schedule_interval='@once', 
-        catchup=False
+    query_table = PythonOperator(
+        task_id="max_query",
+        python_callable=max_query
     )
 
-with DAG('shyanjali_dag', default_args=default_args, schedule_interval=timedelta(days=1)) as dag:
-    task_addition = PythonOperator(
-        task_id='addition_task',
-        python_callable=add_numbers,
-        op_args=[{'num1': 5, 'num2': 7}],
-        provide_context=True,
+    query_table_1 = PythonOperator(
+        task_id="count_query",
+        python_callable=count_query
     )
 
-    task_multiplication = PythonOperator(
-        task_id='multiplication_task',
-        python_callable=multiply_numbers,
-        op_args=[{'num1': 3, 'num2': 4}],
-        provide_context=True,
-    )
-
-    task_addition >> task_multiplication
-
-
-# Step 4: Creating task
-# Creating first task
-# start = DummyOperator(task_id = 'start', dag = dag)
-# Creating second task 
-# end = DummyOperator(task_id = 'end', dag = dag)
-
- # Step 5: Setting up dependencies 
-# start >> end 
+query_table >> query_table_1
