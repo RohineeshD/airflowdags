@@ -1,48 +1,54 @@
-try:
-    import logging
-    from datetime import timedelta
-    from airflow import DAG
-    from airflow.operators.python_operator import PythonOperator
-    from datetime import datetime
-    import pandas as pd
-    from airflow.contrib.hooks.snowflake_hook import SnowflakeHook
-    from airflow.contrib.operators.snowflake_operator import SnowflakeOperator
+from datetime import datetime
+from airflow import DAG
+from airflow.operators.python_operator import PythonOperator
 
-    print("All Dag modules are ok ......")
-except Exception as e:
-    print("Error  {} ".format(e))
+# Define the functions for tasks
+def multiply_numbers(**kwargs):
+    num1 = kwargs['num1']
+    num2 = kwargs['num2']
+    result = num1 * num2
+    print(f"Multiplication Result: {result}")
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-def max_query(**context):
-    hook = SnowflakeHook(snowflake_conn_id="snowflake_conn")
-    result = hook.get_first("select max(age) from db1.schema1.users")
-    logging.info("Number of rows in `abcd_db.public.test3`  - %s", result[0])
+def add_numbers(**kwargs):
+    num1 = kwargs['num1']
+    num2 = kwargs['num2']
+    result = num1 + num2
+    print(f"Addition Result: {result}")
 
-def count_query(**context):
-    hook = SnowflakeHook(snowflake_conn_id="snowflake_conn")
-    result = hook.get_first("select count(*) from db1.schema1.users")
-    logging.info("Number of rows in `abcd_db.public.test3`  - %s", result[0])
+# Define the default arguments for the DAG
+default_args = {
+    'owner': 'airflow',
+    'depends_on_past': False,
+    'start_date': datetime(2023, 8, 23),
+    'retries': 1,
+}
 
-with DAG(
-        dag_id="shyanjali_dag",
-        schedule_interval="@hourly",
-        default_args={
-            "owner": "airflow",
-            "retries": 1,
-            "retry_delay": timedelta(minutes=5),
-            "start_date": datetime(2021, 1, 1),
-        },
-        catchup=False) as f:
+# Create the DAG instance
+dag = DAG(
+    'shyanjali_dag',
+    default_args=default_args,
+    schedule_interval=None,  # Set to a specific interval (e.g., '0 0 * * *') if needed
+)
 
-    query_table = PythonOperator(
-        task_id="max_query",
-        python_callable=max_query
-    )
+# Define the tasks
+num1 = 5
+num2 = 3
 
-    query_table_1 = PythonOperator(
-        task_id="count_query",
-        python_callable=count_query
-    )
+multiply_task = PythonOperator(
+    task_id='multiply_task',
+    python_callable=multiply_numbers,
+    op_args=[num1, num2],
+    provide_context=True,
+    dag=dag,
+)
 
-query_table >> query_table_1
+add_task = PythonOperator(
+    task_id='add_task',
+    python_callable=add_numbers,
+    op_args=[num1, num2],
+    provide_context=True,
+    dag=dag,
+)
+
+# Set task dependencies
+multiply_task >> add_task
