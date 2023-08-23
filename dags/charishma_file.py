@@ -18,7 +18,7 @@ dag = DAG(
     catchup=False,
 )
 
-# Define the SQL query you want to execute in Snowflake
+#  SQL query to execute in Snowflake
 sql_query = """
 SELECT * FROM table1
 """
@@ -27,8 +27,8 @@ SELECT * FROM table1
 snowflake_task = SnowflakeOperator(
     task_id='execute_snowflake_query',
     sql=sql_query,
-    snowflake_conn_id='snowflake_connection',  # Set this to your Snowflake connection ID
-    autocommit=True,  # Set autocommit to True if needed
+    snowflake_conn_id='snow_conn',  
+    autocommit=True,
     dag=dag,
 )
 
