@@ -20,7 +20,7 @@ dag = DAG(
 
 #  SQL query to execute in Snowflake
 sql_query = """
-SELECT SUM(members) AS total_members
+SELECT SUM(name) AS total_members
 FROM table1
 """
 
