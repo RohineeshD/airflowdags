@@ -4,7 +4,8 @@ from airflow import DAG
 # Importing datetime and timedelta modules for scheduling the DAGs
 from datetime import timedelta, datetime
 # Importing operators 
-from airflow.operators.dummy_operator import DummyOperator
+# from airflow.operators.dummy_operator import DummyOperator
+from airflow.operators.python_operator import PythonOperator
 
 def add_numbers(**kwargs):
     num1 = kwargs['num1']
