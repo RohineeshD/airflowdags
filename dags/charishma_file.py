@@ -1,40 +1,33 @@
-# Importing necessary modules
 from airflow import DAG
 from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
 from datetime import datetime
 
-# Define the DAG's default arguments
 default_args = {
     'owner': 'airflow',
     'start_date': datetime(2023, 1, 1),
     'retries': 1,
 }
 
-# Create the DAG object
 dag = DAG(
-    'charishma_dag',
+    'snowflake_charishma_dag',  # Change the dag_id to a unique name
     default_args=default_args,
-    schedule_interval=None,  # Set the schedule interval as needed
+    schedule_interval=None,
     catchup=False,
 )
 
-#  SQL query to execute in Snowflake
 sql_query = """
 SELECT SUM(id) AS total_id_sum
 FROM table1
 """
 
-# Create a SnowflakeOperator task
 snowflake_task = SnowflakeOperator(
     task_id='execute_snowflake_query',
     sql=sql_query,
-    snowflake_conn_id='snow_conn',  
+    snowflake_conn_id='snow_conn',
     autocommit=True,
     dag=dag,
 )
 
-# Set task dependencies
-snowflake_task
 
 
 
