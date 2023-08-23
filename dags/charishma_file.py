@@ -9,7 +9,7 @@ default_args = {
 }
 
 dag = DAG(
-    'charishma_dag',  # Change the dag_id to a unique name
+    'snow_charishma_dag',  # Change the dag_id to a unique name
     default_args=default_args,
     schedule_interval=None,
     catchup=False,
