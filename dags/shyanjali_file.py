@@ -33,7 +33,7 @@ dag = DAG(dag_id='shyanjali_dag',
         catchup=False
     )
 
-with DAG('math_operations_dag', default_args=default_args, schedule_interval=timedelta(days=1)) as dag:
+with DAG('shyanjali_dag', default_args=default_args, schedule_interval=timedelta(days=1)) as dag:
     task_addition = PythonOperator(
         task_id='addition_task',
         python_callable=add_numbers,
