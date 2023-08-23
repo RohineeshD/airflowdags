@@ -1,30 +1,46 @@
-# Step 1: Importing Modules
-# To initiate the DAG Object
+from datetime import datetime
 from airflow import DAG
-# Importing datetime and timedelta modules for scheduling the DAGs
-from datetime import timedelta, datetime
-# Importing operators 
 from airflow.operators.dummy_operator import DummyOperator
+from airflow.operators.python_operator import PythonOperator
 
-# Step 2: Initiating the default_args
-default_args = {
-        'owner' : 'airflow',
-        'start_date' : datetime(2022, 11, 12),
+def print_hello():
+    return 'Hello world from first Airflow DAG!'
 
-}
+dag = DAG('shyanjali_dag',
+          schedule_interval='0 12 * * *',
+          start_date=datetime(2017, 3, 20), catchup=False)
 
-# Step 3: Creating DAG Object
-dag = DAG(dag_id='shyanjali_dag',
-        default_args=default_args,
-        schedule_interval='@once', 
-        catchup=False
-    )
+hello_operator = PythonOperator(task_id='hello_task', python_callable=print_hello, dag=dag)
 
-# Step 4: Creating task
-# Creating first task
-start = DummyOperator(task_id = 'start', dag = dag)
-# Creating second task 
-end = DummyOperator(task_id = 'end', dag = dag)
+hello_operator
 
- # Step 5: Setting up dependencies 
-start >> end 
+# # Step 1: Importing Modules
+# # To initiate the DAG Object
+# from airflow import DAG
+# # Importing datetime and timedelta modules for scheduling the DAGs
+# from datetime import timedelta, datetime
+# # Importing operators 
+# from airflow.operators.dummy_operator import DummyOperator
+
+# # Step 2: Initiating the default_args
+# default_args = {
+#         'owner' : 'airflow',
+#         'start_date' : datetime(2022, 11, 12),
+
+# }
+
+# # Step 3: Creating DAG Object
+# dag = DAG(dag_id='shyanjali_dag',
+#         default_args=default_args,
+#         schedule_interval='@once', 
+#         catchup=False
+#     )
+
+# # Step 4: Creating task
+# # Creating first task
+# start = DummyOperator(task_id = 'start', dag = dag)
+# # Creating second task 
+# end = DummyOperator(task_id = 'end', dag = dag)
+
+#  # Step 5: Setting up dependencies 
+# start >> end 
