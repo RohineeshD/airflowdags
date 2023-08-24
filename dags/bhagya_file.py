@@ -10,7 +10,7 @@ from airflow.utils.dates import days_ago
 # Step 2: Initiating the default_args
 default_args = {
         'owner' : 'airflow',
-        'start_date' :days_ago(2)
+        'start_date' :datetime(2023, 08, 23)
 }
 
 
