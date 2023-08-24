@@ -9,7 +9,7 @@ default_args = {
 }
 
 dag = DAG(
-    'harsha_dag',  # Change the dag_id to a unique name
+    'harsha_dag',  
     default_args=default_args,
     schedule_interval='@once',
     catchup=False,
