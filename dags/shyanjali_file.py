@@ -42,7 +42,7 @@ with DAG(
 
     get_env_task = PythonOperator(
     task_id='get_env_task',
-    python_callable=check_environment_variable,
+    python_callable=get_env_task,
     provide_context=True,
     )
 
