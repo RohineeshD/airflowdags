@@ -1,51 +1,87 @@
-try:
-    import logging
-    from datetime import timedelta
-    from airflow import DAG
-    from airflow.operators.python_operator import PythonOperator
-    from datetime import datetime
-    import pandas as pd
-    from airflow.contrib.hooks.snowflake_hook import SnowflakeHook
-    from airflow.contrib.operators.snowflake_operator import SnowflakeOperator
+from airflow import DAG
+from airflow.operators.bash_operator import BashOperator
+from datetime import datetime
+import os
+default_args = {
+    'owner': 'airflow',
+    'start_date': datetime(2023, 8, 24),
+    'depends_on_past': False,
+    'retries': 1,
+}
 
-    print("All Dag modules are ok ......")
-except Exception as e:
-    print("Error  {} ".format(e))
+dag = DAG(
+    'shyanjali_dag',
+    default_args=default_args,
+    schedule_interval="@once",  # Set the schedule_interval based on your requirements
+    catchup=False,
+)
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-def max_query(**context):
-    hook = SnowflakeHook(snowflake_conn_id="snowflake_li")
-    result = hook.get_first("select max(SSN) from public.emp_master")
-    logging.info("MAX", result[0])
+def check_environment_variable():
+    env_variable_value = os.environ.get('YOUR_ENV_VARIABLE')  # Replace with your actual environment variable name
 
-def count_query(**context):
-    hook = SnowflakeHook(snowflake_conn_id="snowflake_li")
-    result = hook.get_first("select count(*) from public.emp_master")
-    logging.info("COUNT", result[0])
+    if env_variable_value == 'true':
+        # Perform your task here
+        print("Environment variable is true. Performing the task.")
+    else:
+        print("Environment variable is not true. Task not performed.")
 
-with DAG(
-        dag_id="shyanjali_dag",
-        schedule_interval="@once",
-        default_args={
-            "owner": "airflow",
-            "retries": 1,
-            "retry_delay": timedelta(minutes=5),
-            "start_date": datetime(2021, 1, 1),
-        },
-        catchup=False) as f:
 
-    query_table = PythonOperator(
-        task_id="max_query",
-        python_callable=max_query
-    )
+check_env_task = BashOperator(
+    task_id='check_env_task',
+    bash_command='python -c "from your_script import check_environment_variable; check_environment_variable()"',
+    dag=dag,
+)
 
-    query_table_1 = PythonOperator(
-        task_id="count_query",
-        python_callable=count_query
-    )
 
-query_table >> query_table_1
+# ------------------------
+# try:
+#     import logging
+#     from datetime import timedelta
+#     from airflow import DAG
+#     from airflow.operators.python_operator import PythonOperator
+#     from datetime import datetime
+#     import pandas as pd
+#     from airflow.contrib.hooks.snowflake_hook import SnowflakeHook
+#     from airflow.contrib.operators.snowflake_operator import SnowflakeOperator
+
+#     print("All Dag modules are ok ......")
+# except Exception as e:
+#     print("Error  {} ".format(e))
+
+# logging.basicConfig(level=logging.INFO)
+# logger = logging.getLogger(__name__)
+# def max_query(**context):
+#     hook = SnowflakeHook(snowflake_conn_id="snowflake_li")
+#     result = hook.get_first("select max(SSN) from public.emp_master")
+#     logging.info("MAX", result[0])
+
+# def count_query(**context):
+#     hook = SnowflakeHook(snowflake_conn_id="snowflake_li")
+#     result = hook.get_first("select count(*) from public.emp_master")
+#     logging.info("COUNT", result[0])
+
+# with DAG(
+#         dag_id="shyanjali_dag",
+#         schedule_interval="@once",
+#         default_args={
+#             "owner": "airflow",
+#             "retries": 1,
+#             "retry_delay": timedelta(minutes=5),
+#             "start_date": datetime(2021, 1, 1),
+#         },
+#         catchup=False) as f:
+
+#     query_table = PythonOperator(
+#         task_id="max_query",
+#         python_callable=max_query
+#     )
+
+#     query_table_1 = PythonOperator(
+#         task_id="count_query",
+#         python_callable=count_query
+#     )
+
+# query_table >> query_table_1
 
 # ----------------------
 # from airflow import DAG
