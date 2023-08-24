@@ -16,7 +16,7 @@ dag = DAG(
 )
 
 sql_query = """
-"SELECT * FROM exusia_db.exusia_schema.patients WHERE status = 'Recovered'
+"SELECT * FROM patients WHERE status = 'Recovered'
 """
 
 snowflake_task = SnowflakeOperator(
