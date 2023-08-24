@@ -16,7 +16,7 @@ def print_hello():
 
 # Step 3: Creating DAG Object
 dag = DAG(
-    dag_id='charishma_dags',
+    dag_id='charishma_dag',
     default_args=default_args,
     schedule_interval='@once',  
     catchup=False,
