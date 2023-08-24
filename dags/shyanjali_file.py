@@ -66,7 +66,7 @@ def fetch_csv_and_upload(**kwargs):
 def get_data(**kwargs):
     snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake_li')
     connection = snowflake_hook.get_conn()
-    create_table_query="SELECT * FROM AIRLINE WHERE avail_seat_km_per_week >698012498"
+    create_table_query="SELECT TOP (10) FROM AIRLINE WHERE avail_seat_km_per_week >698012498"
     cursor = connection.cursor()
     cursor.execute(create_table_query)
     for row in cursor.fetchall():
@@ -76,7 +76,9 @@ def get_data(**kwargs):
     cursor.close()
     connection.close()
     
-
+def print_success(**kwargs):
+    logging.info("Process Completed")
+    
 # def get_all_env_variables(**kwargs):
 #     env_variables = os.environ
 #     for key, value in env_variables.items():
@@ -110,9 +112,15 @@ with DAG(
         python_callable=get_data,
         provide_context=True  # This is required to pass context to the function
     )
+    
+    print_success = PythonOperator(
+        task_id='print_success',
+        python_callable=print_success,
+        provide_context=True  # This is required to pass context to the function
+    )
 
 
-check_env_variable >> fetch_and_upload >>get_data
+check_env_variable >> fetch_and_upload >>get_data>>print_success
 
 
 # ------------------------
