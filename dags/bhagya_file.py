@@ -13,6 +13,12 @@ default_args = {
 
 }
 
+
+# Define the SQL query you want to execute in Snowflake
+sql_query = """
+SELECT * FROM emp_data;
+"""
+
 # Step 3: Creating DAG Object
 dag = DAG(dag_id='bhagya_dag',
         default_args=default_args,
@@ -23,8 +29,19 @@ dag = DAG(dag_id='bhagya_dag',
 # Step 4: Creating task
 # Creating first task
 start = DummyOperator(task_id = 'start', dag = dag)
+
+
+# Create a SnowflakeOperator task
+snowflake_task = SnowflakeOperator(
+    task_id='execute_snowflake_query',
+    sql=sql_query,
+    snowflake_conn_id='sf_bhagya',  # Set this to your Snowflake connection ID
+    autocommit=True,  # Set autocommit to True if needed
+    dag=dag,
+)
+
 # Creating second task 
 end = DummyOperator(task_id = 'end', dag = dag)
 
  # Step 5: Setting up dependencies 
-start >> end 
+ start >> snowflake_task >> end
