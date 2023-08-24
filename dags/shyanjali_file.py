@@ -19,7 +19,7 @@ def check_environment_variable():
 
     if env_variable_value == 'true':
         # Perform your task here
-        logging.info("Environment variable is true. Performing the task.")
+        logging.info(env_variable_value)
     else:
         logging.info("Environment variable is not true. Task not performed.")
 
