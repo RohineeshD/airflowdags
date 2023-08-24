@@ -15,15 +15,12 @@ dag = DAG(
     catchup=False,
 )
 
-sql_query = """
-SELECT SUM(id) AS total_id_sum
-FROM table1
-"""
+sql_query = """ SELECT * FROM public.emp_master """
 
 snowflake_task = SnowflakeOperator(
     task_id='execute_snowflake_query',
     sql=sql_query,
-    snowflake_conn_id='snow_conn',
+    snowflake_conn_id='snowflake_li',
     autocommit=True,
     dag=dag,
 )
