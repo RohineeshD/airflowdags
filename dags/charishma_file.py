@@ -49,7 +49,7 @@ dag = DAG(
 )
 
 sql_query = """
-SELECT SUM(id) AS total_id_sum
+SELECT max(id) AS max_id
 FROM table1
 """
 
