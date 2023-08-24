@@ -30,18 +30,8 @@ dag = DAG(dag_id='bhagya_dag',
 # Creating first task
 start = DummyOperator(task_id = 'start', dag = dag)
 
-
-# Create a SnowflakeOperator task
-snowflake_task = SnowflakeOperator(
-    task_id='execute_snowflake_query',
-    sql=sql_query,
-    snowflake_conn_id='SNOWFLAKE_BHAGYA',  # Set this to your Snowflake connection ID
-    autocommit=True,  # Set autocommit to True if needed
-    dag=dag,
-)
-
 # Creating second task 
 end = DummyOperator(task_id = 'end', dag = dag)
 
  # Step 5: Setting up dependencies 
- snowflake_task 
+ start >> end
