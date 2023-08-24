@@ -1,72 +1,72 @@
-import logging
-import airflow
-from airflow import DAG
-from airflow.operators.python_operator import PythonOperator
-from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
-from airflow.contrib.hooks.snowflake_hook import SnowflakeHook
-from datetime import datetime, timedelta
-
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
-default_args = {
-    'owner': 'airflow',
-    'start_date': datetime(2022, 11, 12),
-}
-
-dag = DAG(
-    dag_id='harsha_dag',
-    default_args=default_args,
-    schedule_interval='@once',
-    catchup=False,
-)
-
-# Retrieve data from Snowflake table using SnowflakeOperator
-retrieve_data_task = SnowflakeOperator(
-    task_id='retrieve_data_from_snowflake',
-    sql="SELECT * FROM exusia_db.exusia_schema.patients WHERE  status = 'Recovered';",
-    snowflake_conn_id='snowflake_connection',  # Specify your Snowflake connection ID
-    autocommit=True,  # Auto-commit the transaction
-    dag=dag,
-)
-
-# Define the order of tasks
-retrieve_data_task
-
-# Set task dependencies
-retrieve_data_task
-
-
-# ================================================================================================
+# import logging
+# import airflow
 # from airflow import DAG
-# from datetime import datetime, timedelta
 # from airflow.operators.python_operator import PythonOperator
+# from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
+# from airflow.contrib.hooks.snowflake_hook import SnowflakeHook
+# from datetime import datetime, timedelta
 
-# # Step 2: Initiating the default_args
+# logging.basicConfig(level=logging.INFO)
+# logger = logging.getLogger(__name__)
+
 # default_args = {
 #     'owner': 'airflow',
 #     'start_date': datetime(2022, 11, 12),
 # }
 
-# # Define a Python function to be executed by the PythonOperator
-# def print_hello():
-#     print("Hello from the PythonOperator!")
-
-# # Step 3: Creating DAG Object
 # dag = DAG(
 #     dag_id='harsha_dag',
 #     default_args=default_args,
-#     schedule_interval='@once',  
+#     schedule_interval='@once',
 #     catchup=False,
 # )
 
-# # Step 4: Creating task
-# # Create a PythonOperator that will run the print_hello function
-# task = PythonOperator(
-#     task_id='print_hello_task',
-#     python_callable=print_hello,
+# # Retrieve data from Snowflake table using SnowflakeOperator
+# retrieve_data_task = SnowflakeOperator(
+#     task_id='retrieve_data_from_snowflake',
+#     sql="SELECT * FROM exusia_db.exusia_schema.patients WHERE  status = 'Recovered';",
+#     snowflake_conn_id='snowflake_connection',  # Specify your Snowflake connection ID
+#     autocommit=True,  # Auto-commit the transaction
 #     dag=dag,
 # )
+
+# # Define the order of tasks
+# retrieve_data_task
+
+# # Set task dependencies
+# retrieve_data_task
+
+
+# ================================================================================================
+from airflow import DAG
+from datetime import datetime, timedelta
+from airflow.operators.python_operator import PythonOperator
+
+# Step 2: Initiating the default_args
+default_args = {
+    'owner': 'airflow',
+    'start_date': datetime(2022, 11, 12),
+}
+
+# Define a Python function to be executed by the PythonOperator
+def print_hello():
+    print("Hello from the PythonOperator!")
+
+# Step 3: Creating DAG Object
+dag = DAG(
+    dag_id='harsha_dag',
+    default_args=default_args,
+    schedule_interval='@once',  
+    catchup=False,
+)
+
+# Step 4: Creating task
+# Create a PythonOperator that will run the print_hello function
+task = PythonOperator(
+    task_id='print_hello_task',
+    python_callable=print_hello,
+    dag=dag,
+)
 
 
 # ===================================================================================
