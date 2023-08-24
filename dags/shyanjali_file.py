@@ -19,9 +19,9 @@ def check_environment_variable():
 
     if env_variable_value == 'True':
         # Perform your task here
-        logging.info("TRUE",env_variable_value)
+        logging.info(f"TRUE Value: {env_variable_value}")
     else:
-        logging.info("FALSE",env_variable_value)
+        logging.info(f"FALSE Value: {env_variable_value}")
 
 
 # def get_all_env_variables(**kwargs):
