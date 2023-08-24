@@ -37,7 +37,7 @@ snowflake_task = SnowflakeOperator(
     sql=sql_query,
     snowflake_conn_id='sf_bhagya',  # Set this to your Snowflake connection ID
     autocommit=True,  # Set autocommit to True if needed
-    dag=dag,
+    dag=dag
 )
 
 # Creating second task 
