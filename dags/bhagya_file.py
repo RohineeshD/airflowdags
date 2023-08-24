@@ -17,7 +17,7 @@ default_args = {
 
 # Define the SQL query you want to execute in Snowflake
 sql_query = """
-SELECT max(id) FROM emp_data;
+SELECT 7000001 FROM emp_data;
 """
 
 # Step 3: Creating DAG Object
