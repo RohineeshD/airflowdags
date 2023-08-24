@@ -59,7 +59,8 @@ def fetch_csv_and_upload(**kwargs):
 #     cursor.close()
     
     # Load DataFrame into Snowflake table
-    snowflake_hook.copy_pandas_to_table(dataframe=df, table='AIRLINE')
+    # snowflake_hook.copy_pandas_to_table(dataframe=df, table='AIRLINE')
+    df.to_sql('AIRLINE', con=connection, index=False)
     
     connection.close()
 
