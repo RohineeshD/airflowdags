@@ -12,7 +12,7 @@ default_args = {
 
 # Define a Python function to be executed by the PythonOperator
 def print_hello():
-    print("Hello from the PythonOperator!")
+    print("Welcome to Charishma's dag!")
 
 # Step 3: Creating DAG Object
 dag = DAG(
@@ -25,7 +25,7 @@ dag = DAG(
 # Step 4: Creating task
 # Create a PythonOperator that will run the print_hello function
 task = PythonOperator(
-    task_id='print_hello_task',
+    task_id='print_hello',
     python_callable=print_hello,
     dag=dag,
 )
