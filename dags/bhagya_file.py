@@ -5,6 +5,7 @@ from airflow import DAG
 from datetime import timedelta, datetime
 # Importing operators 
 from airflow.operators.dummy_operator import DummyOperator
+from airflow.utils.dates import days_ago
 
 # Step 2: Initiating the default_args
 default_args = {
