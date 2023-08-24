@@ -17,11 +17,11 @@ logger = logging.getLogger(__name__)
 def check_environment_variable():
     env_variable_value = os.environ.get('AIRFLOW__WEBSERVER__AUTHENTICATE')  # Replace with your actual environment variable name
 
-    if env_variable_value == 'true':
+    if env_variable_value == 'True':
         # Perform your task here
-        logging.info(env_variable_value)
+        logging.info("TRUE",env_variable_value)
     else:
-        logging.info(env_variable_value)
+        logging.info("FALSE",env_variable_value)
 
 
 # def get_all_env_variables(**kwargs):
