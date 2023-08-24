@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 
 def check_environment_variable():
-    env_variable_value = os.environ.get('YOUR_ENV_VARIABLE')  # Replace with your actual environment variable name
+    env_variable_value = os.environ.get('AIRFLOW__WEBSERVER__AUTHENTICATE')  # Replace with your actual environment variable name
 
     if env_variable_value == 'true':
         # Perform your task here
@@ -24,10 +24,10 @@ def check_environment_variable():
         logging.info("Environment variable is not true. Task not performed.")
 
 
-def get_all_env_variables(**kwargs):
-    env_variables = os.environ
-    for key, value in env_variables.items():
-        logging.info(f"Variable: {key}, Value: {value}")
+# def get_all_env_variables(**kwargs):
+#     env_variables = os.environ
+#     for key, value in env_variables.items():
+#         logging.info(f"Variable: {key}, Value: {value}")
 
 with DAG(
         dag_id="shyanjali_dag",
@@ -40,9 +40,9 @@ with DAG(
         },
         catchup=False) as f:
 
-    get_env_task = PythonOperator(
-    task_id='get_env_task',
-    python_callable=get_all_env_variables,
+    check_env_variable = PythonOperator(
+    task_id='check_env_variable',
+    python_callable=check_environment_variable,
     provide_context=True,
     )
 
