@@ -24,12 +24,6 @@ logger = logging.getLogger(__name__)
 def check_environment_variable():
     env_variable_value = os.environ.get('AIRFLOW__WEBSERVER__AUTHENTICATE')  # Replace with your actual environment variable name
     return env_variable_value == "True"
-    # if env_variable_value == 'True':
-    #     # Perform your task here
-    #     logging.info(f"TRUE Value: {env_variable_value}")
-    # else:
-    #     logging.info(f"FALSE Value: {env_variable_value}")
-
 
 
 def fetch_csv_and_upload(**kwargs):
@@ -69,6 +63,20 @@ def fetch_csv_and_upload(**kwargs):
     connection.close()
 
 
+def get_data(**kwargs):
+    snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake_li')
+    connection = snowflake_hook.get_conn()
+    create_table_query="SELECT * FROM AIRLINE WHERE avail_seat_km_per_week >698012498"
+    cursor = connection.cursor()
+    cursor.execute(create_table_query)
+    for row in cursor.fetchall():
+        # Process the retrieved data as needed
+        logging.info(row)
+
+    cursor.close()
+    connection.close()
+    
+
 # def get_all_env_variables(**kwargs):
 #     env_variables = os.environ
 #     for key, value in env_variables.items():
@@ -97,7 +105,14 @@ with DAG(
         provide_context=True  # This is required to pass context to the function
     )
 
-check_env_variable >> fetch_and_upload 
+    get_data = PythonOperator(
+        task_id='get_data',
+        python_callable=get_data,
+        provide_context=True  # This is required to pass context to the function
+    )
+
+
+check_env_variable >> fetch_and_upload >>get_data
 
 
 # ------------------------
