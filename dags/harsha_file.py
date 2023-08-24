@@ -13,7 +13,7 @@ default_args = {
 }
 
 dag = DAG(
-    dag_id='harsha_dag',
+    dag_id='harsha_dag1',
     default_args=default_args,
     schedule_interval='@once',
     catchup=False,
