@@ -1,36 +1,64 @@
-# import logging
 from airflow import DAG
 from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
-from airflow.contrib.hooks.snowflake_hook import SnowflakeHook
-from datetime import datetime, timedelta
-
-# logging.basicConfig(level=logging.INFO)
-# logger = logging.getLogger(__name__)
+from datetime import datetime
 
 default_args = {
     'owner': 'airflow',
-    'start_date': datetime(2022, 11, 12),
+    'start_date': datetime(2023, 1, 1),
+    'retries': 1,
 }
 
 dag = DAG(
-    dag_id='harsha_dag1',
+    'harsha_dag',  # Change the dag_id to a unique name
     default_args=default_args,
     schedule_interval='@once',
     catchup=False,
 )
 
+sql_query = """
+"SELECT * FROM exusia_db.exusia_schema.patients WHERE status = 'Recovered'
+"""
 
-    # Retrieve data from Snowflake table using SnowflakeOperator
-    retrieve_data_task = SnowflakeOperator(
-        task_id='retrieve_data_from_snowflake',
-        sql="SELECT * FROM exusia_db.exusia_schema.patients WHERE status = 'Recovered';",
-        snowflake_conn_id='snowflake_conn',  # Specify your Snowflake connection ID
-        autocommit=True,  # Auto-commit the transaction
-        dag=dag,
-    )
+snowflake_task = SnowflakeOperator(
+    task_id='execute_snowflake_query',
+    sql=sql_query,
+    snowflake_conn_id='snowflake_conn',
+    autocommit=True,
+    dag=dag,
 
-    # Set task dependencies
-    retrieve_data_task
+# # import logging
+# from airflow import DAG
+# from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
+# from airflow.contrib.hooks.snowflake_hook import SnowflakeHook
+# from datetime import datetime, timedelta
+
+# # logging.basicConfig(level=logging.INFO)
+# # logger = logging.getLogger(__name__)
+
+# default_args = {
+#     'owner': 'airflow',
+#     'start_date': datetime(2022, 11, 12),
+# }
+
+# dag = DAG(
+#     dag_id='harsha_dag1',
+#     default_args=default_args,
+#     schedule_interval='@once',
+#     catchup=False,
+# )
+
+
+#     # Retrieve data from Snowflake table using SnowflakeOperator
+#     retrieve_data_task = SnowflakeOperator(
+#         task_id='retrieve_data_from_snowflake',
+#         sql="SELECT * FROM exusia_db.exusia_schema.patients WHERE status = 'Recovered';",
+#         snowflake_conn_id='snowflake_conn',  # Specify your Snowflake connection ID
+#         autocommit=True,  # Auto-commit the transaction
+#         dag=dag,
+#     )
+
+#     # Set task dependencies
+#     retrieve_data_task
 
 
 
