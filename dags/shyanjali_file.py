@@ -7,6 +7,7 @@ try:
     import os
     from io import StringIO
     import pandas as pd
+    import requests
     from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
     from airflow.providers.snowflake.transfers.s3_to_snowflake import SnowflakeOperator
 
