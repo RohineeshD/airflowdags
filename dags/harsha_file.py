@@ -25,3 +25,4 @@ snowflake_task = SnowflakeOperator(
     snowflake_conn_id='snowflake_conn',
     autocommit=True,
     dag=dag,
+)
