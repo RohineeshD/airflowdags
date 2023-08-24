@@ -9,7 +9,7 @@ from airflow.operators.dummy_operator import DummyOperator
 # Step 2: Initiating the default_args
 default_args = {
         'owner' : 'airflow',
-        'start_date' : datetime(2023, 08, 24),
+        'start_date' :days_ago(2),
 
 }
 
