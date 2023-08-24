@@ -69,10 +69,15 @@ def get_data(**kwargs):
     create_table_query="SELECT * FROM AIRLINE WHERE avail_seat_km_per_week >698012498 LIMIT 10"
     cursor = connection.cursor()
     cursor.execute(create_table_query)
+    
     for row in cursor.fetchall():
         # Process the retrieved data as needed
         logging.info(row)
-
+    create_table_query2="SELECT * FROM AIRLINE WHERE avail_seat_km_per_week <698012498 LIMIT 5"
+    cursor.execute(create_table_query2)
+    for row in cursor.fetchall():
+        # Process the retrieved data as needed
+        logging.info(row)
     cursor.close()
     connection.close()
     
