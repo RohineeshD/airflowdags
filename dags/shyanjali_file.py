@@ -14,14 +14,14 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-# def check_environment_variable():
-#     env_variable_value = os.environ.get('YOUR_ENV_VARIABLE')  # Replace with your actual environment variable name
+def check_environment_variable():
+    env_variable_value = os.environ.get('YOUR_ENV_VARIABLE')  # Replace with your actual environment variable name
 
-#     if env_variable_value == 'true':
-#         # Perform your task here
-#         logging.info("Environment variable is true. Performing the task.")
-#     else:
-#         logging.info("Environment variable is not true. Task not performed.")
+    if env_variable_value == 'true':
+        # Perform your task here
+        logging.info("Environment variable is true. Performing the task.")
+    else:
+        logging.info("Environment variable is not true. Task not performed.")
 
 
 def get_all_env_variables(**kwargs):
@@ -42,7 +42,7 @@ with DAG(
 
     get_env_task = PythonOperator(
     task_id='get_env_task',
-    python_callable=get_env_task,
+    python_callable=get_all_env_variables,
     provide_context=True,
     )
 
