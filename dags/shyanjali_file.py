@@ -18,7 +18,7 @@ dag = DAG(
 sql_query = """ SELECT * FROM public.emp_master """
 
 snowflake_task = SnowflakeOperator(
-    task_id='execute_snowflake_query',
+    task_id='execute_snowflake_query_liconn',
     sql=sql_query,
     snowflake_conn_id='snowflake_li',
     autocommit=True,
