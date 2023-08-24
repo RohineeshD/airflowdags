@@ -1,6 +1,7 @@
 # Step 1: Importing Modules
 # To initiate the DAG Object
 from airflow import DAG
+import os
 # Importing datetime and timedelta modules for scheduling the DAGs
 from datetime import timedelta, datetime
 # Importing operators 
@@ -29,8 +30,19 @@ dag = DAG(dag_id='bhagya_dag',
 
 # Step 4: Creating task
 # Creating first task
-start = DummyOperator(task_id = 'start', dag = dag)
+#start = DummyOperator(task_id = 'start', dag = dag)
 
+def print_env_var():
+    print(os.environ["AIRFLOW_CTX_DAG_ID"])
+
+def print_processed():
+    print("Processed")
+
+print_context = PythonOperator(
+    task_id="print_env",
+    python_callable=print_env_var,
+    dag=dag
+)
 
 # Create a SnowflakeOperator task
 snowflake_task = SnowflakeOperator(
@@ -42,7 +54,12 @@ snowflake_task = SnowflakeOperator(
 )
 
 # Creating second task 
-end = DummyOperator(task_id = 'end', dag = dag)
+#end = DummyOperator(task_id = 'end', dag = dag)
+print_processed_end = PythonOperator(
+    task_id="print_process",
+    python_callable=print_processed,
+    dag=dag
+)
 
  # Step 5: Setting up dependencies 
-snowflake_task
+print_context >> snowflake_task >> print_processed_end
