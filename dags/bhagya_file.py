@@ -7,6 +7,7 @@ from datetime import timedelta, datetime
 # Importing operators 
 from airflow.operators.dummy_operator import DummyOperator
 from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
+from airflow.operators.python_operator import PythonOperator
 from airflow.utils.dates import days_ago
 
 # Step 2: Initiating the default_args
