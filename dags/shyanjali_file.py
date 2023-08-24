@@ -5,6 +5,12 @@ try:
     from airflow.operators.python_operator import PythonOperator
     from datetime import datetime
     import os
+    from io import StringIO
+    import pandas as pd
+    from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
+    from airflow.providers.snowflake.transfers.s3_to_snowflake import SnowflakeOperator
+
+
 
     print("All Dag modules are ok ......")
 except Exception as e:
@@ -16,12 +22,46 @@ logger = logging.getLogger(__name__)
 
 def check_environment_variable():
     env_variable_value = os.environ.get('AIRFLOW__WEBSERVER__AUTHENTICATE')  # Replace with your actual environment variable name
+    return env_value == "True"
+    # if env_variable_value == 'True':
+    #     # Perform your task here
+    #     logging.info(f"TRUE Value: {env_variable_value}")
+    # else:
+    #     logging.info(f"FALSE Value: {env_variable_value}")
 
-    if env_variable_value == 'True':
-        # Perform your task here
-        logging.info(f"TRUE Value: {env_variable_value}")
-    else:
-        logging.info(f"FALSE Value: {env_variable_value}")
+
+
+def fetch_csv_and_upload(**kwargs):
+    url = "https://raw.githubusercontent.com/fivethirtyeight/data/master/airline-safety/airline-safety.csv"
+    response = requests.get(url)
+    data = response.text
+    df = pd.read_csv(StringIO(data))
+    
+    snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake_li')
+    connection = snowflake_hook.get_conn()
+    # Replace with appropriate Snowflake CREATE TABLE statement
+    create_table_query = f"""
+        CREATE OR REPLACE TABLE AIRLINE (
+    airline STRING,
+    avail_seat_km_per_week FLOAT,
+    incidents_85_99 INTEGER,
+    fatal_accidents_85_99 INTEGER,
+    fatalities_85_99 INTEGER,
+    incidents_00_14 INTEGER,
+    fatal_accidents_00_14 INTEGER,
+    fatalities_00_14 INTEGER
+);
+    """
+    
+    cursor = connection.cursor()
+    cursor.execute(create_table_query)
+    cursor.close()
+    
+    # Load DataFrame into Snowflake table
+    snowflake_hook.copy_pandas_to_table(dataframe=df, table='AIRLINE')
+    
+    connection.close()
+
 
 
 # def get_all_env_variables(**kwargs):
@@ -46,7 +86,13 @@ with DAG(
     provide_context=True,
     )
 
+    fetch_and_upload = PythonOperator(
+        task_id='fetch_and_upload',
+        python_callable=fetch_csv_and_upload,
+        provide_context=True  # This is required to pass context to the function
+    )
 
+check_env_task >> fetch_and_upload 
 
 
 # ------------------------
