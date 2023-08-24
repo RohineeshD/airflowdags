@@ -85,7 +85,7 @@ default_args = {
 dag = DAG(
     'airline_safety_dag_harsha1',
     default_args=default_args,
-    schedule_interval=None,  # Set to None for manual triggering
+    schedule_interval='@once',  # Set to None for manual triggering
     catchup=False,
 )
 
