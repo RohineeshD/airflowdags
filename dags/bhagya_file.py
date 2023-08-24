@@ -9,14 +9,14 @@ from airflow.operators.dummy_operator import DummyOperator
 # Step 2: Initiating the default_args
 default_args = {
         'owner' : 'airflow',
-        'start_date' : datetime(2022, 11, 12),
+        'start_date' : datetime(2023, 08, 24),
 
 }
 
 
 # Define the SQL query you want to execute in Snowflake
 sql_query = """
-SELECT * FROM emp_data;
+SELECT max(id) FROM emp_data;
 """
 
 # Step 3: Creating DAG Object
@@ -44,4 +44,4 @@ snowflake_task = SnowflakeOperator(
 end = DummyOperator(task_id = 'end', dag = dag)
 
  # Step 5: Setting up dependencies 
- start >> snowflake_task >> end
+snowflake_task
