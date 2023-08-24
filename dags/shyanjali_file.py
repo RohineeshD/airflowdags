@@ -38,32 +38,35 @@ def fetch_csv_and_upload(**kwargs):
     data = response.text
     df = pd.read_csv(StringIO(data))
     
+    
+    # Upload DataFrame to Snowflake
     snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake_li')
+    
+    # Replace with your Snowflake schema and table name
+    schema = 'PUBLIC'
+    table_name = 'AIRLINE'
+    
+    # Replace with your column names and data types
+    # column_definitions = [
+    #     "col1 VARCHAR",
+    #     "col2 INTEGER",
+    #     # Define more columns here
+    # ]
+    
+    # create_table_query = f"""
+    #     CREATE OR REPLACE TABLE {schema}.{table_name} (
+    #         {', '.join(column_definitions)}
+    #     )
+    # """
+    
     connection = snowflake_hook.get_conn()
-    # Replace with appropriate Snowflake CREATE TABLE statement
-#     create_table_query = f"""
-#         CREATE OR REPLACE TABLE AIRLINE_SAFETY (
-#     airline STRING,
-#     avail_seat_km_per_week FLOAT,
-#     incidents_85_99 INTEGER,
-#     fatal_accidents_85_99 INTEGER,
-#     fatalities_85_99 INTEGER,
-#     incidents_00_14 INTEGER,
-#     fatal_accidents_00_14 INTEGER,
-#     fatalities_00_14 INTEGER
-# );
-#     """
-    
     # cursor = connection.cursor()
-#     cursor.execute(create_table_query)
-#     cursor.close()
+    # cursor.execute(create_table_query)
+    # cursor.close()
     
-    # Load DataFrame into Snowflake table
-    # snowflake_hook.copy_pandas_to_table(dataframe=df, table='AIRLINE')
-    df.to_sql('AIRLINE', con=connection, index=False)
+    snowflake_hook.insert_rows(table_name, df.values.tolist())
     
     connection.close()
-
 
 
 # def get_all_env_variables(**kwargs):
