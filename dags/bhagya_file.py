@@ -44,4 +44,4 @@ snowflake_task = SnowflakeOperator(
 end = DummyOperator(task_id = 'end', dag = dag)
 
  # Step 5: Setting up dependencies 
-start >> snowflake_task >> end 
+ snowflake_task 
