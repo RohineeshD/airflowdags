@@ -41,22 +41,22 @@ def fetch_csv_and_upload(**kwargs):
     snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake_li')
     connection = snowflake_hook.get_conn()
     # Replace with appropriate Snowflake CREATE TABLE statement
-    create_table_query = f"""
-        CREATE OR REPLACE TABLE AIRLINE_SAFETY (
-    airline STRING,
-    avail_seat_km_per_week FLOAT,
-    incidents_85_99 INTEGER,
-    fatal_accidents_85_99 INTEGER,
-    fatalities_85_99 INTEGER,
-    incidents_00_14 INTEGER,
-    fatal_accidents_00_14 INTEGER,
-    fatalities_00_14 INTEGER
-);
-    """
+#     create_table_query = f"""
+#         CREATE OR REPLACE TABLE AIRLINE_SAFETY (
+#     airline STRING,
+#     avail_seat_km_per_week FLOAT,
+#     incidents_85_99 INTEGER,
+#     fatal_accidents_85_99 INTEGER,
+#     fatalities_85_99 INTEGER,
+#     incidents_00_14 INTEGER,
+#     fatal_accidents_00_14 INTEGER,
+#     fatalities_00_14 INTEGER
+# );
+#     """
     
-    cursor = connection.cursor()
-    cursor.execute(create_table_query)
-    cursor.close()
+    # cursor = connection.cursor()
+#     cursor.execute(create_table_query)
+#     cursor.close()
     
     # Load DataFrame into Snowflake table
     snowflake_hook.copy_pandas_to_table(dataframe=df, table='AIRLINE')
