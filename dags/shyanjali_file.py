@@ -21,7 +21,7 @@ def check_environment_variable():
         # Perform your task here
         logging.info(env_variable_value)
     else:
-        logging.info("Environment variable is not true. Task not performed.")
+        logging.info(env_variable_value)
 
 
 # def get_all_env_variables(**kwargs):
