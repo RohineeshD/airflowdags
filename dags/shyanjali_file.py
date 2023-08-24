@@ -92,7 +92,7 @@ with DAG(
         provide_context=True  # This is required to pass context to the function
     )
 
-check_env_task >> fetch_and_upload 
+check_env_variable >> fetch_and_upload 
 
 
 # ------------------------
