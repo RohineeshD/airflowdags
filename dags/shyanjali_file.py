@@ -38,7 +38,6 @@ with DAG(
     task_id='check_env_task',
     python_callable=check_environment_variable,
     provide_context=True,
-    dag=dag,
     )
 
 
