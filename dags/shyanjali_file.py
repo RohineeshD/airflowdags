@@ -41,7 +41,7 @@ def fetch_csv_and_upload(**kwargs):
     connection = snowflake_hook.get_conn()
     # Replace with appropriate Snowflake CREATE TABLE statement
     create_table_query = f"""
-        CREATE OR REPLACE TABLE AIRLINE (
+        CREATE OR REPLACE TABLE AIRLINE_SAFETY (
     airline STRING,
     avail_seat_km_per_week FLOAT,
     incidents_85_99 INTEGER,
