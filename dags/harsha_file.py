@@ -1,6 +1,13 @@
+import logging
+import airflow
 from airflow import DAG
+from airflow.operators.python_operator import PythonOperator
 from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
+from airflow.contrib.hooks.snowflake_hook import SnowflakeHook
 from datetime import datetime, timedelta
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 default_args = {
     'owner': 'airflow',
