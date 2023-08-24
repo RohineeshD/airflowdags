@@ -1,36 +1,47 @@
-from airflow import DAG
-from airflow.operators.bash_operator import BashOperator
-from datetime import datetime
-import os
-default_args = {
-    'owner': 'airflow',
-    'start_date': datetime(2023, 8, 24),
-    'depends_on_past': False,
-    'retries': 1,
-}
+try:
+    import logging
+    from datetime import timedelta
+    from airflow import DAG
+    from airflow.operators.python_operator import PythonOperator
+    from datetime import datetime
+    import os
 
-dag = DAG(
-    'shyanjali_dag',
-    default_args=default_args,
-    schedule_interval="@once",  # Set the schedule_interval based on your requirements
-    catchup=False,
-)
+    print("All Dag modules are ok ......")
+except Exception as e:
+    print("Error  {} ".format(e))
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 
 def check_environment_variable():
     env_variable_value = os.environ.get('YOUR_ENV_VARIABLE')  # Replace with your actual environment variable name
 
     if env_variable_value == 'true':
         # Perform your task here
-        print("Environment variable is true. Performing the task.")
+        logging.info("Environment variable is true. Performing the task.")
     else:
-        print("Environment variable is not true. Task not performed.")
+        logging.info("Environment variable is not true. Task not performed.")
 
+with DAG(
+        dag_id="shyanjali_dag",
+        schedule_interval="@once",
+        default_args={
+            "owner": "airflow",
+            "retries": 1,
+            "retry_delay": timedelta(minutes=5),
+            "start_date": datetime(2021, 1, 1),
+        },
+        catchup=False) as f:
 
-check_env_task = BashOperator(
+    check_env_task = PythonOperator(
     task_id='check_env_task',
-    bash_command='python -c "from your_script import check_environment_variable; check_environment_variable()"',
+    python_callable=check_environment_variable,
+    provide_context=True,
     dag=dag,
-)
+    )
+
+
 
 
 # ------------------------
