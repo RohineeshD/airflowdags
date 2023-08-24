@@ -66,7 +66,7 @@ def fetch_csv_and_upload(**kwargs):
 def get_data(**kwargs):
     snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake_li')
     connection = snowflake_hook.get_conn()
-    create_table_query="SELECT TOP (10) FROM AIRLINE WHERE avail_seat_km_per_week >698012498"
+    create_table_query="SELECT * FROM AIRLINE WHERE avail_seat_km_per_week >698012498 LIMIT 10"
     cursor = connection.cursor()
     cursor.execute(create_table_query)
     for row in cursor.fetchall():
