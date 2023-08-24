@@ -1,29 +1,79 @@
-from airflow import DAG
-from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
-from datetime import datetime
+try:
+    import logging
+    from datetime import timedelta
+    from airflow import DAG
+    from airflow.operators.python_operator import PythonOperator
+    from datetime import datetime
+    import pandas as pd
+    from airflow.contrib.hooks.snowflake_hook import SnowflakeHook
+    from airflow.contrib.operators.snowflake_operator import SnowflakeOperator
 
-default_args = {
-    'owner': 'airflow',
-    'start_date': datetime(2023, 1, 1),
-    'retries': 1,
-}
+    print("All Dag modules are ok ......")
+except Exception as e:
+    print("Error  {} ".format(e))
 
-dag = DAG(
-    'shyanjali_dag',  # Change the dag_id to a unique name
-    default_args=default_args,
-    schedule_interval='@once',
-    catchup=False,
-)
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+def max_query(**context):
+    hook = SnowflakeHook(snowflake_conn_id="snowflake_li")
+    result = hook.get_first("select max(SSN) from public.emp_master")
+    logging.info("MAX", result[0])
 
-sql_query = """ SELECT * FROM public.emp_master """
+def count_query(**context):
+    hook = SnowflakeHook(snowflake_conn_id="snowflake_li")
+    result = hook.get_first("select count(*) from public.emp_master")
+    logging.info("COUNT", result[0])
 
-snowflake_task = SnowflakeOperator(
-    task_id='execute_snowflake_query_liconn',
-    sql=sql_query,
-    snowflake_conn_id='snowflake_li',
-    autocommit=True,
-    dag=dag,
-)
+with DAG(
+        dag_id="shyanjali_dag",
+        schedule_interval="@once",
+        default_args={
+            "owner": "airflow",
+            "retries": 1,
+            "retry_delay": timedelta(minutes=5),
+            "start_date": datetime(2021, 1, 1),
+        },
+        catchup=False) as f:
+
+    query_table = PythonOperator(
+        task_id="max_query",
+        python_callable=max_query
+    )
+
+    query_table_1 = PythonOperator(
+        task_id="count_query",
+        python_callable=count_query
+    )
+
+query_table >> query_table_1
+
+# ----------------------
+# from airflow import DAG
+# from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
+# from datetime import datetime
+
+# default_args = {
+#     'owner': 'airflow',
+#     'start_date': datetime(2023, 1, 1),
+#     'retries': 1,
+# }
+
+# dag = DAG(
+#     'shyanjali_dag',  # Change the dag_id to a unique name
+#     default_args=default_args,
+#     schedule_interval='@once',
+#     catchup=False,
+# )
+
+# sql_query = """ SELECT * FROM public.emp_master """
+
+# snowflake_task = SnowflakeOperator(
+#     task_id='execute_snowflake_query_liconn',
+#     sql=sql_query,
+#     snowflake_conn_id='snowflake_li',
+#     autocommit=True,
+#     dag=dag,
+# )
 
 # -----------------------------
 # from datetime import datetime
