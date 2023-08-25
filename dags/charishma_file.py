@@ -5,11 +5,17 @@ import pandas as pd
 import requests
 from io import StringIO
 from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
+import os
 
 default_args = {
     'start_date': datetime(2023, 8, 25),
     'retries': 1,
 }
+
+def check_env_variable(**kwargs):
+    c_air_env = os.environ.get('C_AIR_ENV')
+    if c_air_env == 'true':
+        return 'fetch_csv_and_upload'
 
 def fetch_csv_and_upload(**kwargs):
     url = "https://raw.githubusercontent.com/fivethirtyeight/data/master/airline-safety/airline-safety.csv"
@@ -21,15 +27,21 @@ def fetch_csv_and_upload(**kwargs):
     table_name = 'air_table'
     
     snowflake_hook.insert_rows(table_name, df.values.tolist(), df.columns.tolist())
-    
-    return 'Data successfully uploaded to Snowflake.'
 
 with DAG('charishma_dags', schedule_interval=None, default_args=default_args) as dag:
+    check_env_task = PythonOperator(
+        task_id='check_env_variable',
+        python_callable=check_env_variable,
+        provide_context=True,
+    )
+
     upload_data_task = PythonOperator(
         task_id='fetch_csv_and_upload',
         python_callable=fetch_csv_and_upload,
         provide_context=True,
     )
+
+    check_env_task >> upload_data_task
 
 
 
