@@ -89,4 +89,4 @@ task_print_processed_end = PythonOperator(
 )
 
  # Step 5: Setting up dependencies 
-print_context >> task_load_data >> snowflake_task >> print_processed_end
+task_print_context >> task_load_data >> task_snowflake_task >> task_print_processed_end
