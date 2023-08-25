@@ -73,6 +73,7 @@ task2 = PythonOperator(
 task_1 >> task2
 
 
+
 # from airflow import DAG
 # from airflow.operators.python_operator import PythonOperator
 # from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
