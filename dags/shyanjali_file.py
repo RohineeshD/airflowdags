@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 def check_environment_variable():
     
-    env_variable_value = os.environ.get('AIRFLOW__WEBSERVER__AUTHENTICATE')
+    env_variable_value = os.environ.get('AIRFLOW_LI')
     return env_variable_value == "True"
     
 
