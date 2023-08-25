@@ -33,7 +33,7 @@ with DAG('charishma_dags', schedule_interval=None, default_args=default_args) as
         sql=f"COPY INTO airflow_tasks "
             f"FROM 'https://raw.githubusercontent.com/fivethirtyeight/data/master/airline-safety/airline-safety.csv' "
             f"FILE_FORMAT = (TYPE = 'CSV' SKIP_HEADER = 1);",
-        snowflake_conn_id='snowflake',
+        snowflake_conn_id='snow_conn',
     )
 
     # check_env_task >> load_data_task
