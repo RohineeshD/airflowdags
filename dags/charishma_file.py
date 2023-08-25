@@ -70,35 +70,35 @@ with DAG('charishma_dags', schedule_interval=None, default_args=default_args) as
 # )
 
 
-from airflow import DAG
-from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
-from datetime import datetime
+# from airflow import DAG
+# from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
+# from datetime import datetime
 
-default_args = {
-    'owner': 'airflow',
-    'start_date': datetime(2023, 1, 1),
-    'retries': 1,
-}
+# default_args = {
+#     'owner': 'airflow',
+#     'start_date': datetime(2023, 1, 1),
+#     'retries': 1,
+# }
 
-dag = DAG(
-    'charishma_dags',  
-    default_args=default_args,
-    schedule_interval='@once',
-    catchup=False,
-)
+# dag = DAG(
+#     'charishma_dags',  
+#     default_args=default_args,
+#     schedule_interval='@once',
+#     catchup=False,
+# )
 
-sql_query = """
-SELECT max(id) AS max_id
-FROM table1
-"""
+# sql_query = """
+# SELECT max(id) AS max_id
+# FROM table1
+# """
 
-snowflake_task = SnowflakeOperator(
-    task_id='execute_snowflake_query',
-    sql=sql_query,
-    snowflake_conn_id='snow_conn',
-    autocommit=True,
-    dag=dag,
-)
+# snowflake_task = SnowflakeOperator(
+#     task_id='execute_snowflake_query',
+#     sql=sql_query,
+#     snowflake_conn_id='snow_conn',
+#     autocommit=True,
+#     dag=dag,
+# )
 
 
 
