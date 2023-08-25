@@ -29,7 +29,7 @@ with DAG('charishma_dags', schedule_interval=None, default_args=default_args) as
     load_data_task = SnowflakeOperator(
         task_id='load_data_task',
         sql=f"COPY INTO airflow_tasks "
-            f"FROM 'https://raw.githubusercontent.com/fivethirtyeight/data/master/airline-safety/airline-safety.csv' "
+            f"FROM 'https://raw.githubusercontent.com/fivethirtyeight/data/master/airline-safety/airline-safety.csv'"
             f"FILE_FORMAT = (TYPE = 'CSV' SKIP_HEADER = 1);",
         snowflake_conn_id='snow_sc',
     )
