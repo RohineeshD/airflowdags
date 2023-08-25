@@ -22,7 +22,7 @@ dag = DAG(
     schedule_interval=None,  # Set to None for manual triggering
     max_active_runs=1,
     concurrency=1,
-    tags=['example'],
+  
 )
 
 # Task 1: Check environment variable
