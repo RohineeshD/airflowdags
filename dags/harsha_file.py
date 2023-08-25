@@ -20,14 +20,15 @@ dag = DAG(
     'airline_safety_dag',
     default_args=default_args,
     schedule_interval=None,  # Set to None for manual triggering
-    max_active_runs=1,
-    concurrency=1,
+    # max_active_runs=1,
+    # concurrency=1,
+    
   
 )
 
 # Task 1: Check environment variable
 def check_env_variable(**kwargs):
-    env_variable_value = os.environ.get('YOUR_ENV_VARIABLE')  # Replace with your actual env variable name
+    env_variable_value = os.environ.get('harsh_air_env')
     if env_variable_value == 'true':
         return 'load_data_task'
     else:
