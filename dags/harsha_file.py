@@ -13,11 +13,12 @@ default_args = {
     'owner': 'airflow',
     'start_date': days_ago(1),  # Set the start date
     'catchup': False,
-    'provide_context': True,
+    # 'provide_context': True,
 }
 
 dag = DAG(
-    'airline_safety_dag',
+    # 'airline_safety_dag',
+    'airline_dag',
     default_args=default_args,
     schedule_interval=None,  # Set to None for manual triggering
     # max_active_runs=1,
@@ -56,7 +57,7 @@ def load_data_to_snowflake(**kwargs):
         for line in lines:
             values = line.split(',')
             
-            # Replace this query with your table and column names
+            # query for inserting records into snowflake table
             query = f"""
             INSERT INTO airflow_tasks (airline, avail_seat_km_per_week, incidents_85_99,fatal_accidents_85_99,fatalities_85_99,incidents_00_14,fatal_accidents_00_14,fatalities_00_14)
             VALUES ('{values[0]}', '{values[1]}', '{values[2]}','{values[3]}','{values[4]}','{values[5]}','{values[6]}','{values[7]}')
