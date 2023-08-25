@@ -1,31 +1,31 @@
-from airflow import DAG
-from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
-from datetime import datetime
+# from airflow import DAG
+# from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
+# from datetime import datetime
 
-default_args = {
-    'owner': 'airflow',
-    'start_date': datetime(2023, 1, 1),
-    'retries': 1,
-}
+# default_args = {
+#     'owner': 'airflow',
+#     'start_date': datetime(2023, 1, 1),
+#     'retries': 1,
+# }
 
-dag = DAG(
-    'harsha_dag',  
-    default_args=default_args,
-    schedule_interval='@once',
-    catchup=False,
-)
+# dag = DAG(
+#     'harsha_dag',  
+#     default_args=default_args,
+#     schedule_interval='@once',
+#     catchup=False,
+# )
 
-sql_query = """
-SELECT * FROM patients WHERE status = 'Recovered'
-"""
+# sql_query = """
+# SELECT * FROM patients WHERE status = 'Recovered'
+# """
 
-snowflake_task = SnowflakeOperator(
-    task_id='execute_snowflake_query',
-    sql=sql_query,
-    snowflake_conn_id='snowflake_conn',
-    autocommit=True,
-    dag=dag,
-)
+# snowflake_task = SnowflakeOperator(
+#     task_id='execute_snowflake_query',
+#     sql=sql_query,
+#     snowflake_conn_id='snowflake_conn',
+#     autocommit=True,
+#     dag=dag,
+# )
 
 
 
@@ -105,74 +105,74 @@ snowflake_task = SnowflakeOperator(
 # check_env_task1 >> load_data_task2
 
 
-# from airflow import DAG
-# from airflow.providers.http.sensors.http import HttpSensor
-# from airflow.providers.snowflake.transfers.s3_to_snowflake import S3ToSnowflakeOperator
-# from airflow.operators.python_operator import PythonOperator
-# from datetime import datetime, timedelta
-# import pandas as pd
-# import requests
-# import tempfile
+from airflow import DAG
+from airflow.providers.http.sensors.http import HttpSensor
+from airflow.providers.snowflake.transfers.s3_to_snowflake import S3ToSnowflakeOperator
+from airflow.operators.python_operator import PythonOperator
+from datetime import datetime, timedelta
+import pandas as pd
+import requests
+import tempfile
 
-# default_args = {
-#     'owner': 'airflow',
-#     'start_date': datetime(2023, 8, 25),
-#     'retries': 1,
-# }
+default_args = {
+    'owner': 'airflow',
+    'start_date': datetime(2023, 8, 25),
+    'retries': 1,
+}
 
-# dag = DAG(
-#     'airline_safety_dag',
-#     default_args=default_args,
-#     schedule_interval='@once',  # Set to None for manual triggering
-#     catchup=False,
-# )
+dag = DAG(
+    'airline_safety_dag',
+    default_args=default_args,
+    schedule_interval='@once',  # Set to None for manual triggering
+    catchup=False,
+)
 
-# def check_env_variable(**kwargs):
-#     if kwargs['dag_run'].conf.get('load_data'):
-#         return 'load_data_task'
+def check_env_variable(**kwargs):
+    if kwargs['dag_run'].conf.get('load_data'):
+        return 'load_data_task'
 
-# check_env_task = PythonOperator(
-#     task_id='check_env_task',
-#     python_callable=check_env_variable,
-#     provide_context=True,
-#     dag=dag,
-# )
+check_env_task = PythonOperator(
+    task_id='check_env_task',
+    python_callable=check_env_variable,
+    provide_context=True,
+    dag=dag,
+)
 
-# def read_data_and_load_to_snowflake(**kwargs):
-#     url = "https://raw.githubusercontent.com/fivethirtyeight/data/master/airline-safety/airline-safety.csv"
-#     response = requests.get(url)
-#     data = response.text
+def read_data_and_load_to_snowflake(**kwargs):
+    url = "https://raw.githubusercontent.com/fivethirtyeight/data/master/airline-safety/airline-safety.csv"
+    response = requests.get(url)
+    data = response.text
     
-#     # Create a temporary file to store the data
-#     with tempfile.NamedTemporaryFile(delete=False, suffix=".csv") as temp_file:
-#         temp_file.write(data.encode())
-#         temp_file_path = temp_file.name
+    # Create a temporary file to store the data
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".csv") as temp_file:
+        temp_file.write(data.encode())
+        temp_file_path = temp_file.name
 
-#     # Load data into Snowflake using SnowflakeOperator
-#     sql_query = f"""
-#     COPY INTO airflow_tasks
-#     FROM '{temp_file_path}'
-#     FILE_FORMAT = (TYPE = CSV)
-#     """
+    # Load data into Snowflake using SnowflakeOperator
+    sql_query = f"""
+    COPY INTO airflow_tasks
+    FROM '{temp_file_path}'
+    FILE_FORMAT = (TYPE = CSV)
+    """
     
-#     snowflake_task = SnowflakeOperator(
-#         task_id='load_data_into_snowflake',
-#         sql=sql_query,
-#         snowflake_conn_id='snowflake_conn',  # Specify your Snowflake connection ID
-#         autocommit=True,
-#         dag=dag,
-#     )
+    snowflake_task = SnowflakeOperator(
+        task_id='load_data_into_snowflake',
+        sql=sql_query,
+        snowflake_conn_id='snowflake_conn',  # Specify your Snowflake connection ID
+        autocommit=True,
+        dag=dag,
+    )
     
-#     snowflake_task.execute(context=kwargs)
+    snowflake_task.execute(context=kwargs)
 
-# load_data_task = PythonOperator(
-#     task_id='load_data_task',
-#     python_callable=read_data_and_load_to_snowflake,
-#     provide_context=True,
-#     dag=dag,
-# )
+load_data_task = PythonOperator(
+    task_id='load_data_task',
+    python_callable=read_data_and_load_to_snowflake,
+    provide_context=True,
+    dag=dag,
+)
 
-# check_env_task >> load_data_task
+check_env_task >> load_data_task
 
 
 # from airflow import DAG
