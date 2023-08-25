@@ -22,7 +22,7 @@ default_args = {
 #         default_args=default_args,
 #         schedule_interval='@once', 
 #         catchup=False
-    )
+# )
 def check_and_extract_data():
     if Variable.get('ENV_CHECK_VIKAS'):
             url = "https://raw.githubusercontent.com/fivethirtyeight/data/master/airline-safety/airline-safety.csv"
