@@ -1,5 +1,6 @@
 from airflow import DAG
 from airflow.operators.python_operator import PythonOperator
+from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
 # from airflow.providers.snowflake.transfers.local_to_snowflake import SnowflakeOperator
 # from airflow.providers.http.sensors.http_sensor import HttpSensor
 from airflow.utils.dates import days_ago
@@ -39,109 +40,41 @@ task_1 = PythonOperator(
     dag=dag,
 )
 
-task_1
-
-
-# from airflow import DAG
-# from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
-# from datetime import datetime
-
-# default_args = {
-#     'owner': 'airflow',
-#     'start_date': datetime(2023, 1, 1),
-#     'retries': 1,
-# }
-
-# dag = DAG(
-#     'harsha_dag',  
-#     default_args=default_args,
-#     schedule_interval='@once',
-#     catchup=False,
-# )
-
-# sql_query = """
-# SELECT * FROM patients WHERE status = 'Recovered'
-# """
-
-# snowflake_task = SnowflakeOperator(
-#     task_id='execute_snowflake_query',
-#     sql=sql_query,
-#     snowflake_conn_id='snowflake_conn',
-#     autocommit=True,
-#     dag=dag,
-# )
-
-
-
-
-# from airflow import DAG
-# from airflow.providers.http.sensors.http import HttpSensor
-# from airflow.providers.snowflake.transfers.s3_to_snowflake import S3ToSnowflakeOperator
-# from airflow.operators.python_operator import PythonOperator
-# from datetime import datetime, timedelta
-# import pandas as pd
-# import requests
-# import tempfile
-
-# default_args = {
-#     'owner': 'airflow',
-#     'start_date': datetime(2023, 8, 25),
-#     'retries': 1,
-# }
-
-# dag = DAG(
-#     'airline_safety_dag',
-#     default_args=default_args,
-#     schedule_interval='@once',  # Set to None for manual triggering
-#     catchup=False,
-# )
-
-# def check_env_variable(**kwargs):
-#     if kwargs['dag_run'].conf.get('load_data'):
-#         return 'load_data_task'
-
-# check_env_task = PythonOperator(
-#     task_id='check_env_task',
-#     python_callable=check_env_variable,
-#     provide_context=True,
-#     dag=dag,
-# )
-
-# def read_data_and_load_to_snowflake(**kwargs):
-#     url = "https://raw.githubusercontent.com/fivethirtyeight/data/master/airline-safety/airline-safety.csv"
-#     response = requests.get(url)
-#     data = response.text
+def load_data_to_snowflake(**kwargs):
+    url = "https://raw.githubusercontent.com/fivethirtyeight/data/master/airline-safety/airline-safety.csv"
     
-#     # Create a temporary file to store the data
-#     with tempfile.NamedTemporaryFile(delete=False, suffix=".csv") as temp_file:
-#         temp_file.write(data.encode())
-#         temp_file_path = temp_file.name
+    response = requests.get(url)
+    if response.status_code == 200:
+        data = response.text
+        
+        # Split the data into lines and exclude the header
+        lines = data.strip().split('\n')[1:]
+        
+        snowflake_hook = SnowflakeHook(snowflake_conn_id="snowflake_conn")
+        
+        for line in lines:
+            values = line.split(',')
+            
+            # Replace this query with your table and column names
+            query = f"""
+            INSERT INTO airflow_tasks (airline, avail_seat_km_per_week, incidents_85_99,fatal_accidents_85_99,fatalities_85_99,incidents_00_14,fatal_accidents_00_14,fatalities_00_14)
+            VALUES ('{values[0]}', '{values[1]}', '{values[2]}','{values[3]}','{values[4]}','{values[5]}','{values[6]}','{values[7]}','{values[8]}')
+            """
+            
+            snowflake_hook.run(query)
+            
+        print("Data loaded into Snowflake successfully.")
+    else:
+        raise Exception(f"Failed to fetch data from URL. Status code: {response.status_code}")
 
-#     # Load data into Snowflake using SnowflakeOperator
-#     sql_query = f"""
-#     COPY INTO airflow_tasks
-#     FROM '{temp_file_path}'
-#     FILE_FORMAT = (TYPE = CSV)
-#     """
-    
-#     snowflake_task = SnowflakeOperator(
-#         task_id='load_data_into_snowflake',
-#         sql=sql_query,
-#         snowflake_conn_id='snowflake_conn',  # Specify your Snowflake connection ID
-#         autocommit=True,
-#         dag=dag,
-#     )
-    
-#     snowflake_task.execute(context=kwargs)
+task2 = PythonOperator(
+    task_id='load_data_task',
+    python_callable=load_data_to_snowflake,
+    provide_context=True,
+    dag=dag,
+)
 
-# load_data_task = PythonOperator(
-#     task_id='load_data_task',
-#     python_callable=read_data_and_load_to_snowflake,
-#     provide_context=True,
-#     dag=dag,
-# )
-
-# check_env_task >> load_data_task
+task_1 >> task2
 
 
 
@@ -164,37 +97,6 @@ task_1
 
 # sql_query = """
 # SELECT * FROM patients WHERE status = 'Recovered'
-# """
-
-# snowflake_task = SnowflakeOperator(
-#     task_id='execute_snowflake_query',
-#     sql=sql_query,
-#     snowflake_conn_id='snowflake_conn',
-#     autocommit=True,
-#     dag=dag,
-# )
-
-
-
-# from airflow import DAG
-# from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
-# from datetime import datetime
-
-# default_args = {
-#     'owner': 'airflow',
-#     'start_date': datetime(2023, 1, 1),
-#     'retries': 1,
-# }
-
-# dag = DAG(
-#     'harsha_dag',  
-#     default_args=default_args,
-#     schedule_interval='@once',
-#     catchup=False,
-# )
-
-# sql_query = """
-# "SELECT * FROM patients WHERE status = 'Recovered'
 # """
 
 # snowflake_task = SnowflakeOperator(
