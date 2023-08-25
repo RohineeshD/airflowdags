@@ -37,17 +37,19 @@ def check_and_extract_data():
     
 
 
-with DAG('Extracting data', default_args=default_args, schedule_interval=None) as dag:
+with DAG('extracting_data', default_args=default_args, schedule_interval=None) as dag:
     extract_data = PythonOperator(
     task_id='extract_data',
     python_callable=check_and_extract_data,
     provide_context=True,
     )
+
+check_and_extract_data
 # Step 4: Creating task
 # Creating first task
-start = DummyOperator(task_id = 'start', dag = dag)
+# start = DummyOperator(task_id = 'start', dag = dag)
 # Creating second task 
-end = DummyOperator(task_id = 'end', dag = dag)
+# end = DummyOperator(task_id = 'end', dag = dag)
 
  # Step 5: Setting up dependencies 
-start >> end 
+# start >> end 
