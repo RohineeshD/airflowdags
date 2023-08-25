@@ -1,7 +1,7 @@
 from airflow import DAG
 from airflow.operators.python_operator import PythonOperator
-from airflow.providers.snowflake.transfers.local_to_snowflake import SnowflakeOperator
-from airflow.providers.http.sensors.http_sensor import HttpSensor
+# from airflow.providers.snowflake.transfers.local_to_snowflake import SnowflakeOperator
+# from airflow.providers.http.sensors.http_sensor import HttpSensor
 from airflow.utils.dates import days_ago
 import pandas as pd
 import requests
