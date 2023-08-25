@@ -25,10 +25,7 @@ logger = logging.getLogger(__name__)
 def check_environment_variable():
     
     variable_value = Variable.get('AIRFLOW_LI')
-    print(f"Value of: {variable_value}")
-    env_variable_value = os.environ.get('AIRFLOW_LI')
-    print("ENV VAR VAL",env_variable_value)
-    return env_variable_value == "True"
+    return variable_value == "True"
     
 
 
