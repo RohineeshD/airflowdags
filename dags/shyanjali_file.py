@@ -8,6 +8,7 @@ try:
     from io import StringIO
     import pandas as pd
     import requests
+    from airflow.models import Variable
     from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
     from airflow.providers.snowflake.transfers.s3_to_snowflake import SnowflakeOperator
 
@@ -23,6 +24,8 @@ logger = logging.getLogger(__name__)
 
 def check_environment_variable():
     
+    variable_value = Variable.get(variable_name)
+    print(f"Value of {variable_name}: {variable_value}")
     env_variable_value = os.environ.get('AIRFLOW_LI')
     print("ENV VAR VAL",env_variable_value)
     return env_variable_value == "True"
