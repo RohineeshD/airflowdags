@@ -21,6 +21,8 @@ def fetch_csv_and_upload(**kwargs):
     table_name = 'air_table'
     
     snowflake_hook.insert_rows(table_name, df.values.tolist(), df.columns.tolist())
+    
+    return 'Data successfully uploaded to Snowflake.'
 
 with DAG('charishma_dags', schedule_interval=None, default_args=default_args) as dag:
     upload_data_task = PythonOperator(
