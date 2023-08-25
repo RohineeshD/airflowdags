@@ -15,7 +15,7 @@ default_args = {
 dag = DAG(
     'load_data_into_snowflake',
     default_args=default_args,
-    schedule_interval=None,  # Set to None for manual triggering
+    schedule_interval=@hourly,  # Set to None for manual triggering
     catchup=False,
 )
 
