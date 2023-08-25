@@ -15,7 +15,10 @@ def check_env_variable(**kwargs):
     if c_air_env == 'true':
         return 'load_data_task'
     return None
-
+# def check_env_variable():
+#     if os.environ.get('C_AIR_ENV') == 'true':
+#         return 'load_data_task'
+#         return None
 with DAG('charishma_dags', schedule_interval='@once', default_args=default_args) as dag:
     check_env_task = BranchPythonOperator(
         task_id='check_env_variable',
@@ -28,7 +31,7 @@ with DAG('charishma_dags', schedule_interval='@once', default_args=default_args)
         sql=f"COPY INTO airflow_tasks "
             f"FROM 'https://raw.githubusercontent.com/fivethirtyeight/data/master/airline-safety/airline-safety.csv' "
             f"FILE_FORMAT = (TYPE = 'CSV' SKIP_HEADER = 1);",
-        snowflake_conn_id='snowflake',
+        snowflake_conn_id='snow_conn',
     )
 
     check_env_task >> load_data_task
