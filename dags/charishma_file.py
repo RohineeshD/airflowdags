@@ -1,8 +1,6 @@
 from airflow import DAG
 from airflow.operators.python_operator import PythonOperator
-from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
 from datetime import datetime
-import os
 import pandas as pd
 import requests
 from io import StringIO
@@ -14,19 +12,23 @@ default_args = {
 }
 
 def fetch_csv_and_upload(**kwargs):
-    url = "https://raw.githubusercontent.com/fivethirtyeight/data/master/airline-safety/airline-safety.csv"
-    response = requests.get(url)
-    data = response.text
-    df = pd.read_csv(StringIO(data))
-    
-    # Upload DataFrame to Snowflake
-    snowflake_hook = SnowflakeHook(snowflake_conn_id='snow_sc')
-    
-    #  target table name
-    table_name = 'airflow_tasks'
-    
-    # Upload DataFrame to Snowflake
-    snowflake_hook.insert_rows(table_name, df.values.tolist(), df.columns.tolist())
+    try:
+        url = "https://raw.githubusercontent.com/fivethirtyeight/data/master/airline-safety/airline-safety.csv"
+        response = requests.get(url)
+        
+        if response.status_code == 200:
+            data = response.text
+            df = pd.read_csv(StringIO(data))
+            
+            # Upload DataFrame to Snowflake
+            snowflake_hook = SnowflakeHook(snowflake_conn_id='snow_sc')
+            table_name = 'airflow_tasks'
+            snowflake_hook.insert_rows(table_name, df.values.tolist(), df.columns.tolist())
+            print("Data uploaded successfully.")
+        else:
+            print("Failed to fetch data from the URL. Status code:", response.status_code)
+    except Exception as e:
+        print("An error occurred:", str(e))
 
 with DAG('charishma_dags', schedule_interval=None, default_args=default_args) as dag:
     upload_data_task = PythonOperator(
@@ -36,6 +38,46 @@ with DAG('charishma_dags', schedule_interval=None, default_args=default_args) as
     )
 
     upload_data_task
+
+
+# from airflow import DAG
+# from airflow.operators.python_operator import PythonOperator
+# from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
+# from datetime import datetime
+# import os
+# import pandas as pd
+# import requests
+# from io import StringIO
+# from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
+
+# default_args = {
+#     'start_date': datetime(2023, 8, 25),
+#     'retries': 1,
+# }
+
+# def fetch_csv_and_upload(**kwargs):
+#     url = "https://raw.githubusercontent.com/fivethirtyeight/data/master/airline-safety/airline-safety.csv"
+#     response = requests.get(url)
+#     data = response.text
+#     df = pd.read_csv(StringIO(data))
+    
+#     # Upload DataFrame to Snowflake
+#     snowflake_hook = SnowflakeHook(snowflake_conn_id='snow_sc')
+    
+#     #  target table name
+#     table_name = 'airflow_tasks'
+    
+#     # Upload DataFrame to Snowflake
+#     snowflake_hook.insert_rows(table_name, df.values.tolist(), df.columns.tolist())
+
+# with DAG('charishma_dags', schedule_interval=None, default_args=default_args) as dag:
+#     upload_data_task = PythonOperator(
+#         task_id='fetch_csv_and_upload',
+#         python_callable=fetch_csv_and_upload,
+#         provide_context=True,
+#     )
+
+#     upload_data_task
 
 
 
