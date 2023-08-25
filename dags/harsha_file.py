@@ -11,20 +11,16 @@ import os
 
 default_args = {
     'owner': 'airflow',
-    'start_date': days_ago(1),  # Set the start date
+    'start_date': days_ago(1),  
     'catchup': False,
-    # 'provide_context': True,
+
 }
 
 dag = DAG(
-    # 'airline_safety_dag',
-    'airline_dag',
+    'harsha_dag',
     default_args=default_args,
-    schedule_interval=None,  # Set to None for manual triggering
-    # max_active_runs=1,
-    # concurrency=1,
+    schedule_interval=None, 
     
-  
 )
 
 # Task 1: Check environment variable
