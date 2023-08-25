@@ -4,7 +4,7 @@ from airflow import DAG
 # Importing datetime and timedelta modules for scheduling the DAGs
 from datetime import timedelta, datetime
 # Importing operators
-from airflow.operators.http_sensor import HttpSensor
+from airflow.contrib.sensors.http_sensor import HttpSensor
 from airflow.operators.dummy_operator import DummyOperator
 from airflow.operators.python_operator import PythonOperator
 import requests
