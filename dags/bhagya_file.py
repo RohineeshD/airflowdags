@@ -50,7 +50,7 @@ def load_data():
         df = pd.read_csv(StringIO(data))
         sf_hook = SnowflakeHook(snowflake_conn_id='sf_bhagya')
         conn = sf_hook.get_conn()
-        conn.insert_rows('AIRLINES',df.values.tolist())
+        sf_hook.insert_rows('AIRLINES',df.values.tolist())
         conn.close();
         
 
