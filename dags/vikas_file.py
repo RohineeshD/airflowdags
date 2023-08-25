@@ -7,6 +7,7 @@ from datetime import timedelta, datetime
 from airflow.operators.dummy_operator import DummyOperator
 #Importing vvariable class
 from airflow.models import Variable
+from airflow.operators.python_operator import PythonOperator
 
 # Step 2: Initiating the default_args
 default_args = {
