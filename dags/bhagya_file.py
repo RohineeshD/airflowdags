@@ -23,12 +23,7 @@ sql_query = """
 SELECT 7000001 FROM emp_data;
 """
 
-# Step 3: Creating DAG Object
-dag = DAG(dag_id='bhagya_dag',
-        default_args=default_args,
-        schedule_interval='@once', 
-        catchup=False
-    )
+my_regular_var = 'NONE'
 
 # Step 4: Creating task
 # Creating first task
@@ -38,19 +33,24 @@ def print_env_var():
     print(os.environ["AIRFLOW_CTX_DAG_ID"])
 
 def get_var_regular():    
-    my_regular_var = Variable.get("my_regular_var", default_var=None)
+    my_regular_var = Variable.get("b_var", default_var=None)
     print("Variable value: ",my_regular_var)
 
 def print_processed():
     print("Processed")
+
+# Step 3: Creating DAG Object
+dag = DAG(dag_id='bhagya_dag',
+        default_args=default_args,
+        schedule_interval='@once', 
+        catchup=False
+    )
 
 print_context = PythonOperator(
     task_id="print_env",
     python_callable=get_var_regular,
     dag=dag
 )
-
-
 
 # Create a SnowflakeOperator task
 snowflake_task = SnowflakeOperator(
