@@ -9,11 +9,12 @@ from airflow.operators.dummy_operator import DummyOperator
 from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
 from airflow.operators.python_operator import PythonOperator
 from airflow.utils.dates import days_ago
+from airflow.models import Variable
 
 # Step 2: Initiating the default_args
 default_args = {
         'owner' : 'airflow',
-        'start_date' :datetime(2023, 8, 8)
+        'start_date' :days_ago(2)
 }
 
 
@@ -36,14 +37,20 @@ dag = DAG(dag_id='bhagya_dag',
 def print_env_var():
     print(os.environ["AIRFLOW_CTX_DAG_ID"])
 
+def get_var_regular():    
+    my_regular_var = Variable.get("my_regular_var", default_var=None)
+    print("Variable value: ",my_regular_var)
+
 def print_processed():
     print("Processed")
 
 print_context = PythonOperator(
     task_id="print_env",
-    python_callable=print_env_var,
+    python_callable=get_var_regular,
     dag=dag
 )
+
+
 
 # Create a SnowflakeOperator task
 snowflake_task = SnowflakeOperator(
