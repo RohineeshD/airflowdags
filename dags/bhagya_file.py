@@ -1,5 +1,6 @@
 # Step 1: Importing Modules
 # To initiate the DAG Object
+from io import StringIO
 from airflow import DAG
 import os
 # Importing datetime and timedelta modules for scheduling the DAGs
@@ -7,6 +8,7 @@ from datetime import timedelta, datetime
 # Importing operators 
 from airflow.operators.dummy_operator import DummyOperator
 from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
+from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
 from airflow.operators.python_operator import PythonOperator
 from airflow.utils.dates import days_ago
 from airflow.models import Variable
@@ -40,10 +42,16 @@ def get_var_regular():
     print("Variable value: ",my_regular_var)
 
 def load_data():
-        original = r"https://raw.githubusercontent.com/fivethirtyeight/data/master/airline-safety/airline-safety.csv"
-        delimiter = "," 
-        total = pd.read_csv(original, sep = delimiter)
-        write_pandas(sf_bhagya, total, "AIRLINES")
+        url = r"https://raw.githubusercontent.com/fivethirtyeight/data/master/airline-safety/airline-safety.csv"
+        response = requests.get(url)
+        data = response.text
+        df = pd.read_csv(StringIO(data))
+        sf_hook = SnowflakeHook(snowflake_conn_id='sf_bhagya')
+        conn = sf_hook.get_conn()
+        conn.insert_rows('AIRLINES',df.values.tolist())
+        conn.close();
+        
+
 
 def print_query(ti, **kwargs):
     query = ti.xcom_pull(task_ids='execute_snowflake_query')
