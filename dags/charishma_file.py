@@ -36,7 +36,7 @@ with DAG('charishma_dags', schedule_interval=None, default_args=default_args) as
         snowflake_conn_id='snow_conn',
     )
 
-    # check_env_task >> load_data_task
+  check_env_task >> load_data_task
 
 # from airflow import DAG
 # from airflow.operators.python_operator import PythonOperator
