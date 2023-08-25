@@ -38,7 +38,7 @@ def check_and_extract_data():
     
 
 
-with DAG('extracting_data', default_args=default_args, schedule_interval=None) as dag:
+with DAG('vikas_dag', default_args=default_args, schedule_interval=None) as dag:
     extract_data = PythonOperator(
     task_id='extract_data',
     python_callable=check_and_extract_data,
