@@ -50,7 +50,6 @@ def data_load_to_snowflake():
         cursor = snowflake_conn.cursor()
         
         # Using destination db schema and table
-	destination_database = 'exusia_db'
         destination_schema = 'exusia_schema'
         destination_table = 'airflow'
         
