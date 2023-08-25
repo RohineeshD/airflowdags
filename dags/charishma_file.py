@@ -8,17 +8,17 @@ default_args = {
     'start_date': datetime(2023, 8, 25),
     'retries': 1,
 }
-def check_env_variable(**kwargs):
-    c_air_env = os.environ.get('C_AIR_ENV')
-    print(f"Value of C_AIR_ENV: {c_air_env}")
-    if c_air_env == 'true':
-        return 'load_data_task'
-    return None
-
-# def check_env_variable():
-#     if os.environ.get('C_AIR_ENV') == 'true':
+# def check_env_variable(**kwargs):
+#     c_air_env = os.environ.get('C_AIR_ENV')
+#     print(f"Value of C_AIR_ENV: {c_air_env}")
+#     if c_air_env == 'true':
 #         return 'load_data_task'
-#         return None
+#     return None
+
+def check_env_variable():
+    if os.environ.get('C_AIR_ENV') == 'true':
+        return 'load_data_task'
+        return None
 
 
 with DAG('charishma_dags', schedule_interval=None, default_args=default_args) as dag:
@@ -36,7 +36,7 @@ with DAG('charishma_dags', schedule_interval=None, default_args=default_args) as
         snowflake_conn_id='snowflake',
     )
 
-    check_env_task >> load_data_task
+    # check_env_task >> load_data_task
 
 # from airflow import DAG
 # from airflow.operators.python_operator import PythonOperator
