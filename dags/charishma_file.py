@@ -19,7 +19,7 @@ def check_env_variable(**kwargs):
 #     if os.environ.get('C_AIR_ENV') == 'true':
 #         return 'load_data_task'
 #         return None
-with DAG('charishma_dags', schedule_interval='@once', default_args=default_args) as dag:
+with DAG('charishma_dags', schedule_interval=None, default_args=default_args) as dag:
     check_env_task = BranchPythonOperator(
         task_id='check_env_variable',
         python_callable=check_env_variable,
