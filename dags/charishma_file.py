@@ -1,3 +1,43 @@
+from airflow import DAG
+from airflow.operators.python import BranchPythonOperator
+from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
+from datetime import datetime
+import os
+
+default_args = {
+    'start_date': datetime(2023, 8, 25),
+    'retries': 1,
+}
+def check_env_variable(**kwargs):
+    c_air_env = os.environ.get('C_AIR_ENV')
+    print(f"Value of C_AIR_ENV: {c_air_env}")
+    if c_air_env == 'true':
+        return 'load_data_task'
+    return None
+
+# def check_env_variable():
+#     if os.environ.get('C_AIR_ENV') == 'true':
+#         return 'load_data_task'
+#         return None
+
+
+with DAG('airline_data_dag', schedule_interval=None, default_args=default_args) as dag:
+    check_env_task = BranchPythonOperator(
+        task_id='check_env_variable',
+        python_callable=check_env_variable,
+        provide_context=True,
+    )
+
+    load_data_task = SnowflakeOperator(
+        task_id='load_data_task',
+        sql=f"COPY INTO airflow_tasks "
+            f"FROM 'https://raw.githubusercontent.com/fivethirtyeight/data/master/airline-safety/airline-safety.csv' "
+            f"FILE_FORMAT = (TYPE = 'CSV' SKIP_HEADER = 1);",
+        snowflake_conn_id='snowflake',
+    )
+
+    check_env_task >> load_data_task
+
 # from airflow import DAG
 # from airflow.operators.python_operator import PythonOperator
 # from datetime import datetime
