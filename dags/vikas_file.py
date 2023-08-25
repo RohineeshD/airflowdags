@@ -4,6 +4,7 @@ from airflow import DAG
 # Importing datetime and timedelta modules for scheduling the DAGs
 from datetime import timedelta, datetime
 # Importing operators 
+import requests
 from airflow.operators.dummy_operator import DummyOperator
 #Importing vvariable class
 from airflow.models import Variable
