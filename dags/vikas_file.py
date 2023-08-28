@@ -34,11 +34,13 @@ def check_and_extract_data():
             response = requests.get(url)
             data = response.text
             df = pd.read_csv(StringIO(data))
-    
-            snowflake_hook = SnowflakeHook(snowflake_conn_id='snow_sc')
+            snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake_li')
+            schema = 'af_sch'
             table_name = 'data'
-            snowflake_hook.insert_rows(table_name, df.values.tolist(), df.columns.tolist())
+            connection = snowflake_hook.get_conn()
+            snowflake_hook.insert_rows(table_name, df.values.tolist())
             print(data)
+            connection.close()
     else:
             pass
             
