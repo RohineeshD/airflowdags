@@ -71,15 +71,16 @@ def get_data(**kwargs):
     #     print(row)
     #     logging.info(row)
     if records:
-        print("Printing 10 records:")
+        print("10 records")
     else:
         create_table_query="SELECT * FROM AIRLINE WHERE avail_seat_km_per_week LIMIT 5"
         cursor = connection.cursor()
         records = cursor.execute(create_table_query)
-        print("Printing 5 records:")
+        print("5 records")
     
     for record in records:
         print(record)
+        
     cursor.close()
     connection.close()
     
