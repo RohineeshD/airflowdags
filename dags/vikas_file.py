@@ -11,6 +11,7 @@ from airflow.models import Variable
 from io import StringIO
 from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
 from airflow.operators.python_operator import PythonOperator
+import pandas as pd
 
 # Step 2: Initiating the default_args
 default_args = {
