@@ -42,7 +42,7 @@ def print_env_var():
 
 def get_var_regular():    
     my_regular_var = Variable.get("b_var", default_var=0)
-    logging.info("Variable value: ",my_regular_var)
+    print("Variable value: ",my_regular_var)
 
 def load_data():
     url = r"https://raw.githubusercontent.com/fivethirtyeight/data/master/airline-safety/airline-safety.csv"
@@ -97,6 +97,12 @@ task_load_data = PythonOperator(
     dag=dag
 )
 
+task_get_sf_data = PythonOperator(
+    task_id="Get_Data_From_Snowflake",
+    python_callable=get_sf_data,
+    dag=dag
+)
+
 # Create a SnowflakeOperator task
 task_snowflake_task = SnowflakeOperator(
     task_id='execute_snowflake_query',
@@ -115,4 +121,4 @@ task_print_processed_end = PythonOperator(
 )
 
  # Step 5: Setting up dependencies 
-task_print_context >> task_load_data >> task_snowflake_task >> task_print_processed_end
+task_print_context >> task_load_data >> task_get_sf_data >> task_snowflake_task >> task_print_processed_end
