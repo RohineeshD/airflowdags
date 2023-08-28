@@ -25,12 +25,6 @@ default_args = {
         'start_date' :days_ago(2)
 }
 
-
-# Define the SQL query you want to execute in Snowflake
-query = """
-SELECT 7000001 FROM emp_data;
-"""
-
 my_regular_var = 0
 
 # Step 4: Creating task
@@ -63,7 +57,7 @@ def get_sf_data():
 
     if my_regular_var < 698012498: 
 
-        query1 = "SELECT * FROM AIRLINES WHERE AVAIL_SEAT_KM_PER_WEEK < 698012498 LIMIT 5"
+        query1 = "SELECT * FROM AIRLINES WHERE AVAIL_SEAT_KM_PER_WEEK =< 698012498 LIMIT 5"
         data = cur.execute(query1)
     else:
         
@@ -108,14 +102,6 @@ task_get_sf_data = PythonOperator(
     dag=dag
 )
 
-# Create a SnowflakeOperator task
-task_snowflake_task = SnowflakeOperator(
-    task_id='execute_snowflake_query',
-    sql=query,
-    snowflake_conn_id='sf_bhagya',  # Set this to your Snowflake connection ID
-    autocommit=True,  # Set autocommit to True if needed
-    dag=dag
-)
 
 # Creating second task 
 #end = DummyOperator(task_id = 'end', dag = dag)
@@ -126,4 +112,4 @@ task_print_processed_end = PythonOperator(
 )
 
  # Step 5: Setting up dependencies 
-task_print_context >> task_load_data >> task_get_sf_data >> task_print_processed_end
+task_print_context >> task_load_data >> task_get_sf_data >> task_snowflake_task >> task_print_processed_end
