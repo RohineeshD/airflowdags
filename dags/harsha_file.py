@@ -10,14 +10,14 @@ default_args = {
 }
 
 dag = DAG(
-    'airflow_dag',  
+    'harsha_dag',  
     default_args=default_args,
     schedule_interval=None,
     catchup=False,
 )
 
 # Task 3: Check if avail_seat_km_per_week is greater than 698012498
-def check_seat_km(**kwargs):
+def check_seat_km():
     # Replace this with your actual Snowflake query
     sql_query = "SELECT * FROM airflow_tasks WHERE avail_seat_km_per_week > 698012498"
     return sql_query
@@ -32,22 +32,27 @@ check_seat_task = SnowflakeOperator(
 
 # Task 4: Print 10 or 5 records based on the previous task
 def print_records(**kwargs):
-    task_result = kwargs['task_instance'].xcom_pull(task_ids='check_seat_task')
-    if task_result > 0:
-        # Snowflake query for 10 recors
+    task_instance = kwargs['ti']
+    task_result = task_instance.xcom_pull(task_ids='check_seat_task')
+    
+    if task_result[0][0] > 0:
+        # Snowflake query for records 5
         sql_query = "SELECT * FROM airflow_tasks LIMIT 10"
     else:
-        # Snowflake query for 5 recors
+        #  Snowflake query for records 5
         sql_query = "SELECT * FROM airflow_tasks LIMIT 5"
     
-    # Execute the query using SnowflakeOperator
-    print_records_task = SnowflakeOperator(
+    # Replace this with your actual Snowflake connection
+    snowflake_conn_id = 'snowflake_conn'
+    snowflake_task = SnowflakeOperator(
         task_id='print_records_task',
         sql=sql_query,
-        snowflake_conn_id='snowflake_conn',
+        snowflake_conn_id=snowflake_conn_id,
         autocommit=True,
         dag=dag,
     )
+
+    snowflake_task.execute(context=kwargs)
 
 print_records_task = PythonOperator(
     task_id='print_records_task',
