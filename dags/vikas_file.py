@@ -34,7 +34,7 @@ def check_and_extract_data():
             response = requests.get(url)
             data = response.text
             df = pd.read_csv(StringIO(data))
-            snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake_li')
+            snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake_connection')
             schema = 'af_sch'
             table_name = 'data'
             connection = snowflake_hook.get_conn()
