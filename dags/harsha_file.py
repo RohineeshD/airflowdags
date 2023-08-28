@@ -60,13 +60,15 @@ task_2 = PythonOperator(
     dag=dag,
 )
 
-
 def print_records_all(**kwargs):
     snowflake_hook = SnowflakeHook(snowflake_conn_id="snowflake_conn")
     query = """ SELECT * FROM airflow_tasks WHERE avail_seat_km_per_week > 698012498 
      """
     records = snowflake_hook.get_records(query)
-    
+    print("Printing records:")
+    for record in records:
+        print(record)
+
 task_3 = PythonOperator(
     task_id='print_records_all_task',
     python_callable=print_records_all,
@@ -106,7 +108,8 @@ task_5 = PythonOperator(
     dag=dag,
 )
 
-task_1 >> task_3 >> task_4 >> task_5
+task_1 >> task_2 >> task_3 >> task_4 >> task_5
+
 
 
 
