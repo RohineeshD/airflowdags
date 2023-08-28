@@ -59,15 +59,20 @@ def get_sf_data():
     sf_hook = SnowflakeHook(snowflake_conn_id='sf_bhagya')
     conn = sf_hook.get_conn()
     cur = conn.cursor();
+    data = '';
 
     if my_regular_var < 698012498: 
 
         query1 = "SELECT * FROM AIRLINES WHERE AVAIL_SEAT_KM_PER_WEEK < 698012498 LIMIT 5"
-        cur.execute(query1)
+        data = cur.execute(query1)
     else:
         
         query1 = "SELECT * FROM AIRLINES WHERE AVAIL_SEAT_KM_PER_WEEK > 698012498 LIMIT 10"
-        cur.execute(query1)
+        data = cur.execute(query1)
+    
+    for record in data:
+        print(record)
+        
     conn.close();
 
 
@@ -121,4 +126,4 @@ task_print_processed_end = PythonOperator(
 )
 
  # Step 5: Setting up dependencies 
-task_print_context >> task_load_data >> task_get_sf_data >> task_snowflake_task >> task_print_processed_end
+task_print_context >> task_load_data >> task_get_sf_data >> task_print_processed_end
