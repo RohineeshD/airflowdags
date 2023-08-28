@@ -60,20 +60,32 @@ task_1 = PythonOperator(
 #     dag=dag,
 # )
 
-sql_query = """
-    SELECT * FROM airflow_tasks
-    WHERE avail_seat_km_per_week > 698012498;
-"""
+# sql_query = """
+#     SELECT * FROM airflow_tasks
+#     WHERE avail_seat_km_per_week > 698012498;
+# """
 
-task_3 = SnowflakeOperator(
-    task_id='execute_snowflake_query',
-    sql=sql_query,
-    snowflake_conn_id='snowflake_conn',
-    autocommit=True,
+# task_3 = SnowflakeOperator(
+#     task_id='execute_snowflake_query',
+#     sql=sql_query,
+#     snowflake_conn_id='snowflake_conn',
+#     autocommit=True,
+#     dag=dag,
+# )
+
+def print_records_all(**kwargs):
+    snowflake_hook = SnowflakeHook(snowflake_conn_id="snowflake_conn")
+    query = "SELECT * FROM airflow_tasks WHERE avail_seat_km_per_week > 698012498 "
+    records = snowflake_hook.get_records(query)
+    
+task_3 = PythonOperator(
+    task_id='print_records_all_task',
+    python_callable=print_records_all,
+    provide_context=True,
     dag=dag,
 )
 
-def print_records(**kwargs):
+def print_records_limit(**kwargs):
     snowflake_hook = SnowflakeHook(snowflake_conn_id="snowflake_conn")
     query = "SELECT * FROM airflow_tasks WHERE avail_seat_km_per_week > 698012498 LIMIT 10"
     records = snowflake_hook.get_records(query)
@@ -90,7 +102,7 @@ def print_records(**kwargs):
 
 task_4 = PythonOperator(
     task_id='print_records_task',
-    python_callable=print_records,
+    python_callable=print_records_limit,
     provide_context=True,
     dag=dag,
 )
