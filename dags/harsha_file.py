@@ -2,7 +2,11 @@ from airflow import DAG
 from airflow.operators.python_operator import PythonOperator
 from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
 from airflow.utils.dates import days_ago
+import pandas as pd
+import requests
+import tempfile
 import os
+
 
 default_args = {
     'owner': 'airflow',
