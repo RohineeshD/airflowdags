@@ -43,7 +43,7 @@ def filter_records(**kwargs):
     return num_records
 
 def print_records(num_records, **kwargs):
-    snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake')
+    snowflake_hook = SnowflakeHook(snowflake_conn_id='snow_sc')
     
     sql_task4 = f"""
     SELECT *
