@@ -70,11 +70,13 @@ def get_data(**kwargs):
     records = cursor.fetchall()
     if len(records)==10:
         for row in cursor.fetchall():
+            print(row)
             logging.info(row)
     else:
         create_table_query2="SELECT * FROM AIRLINE WHERE avail_seat_km_per_week LIMIT 5"
         cursor.execute(create_table_query2)
         for row in cursor.fetchall():
+            print(row)
             logging.info(row)
     cursor.close()
     connection.close()
