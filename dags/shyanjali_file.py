@@ -57,12 +57,7 @@ def fetch_csv_and_upload(**kwargs):
     # """
     
     connection = snowflake_hook.get_conn()
-    # cursor = connection.cursor()
-    # cursor.execute(create_table_query)
-    # cursor.close()
-    
     snowflake_hook.insert_rows(table_name, df.values.tolist())
-    
     connection.close()
 
 
@@ -71,25 +66,15 @@ def get_data(**kwargs):
     connection = snowflake_hook.get_conn()
     create_table_query="SELECT * FROM AIRLINE WHERE avail_seat_km_per_week >698012498 LIMIT 10"
     cursor = connection.cursor()
-    cursor.execute(create_table_query)
-    records = cursor.fetchmany(10) 
-    if:
-        cursor.rowcount > 10 
+    records = cursor.execute(create_table_query)
+    if len(records)==10:
+        for row in cursor.fetchall():
+            logging.info(row)
     else:
-        cursor.execute("SELECT * FROM AIRLINE WHERE avail_seat_km_per_week LIMIT 5")
-        cursor.fetchmany(5)
-
-    for record in records:
-        print(record)
-    
-    # for row in cursor.fetchall():
-    #     # Process the retrieved data as needed
-    #     logging.info(row)
-    # create_table_query2="SELECT * FROM AIRLINE WHERE avail_seat_km_per_week LIMIT 5"
-    # cursor.execute(create_table_query2)
-    # for row in cursor.fetchall():
-    #     # Process the retrieved data as needed
-    #     logging.info(row)
+        create_table_query2="SELECT * FROM AIRLINE WHERE avail_seat_km_per_week LIMIT 5"
+        cursor.execute(create_table_query2)
+        for row in cursor.fetchall():
+            logging.info(row)
     cursor.close()
     connection.close()
     
