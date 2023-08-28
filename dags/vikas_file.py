@@ -44,7 +44,7 @@ def check_and_extract_data():
             cursor = connection.cursor()
             cursor.execute(filter_query)
 
-            print("****************below is the data******************)
+            print("****************below is the data******************")
             print(cursor.fetchall())
             connection.close()
     else:
