@@ -34,8 +34,10 @@ check_seat_task = SnowflakeOperator(
 def print_records(**kwargs):
     task_instance = kwargs['ti']
     task_result = task_instance.xcom_pull(task_ids='check_seat_task')
-    record_count = task_result[0][0]  # Get the count from the first row
-
+    
+    # Assuming task_result is the value stored in XCom
+    record_count = task_result
+    
     if record_count > 0:
         sql_query = "SELECT * FROM airflow_tasks LIMIT 10"
     else:
@@ -70,6 +72,7 @@ print_completed_task = PythonOperator(
 )
 
 check_seat_task >> print_records_task >> print_completed_task
+
 
 
 
