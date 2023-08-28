@@ -15,11 +15,11 @@ dag = DAG(
      catchup=False,
  )
 
- sql_query = """
+sql_query = """
  SELECT *FROM air_table
 WHERE avail_seat_km_per_week > 698012498;
 
- snowflake_task = SnowflakeOperator(
+snowflake_task = SnowflakeOperator(
      task_id='execute_snowflake_query',
      sql=sql_query,
      snowflake_conn_id='snowflake_conn',
