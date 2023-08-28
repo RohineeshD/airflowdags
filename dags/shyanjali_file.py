@@ -66,7 +66,8 @@ def get_data(**kwargs):
     connection = snowflake_hook.get_conn()
     create_table_query="SELECT * FROM AIRLINE WHERE avail_seat_km_per_week >698012498 LIMIT 10"
     cursor = connection.cursor()
-    records = cursor.execute(create_table_query)
+    cursor.execute(create_table_query)
+    records = cursor.fetchall()
     if len(records)==10:
         for row in cursor.fetchall():
             logging.info(row)
