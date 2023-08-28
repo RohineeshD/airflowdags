@@ -42,10 +42,11 @@ def print_env_var():
     print(os.environ["AIRFLOW_CTX_DAG_ID"])
 
 def get_var_regular():    
-    my_regular_var = Variable.get("b_var", default_var=0)
+    my_regular_var = os.environ["b_var"]
     print("Variable value: ",my_regular_var)
 
 def load_data():
+  if my_regular_var > 0:
     url = r"https://raw.githubusercontent.com/fivethirtyeight/data/master/airline-safety/airline-safety.csv"
     response = requests.get(url)
     data = response.text
