@@ -12,6 +12,7 @@ from io import StringIO
 from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
 from airflow.operators.python_operator import PythonOperator
 import pandas as pd
+from airflow.providers.snowflake.transfers.snowflake import SnowflakeOperator
 
 # Step 2: Initiating the default_args
 default_args = {
@@ -50,13 +51,22 @@ def check_and_extract_data():
 
 
 with DAG('vikas_dag', default_args=default_args, schedule_interval=None) as dag:
+        
     extract_data = PythonOperator(
     task_id='extract_data',
     python_callable=check_and_extract_data,
     provide_context=True,
     )
 
-check_and_extract_data
+        extract_task = SnowflakeOperator(
+        task_id='extract_data',
+        sql='SELECT * FROM af_sch.data WHERE avail_seat_km_per_week >698012498 LIMIT 10',
+        snowflake_conn_id='snowflake_connection',
+        autocommit=True,  # Set autocommit to True to commit the transaction
+        dag=dag,
+        )
+
+check_and_extract_data >> extract_task
 # Step 4: Creating task
 # Creating first task
 # start = DummyOperator(task_id = 'start', dag = dag)
