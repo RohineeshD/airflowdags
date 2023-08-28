@@ -8,7 +8,7 @@ default_args = {
      'retries': 1,
  }
 
- dag = DAG(
+dag = DAG(
      'harsha_dag',  
      default_args=default_args,
      schedule_interval=None,
