@@ -35,7 +35,6 @@ task_1 = PythonOperator(
     dag=dag,
 )
 
-# ... Your existing code ...
 
 # Task 4: Print 10 records or 5 records
 def print_records(**kwargs):
