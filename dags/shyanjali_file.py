@@ -66,18 +66,19 @@ def get_data(**kwargs):
     connection = snowflake_hook.get_conn()
     create_table_query="SELECT * FROM AIRLINE WHERE avail_seat_km_per_week >698012498 LIMIT 10"
     cursor = connection.cursor()
-    cursor.execute(create_table_query)
-    # records = cursor.fetchall()
-    # if len(records)==10:
-    for row in cursor.fetchall():
-        print(row)
-        logging.info(row)
-    # else:
-    #     create_table_query2="SELECT * FROM AIRLINE WHERE avail_seat_km_per_week LIMIT 5"
-    #     cursor.execute(create_table_query2)
-    #     for row in cursor.fetchall():
-    #         print(row)
-    #         logging.info(row)
+    records = cursor.execute(create_table_query)
+    # for row in cursor.fetchall():
+    #     print(row)
+    #     logging.info(row)
+    if records:
+        print("Printing 10 records:")
+    else:
+        query = "SELECT * FROM airflow_tasks LIMIT 5"
+        records = snowflake_hook.get_records(query)
+        print("Printing 5 records:")
+    
+    for record in records:
+        print(record)
     cursor.close()
     connection.close()
     
