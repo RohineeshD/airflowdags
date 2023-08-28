@@ -35,8 +35,8 @@ def print_records(**kwargs):
     task_instance = kwargs['ti']
     task_result = task_instance.xcom_pull(task_ids='check_seat_task')
     
-    # Assuming task_result is the value stored in XCom
-    record_count = task_result
+    # Assuming task_result is a value stored in XCom
+    record_count = int(task_result[0][0])  # Assuming the XCom value is a list of tuples
     
     if record_count > 0:
         sql_query = "SELECT * FROM airflow_tasks LIMIT 10"
