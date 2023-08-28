@@ -16,7 +16,7 @@ dag = DAG(
  )
 
 sql_query = """
- SELECT * FROM air_table
+ SELECT * FROM airflow_tasks
 WHERE avail_seat_km_per_week > 698012498
 """
 
