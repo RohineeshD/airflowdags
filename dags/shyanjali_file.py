@@ -24,10 +24,11 @@ logger = logging.getLogger(__name__)
 
 def check_environment_variable():
     
-    variable_value = Variable.get('AIRFLOW_LI')
-    return variable_value == "True"
+    # variable_value = Variable.get('AIRFLOW_LI')
+    # return variable_value == "True"
+    if os.environ.get('AIRFLOW_LI') == 'True':
+        return 'fetch_csv_and_upload'
     
-
 
 def fetch_csv_and_upload(**kwargs):
     url = "https://raw.githubusercontent.com/fivethirtyeight/data/master/airline-safety/airline-safety.csv"
