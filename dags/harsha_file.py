@@ -1,77 +1,86 @@
 from airflow import DAG
-from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
 from airflow.operators.python_operator import PythonOperator
-from datetime import datetime
+from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
+from airflow.utils.dates import days_ago
+import pandas as pd
+import requests
+import tempfile
+import os
 
 default_args = {
     'owner': 'airflow',
-    'start_date': datetime(2023, 1, 1),
-    'retries': 1,
+    'start_date': days_ago(1),  # Set the start date
+    'catchup': False,
+    'provide_context': True,
 }
 
 dag = DAG(
-    'airflow_dag',  
+    'airline_safety_dag',
     default_args=default_args,
-    schedule_interval=None,
-    catchup=False,
+    schedule_interval=None,  # Set to None for manual triggering
 )
 
-# Task 3: Check if avail_seat_km_per_week is greater than 698012498
-def check_seat_km():
-    # Replace this with your actual Snowflake query
-    sql_query = "SELECT COUNT(*) FROM airflow_tasks WHERE avail_seat_km_per_week > 698012498"
-    return sql_query
+# Task 1: Check environment variable
+def check_env_variable(**kwargs):
+    env_variable_value = os.environ.get('harsh_air_env')
+    if env_variable_value == 'true':
+        return 'load_data_task'
+    else:
+        return 'task_end'
 
-check_seat_task = SnowflakeOperator(
-    task_id='check_seat_task',
-    sql=check_seat_km,
-    snowflake_conn_id='snowflake_conn',
-    autocommit=True,
+task_1 = PythonOperator(
+    task_id='check_env_variable',
+    python_callable=check_env_variable,
+    provide_context=True,
     dag=dag,
 )
 
-# Task 4: Print 10 or 5 records based on the previous task
+# ... Your existing code ...
+
+# Task 4: Print 10 records or 5 records
 def print_records(**kwargs):
-    task_instance = kwargs['ti']
-    task_result = task_instance.xcom_pull(task_ids='check_seat_task')
+    snowflake_hook = SnowflakeHook(snowflake_conn_id="snowflake_conn")
+    query = """
+    SELECT * FROM airflow_tasks
+    WHERE avail_seat_km_per_week > 698012498
+    LIMIT 10
+    """
+    records = snowflake_hook.get_records(query)
     
-    # Assuming task_result is a value stored in XCom
-    record_count = int(task_result[0][0])  # Assuming the XCom value is a list of tuples
-    
-    if record_count > 0:
-        sql_query = "SELECT * FROM airflow_tasks LIMIT 10"
+    if records:
+        print("Printing 10 records:")
+        for record in records:
+            print(record)
     else:
-        sql_query = "SELECT * FROM airflow_tasks LIMIT 5"
-    
-    snowflake_task = SnowflakeOperator(
-        task_id='print_records_task',
-        sql=sql_query,
-        snowflake_conn_id='snowflake_conn',  
-        autocommit=True,
-        dag=dag,
-    )
+        query = """
+        SELECT * FROM airflow_tasks
+        LIMIT 5
+        """
+        records = snowflake_hook.get_records(query)
+        print("Printing 5 records:")
+        for record in records:
+            print(record)
 
-    snowflake_task.execute(context=kwargs)
-
-print_records_task = PythonOperator(
+task_4 = PythonOperator(
     task_id='print_records_task',
     python_callable=print_records,
     provide_context=True,
     dag=dag,
 )
 
-# Task 5: Print "Process completed"
+# Task 5: Print process completed
 def print_completed(**kwargs):
-    print("Process completed")
+    print("Process completed.")
 
-print_completed_task = PythonOperator(
+task_5 = PythonOperator(
     task_id='print_completed_task',
     python_callable=print_completed,
     provide_context=True,
     dag=dag,
 )
 
-check_seat_task >> print_records_task >> print_completed_task
+# Set task dependencies
+task_1 >> task_4 >> task_5
 
 
 
