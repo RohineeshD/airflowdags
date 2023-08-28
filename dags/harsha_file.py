@@ -1,64 +1,94 @@
-from airflow import DAG
-from airflow.operators.python_operator import PythonOperator
-from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
-from airflow.utils.dates import days_ago
-import pandas as pd
-import requests
-import tempfile
-import os
+ from airflow import DAG
+ from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
+ from datetime import datetime
 
 default_args = {
-    'owner': 'airflow',
-    'start_date': days_ago(1),  # Set the start date
-    'catchup': False,
-    'provide_context': True,
-}
+     'owner': 'airflow',
+     'start_date': datetime(2023, 1, 1),
+     'retries': 1,
+ }
 
-dag = DAG(
-    'airline_safety_dag',
-    default_args=default_args,
-    schedule_interval=None,  # Set to None for manual triggering
-)
+ dag = DAG(
+     'harsha_dag',  
+     default_args=default_args,
+     schedule_interval=None,
+     catchup=False,
+ )
 
-# Task 1: Check environment variable
-def check_env_variable(**kwargs):
-    env_variable_value = os.environ.get('harsh_air_env')
-    if env_variable_value == 'true':
-        return 'load_data_task'
-    else:
-        return 'task_end'
+ sql_query = """
+ SELECT *FROM air_table
+WHERE avail_seat_km_per_week > 698012498;
 
-task_1 = PythonOperator(
-    task_id='check_env_variable',
-    python_callable=check_env_variable,
-    provide_context=True,
-    dag=dag,
-)
+ snowflake_task = SnowflakeOperator(
+     task_id='execute_snowflake_query',
+     sql=sql_query,
+     snowflake_conn_id='snowflake_conn',
+     autocommit=True,
+     dag=dag,
+ )
 
-# ... Your existing code ...
 
-# Task 3: Check if avail_seat_km_per_week is greater than 698012498
-def check_avail_seat_km(**kwargs):
-    snowflake_hook = SnowflakeHook(snowflake_conn_id="snowflake_conn")
-    query = """
-    SELECT COUNT(*) as record_count FROM airflow_tasks WHERE avail_seat_km_per_week > 698012498
-    """
-    result = snowflake_hook.get_first(query)
-    record_count = result[0]
+# from airflow import DAG
+# from airflow.operators.python_operator import PythonOperator
+# from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
+# from airflow.utils.dates import days_ago
+# import pandas as pd
+# import requests
+# import tempfile
+# import os
+
+# default_args = {
+#     'owner': 'airflow',
+#     'start_date': days_ago(1),  
+#     'catchup': False,
+#     'provide_context': True,
+# }
+
+# dag = DAG(
+#     'airline_safety_dag',
+#     default_args=default_args,
+#     schedule_interval=None,  
+# )
+
+# # Task 1: Check environment variable
+# def check_env_variable(**kwargs):
+#     env_variable_value = os.environ.get('harsh_air_env')
+#     if env_variable_value == 'true':
+#         return 'load_data_task'
+#     else:
+#         return 'task_end'
+
+# task_1 = PythonOperator(
+#     task_id='check_env_variable',
+#     python_callable=check_env_variable,
+#     provide_context=True,
+#     dag=dag,
+# )
+
+
+
+# # Task 3: Check if avail_seat_km_per_week is greater than 698012498
+# def check_avail_seat_km(**kwargs):
+#     snowflake_hook = SnowflakeHook(snowflake_conn_id="snowflake_conn")
+#     query = """
+#     SELECT COUNT(*) as record_count FROM airflow_tasks WHERE avail_seat_km_per_week > 698012498
+#     """
+#     result = snowflake_hook.get_first(query)
+#     record_count = result[0]
     
-    if record_count > 0:
-        return 'print_10_records_task'
-    else:
-        return 'print_5_records_task'
+#     if record_count > 0:
+#         return 'print_10_records_task'
+#     else:
+#         return 'print_5_records_task'
 
-task_3 = PythonOperator(
-    task_id='check_avail_seat_km',
-    python_callable=check_avail_seat_km,
-    provide_context=True,
-    dag=dag,
-)
+# task_3 = PythonOperator(
+#     task_id='check_avail_seat_km',
+#     python_callable=check_avail_seat_km,
+#     provide_context=True,
+#     dag=dag,
+# )
 
-task_1 >> task_3
+# task_1 >> task_3
 
 
 
