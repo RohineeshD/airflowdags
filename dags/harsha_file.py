@@ -64,11 +64,11 @@ task2 = PythonOperator(
     dag=dag,
 )
 
- sql_query = """
+sql_query = """
  SELECT *FROM airflow_tasks
 WHERE avail_seat_km_per_week > 698012498;
 
- snowflake_task = SnowflakeOperator(
+task3 = SnowflakeOperator(
      task_id='execute_snowflake_query',
      sql=sql_query,
      snowflake_conn_id='snowflake_conn',
@@ -108,7 +108,7 @@ task_5 = PythonOperator(
     dag=dag,
 )
 
-task_1 >> task_4 >> task_5
+task_1 >>task2 >> task3 >> task_4 >> task_5
 
 
 
