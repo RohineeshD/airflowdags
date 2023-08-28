@@ -46,6 +46,7 @@ def check_and_extract_data():
             print("****************below is the data******************")
             print(cursor.fetchall())
             connection.close()
+            print("process completed")
     else:
             pass
             
