@@ -30,7 +30,7 @@ query = """
 SELECT 7000001 FROM emp_data;
 """
 
-my_regular_var = 'NONE'
+my_regular_var = 0
 
 # Step 4: Creating task
 # Creating first task
@@ -40,19 +40,34 @@ def print_env_var():
     print(os.environ["AIRFLOW_CTX_DAG_ID"])
 
 def get_var_regular():    
-    my_regular_var = Variable.get("b_var", default_var=None)
-    print("Variable value: ",my_regular_var)
+    my_regular_var = Variable.get("b_var", default_var=0)
+    logging.info("Variable value: ",my_regular_var)
 
 def load_data():
-        url = r"https://raw.githubusercontent.com/fivethirtyeight/data/master/airline-safety/airline-safety.csv"
-        response = requests.get(url)
-        data = response.text
-        df = pd.read_csv(StringIO(data))
-        sf_hook = SnowflakeHook(snowflake_conn_id='sf_bhagya')
-        conn = sf_hook.get_conn()
-        sf_hook.insert_rows('AIRLINES',df.values.tolist())
-        conn.close();
+    url = r"https://raw.githubusercontent.com/fivethirtyeight/data/master/airline-safety/airline-safety.csv"
+    response = requests.get(url)
+    data = response.text
+    df = pd.read_csv(StringIO(data))
+    sf_hook = SnowflakeHook(snowflake_conn_id='sf_bhagya')
+    conn = sf_hook.get_conn()
+    sf_hook.insert_rows('AIRLINES',df.values.tolist())
+    conn.close();    
+
+def get_sf_data():
+    
+    sf_hook = SnowflakeHook(snowflake_conn_id='sf_bhagya')
+    conn = sf_hook.get_conn()
+    cur = conn.cursor();
+
+    if my_regular_var < 698012498: 
+
+        query1 = "SELECT * FROM AIRLINES WHERE AVAIL_SEAT_KM_PER_WEEK < 698012498 LIMIT 5"
+        cur.execute(query1)
+    else:
         
+        query1 = "SELECT * FROM AIRLINES WHERE AVAIL_SEAT_KM_PER_WEEK > 698012498 LIMIT 10"
+        cur.execute(query1)
+    conn.close();
 
 
 def print_query(ti, **kwargs):
@@ -60,7 +75,7 @@ def print_query(ti, **kwargs):
     print(query)
 
 def print_processed():
-    print("Processed")
+    logging.info("Processed")
 
 # Step 3: Creating DAG Object
 dag = DAG(dag_id='bhagya_dag',
