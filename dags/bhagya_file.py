@@ -64,7 +64,7 @@ def get_sf_data():
 
     if my_regular_var < 698012498: 
 
-        query1 = "SELECT * FROM AIRLINES WHERE AVAIL_SEAT_KM_PER_WEEK =< 698012498 LIMIT 5"
+        query1 = "SELECT * FROM AIRLINES WHERE AVAIL_SEAT_KM_PER_WEEK <= 698012498 LIMIT 5"
         data = cur.execute(query1)
     else:
         
