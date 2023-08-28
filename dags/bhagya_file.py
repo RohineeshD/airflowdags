@@ -42,7 +42,7 @@ def print_env_var():
     print(os.environ["AIRFLOW_CTX_DAG_ID"])
 
 def get_var_regular():    
-    my_regular_var = os.environ["b_var"]
+    my_regular_var = os.environ.get["b_var"]
     print("Variable value: ",my_regular_var)
 
 def load_data():
