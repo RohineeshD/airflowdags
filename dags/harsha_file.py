@@ -1,32 +1,104 @@
 from airflow import DAG
 from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
+from airflow.operators.python_operator import PythonOperator
 from datetime import datetime
 
 default_args = {
-     'owner': 'airflow',
-     'start_date': datetime(2023, 1, 1),
-     'retries': 1,
- }
+    'owner': 'airflow',
+    'start_date': datetime(2023, 1, 1),
+    'retries': 1,
+}
 
 dag = DAG(
-     'harsha_dag',  
-     default_args=default_args,
-     schedule_interval=None,
-     catchup=False,
- )
+    'airflow_dag',  
+    default_args=default_args,
+    schedule_interval=None,
+    catchup=False,
+)
 
-sql_query = """
- SELECT * FROM airflow_tasks
-WHERE avail_seat_km_per_week > 698012498
-"""
+# Task 3: Check if avail_seat_km_per_week is greater than 698012498
+def check_seat_km(**kwargs):
+    # Replace this with your actual Snowflake query
+    sql_query = "SELECT * FROM airflow_tasks WHERE avail_seat_km_per_week > 698012498"
+    return sql_query
 
-snowflake_task = SnowflakeOperator(
-     task_id='execute_snowflake_query',
-     sql=sql_query,
-     snowflake_conn_id='snowflake_conn',
-     autocommit=True,
-     dag=dag,
- )
+check_seat_task = SnowflakeOperator(
+    task_id='check_seat_task',
+    sql=check_seat_km,
+    snowflake_conn_id='snowflake_conn',
+    autocommit=True,
+    dag=dag,
+)
+
+# Task 4: Print 10 or 5 records based on the previous task
+def print_records(**kwargs):
+    task_result = kwargs['task_instance'].xcom_pull(task_ids='check_seat_task')
+    if task_result > 0:
+        # Snowflake query for 10 recors
+        sql_query = "SELECT * FROM airflow_tasks LIMIT 10"
+    else:
+        # Snowflake query for 5 recors
+        sql_query = "SELECT * FROM airflow_tasks LIMIT 5"
+    
+    # Execute the query using SnowflakeOperator
+    print_records_task = SnowflakeOperator(
+        task_id='print_records_task',
+        sql=sql_query,
+        snowflake_conn_id='snowflake_conn',
+        autocommit=True,
+        dag=dag,
+    )
+
+print_records_task = PythonOperator(
+    task_id='print_records_task',
+    python_callable=print_records,
+    provide_context=True,
+    dag=dag,
+)
+
+# Task 5: Print "Process completed"
+def print_completed(**kwargs):
+    print("Process completed")
+
+print_completed_task = PythonOperator(
+    task_id='print_completed_task',
+    python_callable=print_completed,
+    provide_context=True,
+    dag=dag,
+)
+
+check_seat_task >> print_records_task >> print_completed_task
+
+
+# from airflow import DAG
+# from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
+# from datetime import datetime
+
+# default_args = {
+#      'owner': 'airflow',
+#      'start_date': datetime(2023, 1, 1),
+#      'retries': 1,
+#  }
+
+# dag = DAG(
+#      'harsha_dag',  
+#      default_args=default_args,
+#      schedule_interval=None,
+#      catchup=False,
+#  )
+
+# sql_query = """
+#  SELECT * FROM airflow_tasks
+# WHERE avail_seat_km_per_week > 698012498
+# """
+
+# snowflake_task = SnowflakeOperator(
+#      task_id='execute_snowflake_query',
+#      sql=sql_query,
+#      snowflake_conn_id='snowflake_conn',
+#      autocommit=True,
+#      dag=dag,
+#  )
 
 
 # from airflow import DAG
