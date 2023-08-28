@@ -1,5 +1,5 @@
 from airflow import DAG
-from airflow.operators.python_operator import PythonOperator
+from airflow.operators.python import PythonOperator
 from datetime import datetime
 import pandas as pd
 import requests
@@ -23,10 +23,41 @@ def fetch_csv_and_upload(**kwargs):
     data = response.text
     df = pd.read_csv(StringIO(data))
     
-    snowflake_hook = SnowflakeHook(snowflake_conn_id='snow_sc')
-    table_name = 'air_table'
+    snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake')
+    table_name = 'air_local'
     
     snowflake_hook.insert_rows(table_name, df.values.tolist(), df.columns.tolist())
+
+def filter_records(**kwargs):
+    snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake')
+    
+    sql_task3 = """
+    SELECT *
+    FROM air_table
+    WHERE avail_seat_km_per_week > 698012498
+    """
+    
+    result = snowflake_hook.get_records(sql_task3)
+    num_records = 10 if result else 5
+    
+    return num_records
+
+def print_records(num_records, **kwargs):
+    snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake')
+    
+    sql_task4 = f"""
+    SELECT *
+    FROM air_table
+    WHERE avail_seat_km_per_week > 698012498
+    LIMIT {num_records}
+    """
+    
+    records = snowflake_hook.get_records(sql_task4)
+    print("Printing records:")
+    print(records)
+    
+    # Task 5: Print process completed
+    print("Process completed")
 
 with DAG('charishma_dags', schedule_interval=None, default_args=default_args) as dag:
     check_env_task = PythonOperator(
@@ -40,8 +71,25 @@ with DAG('charishma_dags', schedule_interval=None, default_args=default_args) as
         python_callable=fetch_csv_and_upload,
         provide_context=True,
     )
+    
+    num_records_task = PythonOperator(
+        task_id='filter_records',
+        python_callable=filter_records,
+        provide_context=True,
+    )
+    
+    print_records_task = PythonOperator(
+        task_id='print_records',
+        python_callable=print_records,
+        op_args=[num_records_task.output],  # Pass the output of num_records_task
+        provide_context=True,
+    )
 
-    check_env_task >> upload_data_task
+    check_env_task >> [upload_data_task, num_records_task, print_records_task]
+
+
+
+
 
 
 
