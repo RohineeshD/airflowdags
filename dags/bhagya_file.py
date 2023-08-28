@@ -3,6 +3,7 @@
 from io import StringIO
 from airflow import DAG
 import os
+import logging
 import requests
 # Importing datetime and timedelta modules for scheduling the DAGs
 from datetime import timedelta, datetime
