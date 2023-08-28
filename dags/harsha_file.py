@@ -19,18 +19,18 @@ dag = DAG(
     schedule_interval=None,
 )
 
-def check_env_variable(**kwargs):
-    if os.environ.get('harsh_air_env') == 'true':
-        return 'load_data_task'
-    else:
-        return 'task_end'
+# def check_env_variable(**kwargs):
+#     if os.environ.get('harsh_air_env') == 'true':
+#         return 'load_data_task'
+#     else:
+#         return 'task_end'
 
-task_1 = PythonOperator(
-    task_id='check_env_variable',
-    python_callable=check_env_variable,
-    provide_context=True,
-    dag=dag,
-)
+# task_1 = PythonOperator(
+#     task_id='check_env_variable',
+#     python_callable=check_env_variable,
+#     provide_context=True,
+#     dag=dag,
+# )
 
 # def load_data_to_snowflake(**kwargs):
 #     url = "https://raw.githubusercontent.com/fivethirtyeight/data/master/airline-safety/airline-safety.csv"
@@ -86,39 +86,39 @@ task_3 = PythonOperator(
     dag=dag,
 )
 
-def print_records_limit(**kwargs):
-    snowflake_hook = SnowflakeHook(snowflake_conn_id="snowflake_conn")
-    query = "SELECT * FROM airflow_tasks WHERE avail_seat_km_per_week > 698012498 LIMIT 10"
-    records = snowflake_hook.get_records(query)
+# def print_records_limit(**kwargs):
+#     snowflake_hook = SnowflakeHook(snowflake_conn_id="snowflake_conn")
+#     query = "SELECT * FROM airflow_tasks WHERE avail_seat_km_per_week > 698012498 LIMIT 10"
+#     records = snowflake_hook.get_records(query)
     
-    if records:
-        print("Printing 10 records:")
-    else:
-        query = "SELECT * FROM airflow_tasks LIMIT 5"
-        records = snowflake_hook.get_records(query)
-        print("Printing 5 records:")
+#     if records:
+#         print("Printing 10 records:")
+#     else:
+#         query = "SELECT * FROM airflow_tasks LIMIT 5"
+#         records = snowflake_hook.get_records(query)
+#         print("Printing 5 records:")
     
-    for record in records:
-        print(record)
+#     for record in records:
+#         print(record)
 
-task_4 = PythonOperator(
-    task_id='print_records_task',
-    python_callable=print_records_limit,
-    provide_context=True,
-    dag=dag,
-)
+# task_4 = PythonOperator(
+#     task_id='print_records_task',
+#     python_callable=print_records_limit,
+#     provide_context=True,
+#     dag=dag,
+# )
 
-def print_completed(**kwargs):
-    print("Process completed.")
+# def print_completed(**kwargs):
+#     print("Process completed.")
 
-task_5 = PythonOperator(
-    task_id='print_completed_task',
-    python_callable=print_completed,
-    provide_context=True,
-    dag=dag,
-)
+# task_5 = PythonOperator(
+#     task_id='print_completed_task',
+#     python_callable=print_completed,
+#     provide_context=True,
+#     dag=dag,
+# )
 
-task_1 >> task_3 >> task_4 >> task_5
+# task_1 >> task_3 >> task_4 >> task_5
 
 
 
