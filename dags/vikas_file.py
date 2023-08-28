@@ -40,7 +40,12 @@ def check_and_extract_data():
             table_name = 'data'
             connection = snowflake_hook.get_conn()
             snowflake_hook.insert_rows(table_name, df.values.tolist())
-            print(data)
+            filter_query="SELECT * FROM data WHERE avail_seat_km_per_week >698012498 LIMIT 10"
+            cursor = connection.cursor()
+            cursor.execute(filter_query)
+
+            print("****************below is the data******************)
+            print(cursor.fetchall())
             connection.close()
     else:
             pass
@@ -57,16 +62,15 @@ with DAG('vikas_dag', default_args=default_args, schedule_interval=None) as dag:
     python_callable=check_and_extract_data,
     provide_context=True,
     )
+# extract_task = SnowflakeOperator(
+#         task_id='extract_data',
+#         sql='SELECT * FROM af_sch.data WHERE avail_seat_km_per_week >698012498 LIMIT 10',
+#         snowflake_conn_id='snowflake_connection',
+#         autocommit=True,  # Set autocommit to True to commit the transaction
+#         dag=dag,
+#         )
 
-        extract_task = SnowflakeOperator(
-        task_id='extract_data',
-        sql='SELECT * FROM af_sch.data WHERE avail_seat_km_per_week >698012498 LIMIT 10',
-        snowflake_conn_id='snowflake_connection',
-        autocommit=True,  # Set autocommit to True to commit the transaction
-        dag=dag,
-        )
-
-check_and_extract_data >> extract_task
+check_and_extract_data 
 # Step 4: Creating task
 # Creating first task
 # start = DummyOperator(task_id = 'start', dag = dag)
