@@ -30,6 +30,52 @@ task_1 = PythonOperator(
     dag=dag,
 )
 
+def load_data_to_snowflake(**kwargs):
+    url = "https://raw.githubusercontent.com/fivethirtyeight/data/master/airline-safety/airline-safety.csv"
+    
+    response = requests.get(url)
+    if response.status_code == 200:
+        data = response.text
+        
+        # Split the data into lines and exclude the header
+        lines = data.strip().split('\n')[1:]
+        
+        snowflake_hook = SnowflakeHook(snowflake_conn_id="snowflake_conn")
+        
+        for line in lines:
+            values = line.split(',')
+            
+            # Replace this query with your table and column names
+            query = f"""
+            INSERT INTO airflow_tasks (airline, avail_seat_km_per_week, incidents_85_99,fatal_accidents_85_99,fatalities_85_99,incidents_00_14,fatal_accidents_00_14,fatalities_00_14)
+            VALUES ('{values[0]}', '{values[1]}', '{values[2]}','{values[3]}','{values[4]}','{values[5]}','{values[6]}','{values[7]}')
+            """
+            
+            snowflake_hook.run(query)
+            
+        print("Data loaded into Snowflake successfully.")
+    else:
+        raise Exception(f"Failed to fetch data from URL. Status code: {response.status_code}")
+
+task2 = PythonOperator(
+    task_id='load_data_task',
+    python_callable=load_data_to_snowflake,
+    provide_context=True,
+    dag=dag,
+)
+
+ sql_query = """
+ SELECT *FROM airflow_tasks
+WHERE avail_seat_km_per_week > 698012498;
+
+ snowflake_task = SnowflakeOperator(
+     task_id='execute_snowflake_query',
+     sql=sql_query,
+     snowflake_conn_id='snowflake_conn',
+     autocommit=True,
+     dag=dag,
+ )
+
 def print_records(**kwargs):
     snowflake_hook = SnowflakeHook(snowflake_conn_id="snowflake_conn")
     query = "SELECT * FROM airflow_tasks WHERE avail_seat_km_per_week > 698012498 LIMIT 10"
