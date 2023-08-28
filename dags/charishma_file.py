@@ -27,7 +27,7 @@ def fetch_csv_and_upload(**kwargs):
     df = pd.read_csv(StringIO(data))
     
     snowflake_hook = SnowflakeHook(snowflake_conn_id=SNOWFLAKE_CONN_ID)
-    table_name = 'air_local'
+    table_name = 'air_table'
     
     snowflake_hook.insert_rows(table_name, df.values.tolist(), df.columns.tolist())
 
