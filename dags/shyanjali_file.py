@@ -39,7 +39,6 @@ def fetch_csv_and_upload(**kwargs):
     
     # Upload DataFrame to Snowflake
     snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake_li')
-    
     # Replace with your Snowflake schema and table name
     schema = 'PUBLIC'
     table_name = 'AIRLINE'
@@ -73,15 +72,24 @@ def get_data(**kwargs):
     create_table_query="SELECT * FROM AIRLINE WHERE avail_seat_km_per_week >698012498 LIMIT 10"
     cursor = connection.cursor()
     cursor.execute(create_table_query)
+    records = cursor.fetchmany(10) 
+    if:
+        cursor.rowcount > 10 
+    else:
+        cursor.execute("SELECT * FROM AIRLINE WHERE avail_seat_km_per_week LIMIT 5")
+        cursor.fetchmany(5)
+
+    for record in records:
+        print(record)
     
-    for row in cursor.fetchall():
-        # Process the retrieved data as needed
-        logging.info(row)
-    create_table_query2="SELECT * FROM AIRLINE WHERE avail_seat_km_per_week <698012498 LIMIT 5"
-    cursor.execute(create_table_query2)
-    for row in cursor.fetchall():
-        # Process the retrieved data as needed
-        logging.info(row)
+    # for row in cursor.fetchall():
+    #     # Process the retrieved data as needed
+    #     logging.info(row)
+    # create_table_query2="SELECT * FROM AIRLINE WHERE avail_seat_km_per_week LIMIT 5"
+    # cursor.execute(create_table_query2)
+    # for row in cursor.fetchall():
+    #     # Process the retrieved data as needed
+    #     logging.info(row)
     cursor.close()
     connection.close()
     
