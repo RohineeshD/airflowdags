@@ -7,6 +7,9 @@ from io import StringIO
 from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
 import os
 
+# global Snowflake connection ID
+SNOWFLAKE_CONN_ID = 'snow_sc'
+
 default_args = {
     'start_date': datetime(2023, 8, 25),
     'retries': 1,
@@ -23,13 +26,13 @@ def fetch_csv_and_upload(**kwargs):
     data = response.text
     df = pd.read_csv(StringIO(data))
     
-    snowflake_hook = SnowflakeHook(snowflake_conn_id='snow_sc')
+    snowflake_hook = SnowflakeHook(snowflake_conn_id=SNOWFLAKE_CONN_ID)
     table_name = 'air_local'
     
     snowflake_hook.insert_rows(table_name, df.values.tolist(), df.columns.tolist())
 
 def filter_records(**kwargs):
-    snowflake_hook = SnowflakeHook(snowflake_conn_id='snow_sc')
+    snowflake_hook = SnowflakeHook(snowflake_conn_id=SNOWFLAKE_CONN_ID)
     
     sql_task3 = """
     SELECT *
@@ -43,7 +46,7 @@ def filter_records(**kwargs):
     return num_records
 
 def print_records(num_records, **kwargs):
-    snowflake_hook = SnowflakeHook(snowflake_conn_id='snow_sc')
+    snowflake_hook = SnowflakeHook(snowflake_conn_id=SNOWFLAKE_CONN_ID)
     
     sql_task4 = f"""
     SELECT *
