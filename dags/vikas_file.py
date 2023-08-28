@@ -8,6 +8,8 @@ import requests
 from airflow.operators.dummy_operator import DummyOperator
 #Importing vvariable class
 from airflow.models import Variable
+from io import StringIO
+from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
 from airflow.operators.python_operator import PythonOperator
 
 # Step 2: Initiating the default_args
@@ -30,6 +32,11 @@ def check_and_extract_data():
             url = "https://raw.githubusercontent.com/fivethirtyeight/data/master/airline-safety/airline-safety.csv"
             response = requests.get(url)
             data = response.text
+            df = pd.read_csv(StringIO(data))
+    
+            snowflake_hook = SnowflakeHook(snowflake_conn_id='snow_sc')
+            table_name = 'data'
+            snowflake_hook.insert_rows(table_name, df.values.tolist(), df.columns.tolist())
             print(data)
     else:
             pass
