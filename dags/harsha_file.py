@@ -2,14 +2,11 @@ from airflow import DAG
 from airflow.operators.python_operator import PythonOperator
 from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
 from airflow.utils.dates import days_ago
-import pandas as pd
-import requests
-import tempfile
 import os
 
 default_args = {
     'owner': 'airflow',
-    'start_date': days_ago(1),  # Set the start date
+    'start_date': days_ago(1),
     'catchup': False,
     'provide_context': True,
 }
@@ -17,13 +14,11 @@ default_args = {
 dag = DAG(
     'airline_safety_dag',
     default_args=default_args,
-    schedule_interval=None,  # Set to None for manual triggering
+    schedule_interval=None,
 )
 
-# Task 1: Check environment variable
 def check_env_variable(**kwargs):
-    env_variable_value = os.environ.get('harsh_air_env')
-    if env_variable_value == 'true':
+    if os.environ.get('harsh_air_env') == 'true':
         return 'load_data_task'
     else:
         return 'task_end'
@@ -35,30 +30,20 @@ task_1 = PythonOperator(
     dag=dag,
 )
 
-
-# Task 4: Print 10 records or 5 records
 def print_records(**kwargs):
     snowflake_hook = SnowflakeHook(snowflake_conn_id="snowflake_conn")
-    query = """
-    SELECT * FROM airflow_tasks
-    WHERE avail_seat_km_per_week > 698012498
-    LIMIT 10
-    """
+    query = "SELECT * FROM airflow_tasks WHERE avail_seat_km_per_week > 698012498 LIMIT 10"
     records = snowflake_hook.get_records(query)
     
     if records:
         print("Printing 10 records:")
-        for record in records:
-            print(record)
     else:
-        query = """
-        SELECT * FROM airflow_tasks
-        LIMIT 5
-        """
+        query = "SELECT * FROM airflow_tasks LIMIT 5"
         records = snowflake_hook.get_records(query)
         print("Printing 5 records:")
-        for record in records:
-            print(record)
+    
+    for record in records:
+        print(record)
 
 task_4 = PythonOperator(
     task_id='print_records_task',
@@ -67,7 +52,6 @@ task_4 = PythonOperator(
     dag=dag,
 )
 
-# Task 5: Print process completed
 def print_completed(**kwargs):
     print("Process completed.")
 
@@ -78,8 +62,8 @@ task_5 = PythonOperator(
     dag=dag,
 )
 
-# Set task dependencies
 task_1 >> task_4 >> task_5
+
 
 
 
