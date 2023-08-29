@@ -19,6 +19,7 @@ dag = DAG(
     schedule_interval=None,
 )
 
+# the function is checking the envirnoment veriable
 def check_env_variable(**kwargs):
     if os.environ.get('harsh_air_env') == 'true':
         return 'load_data_task'
@@ -32,6 +33,7 @@ task_1 = PythonOperator(
     dag=dag,
 )
 
+# the fucntion is loding the data from url to snowflake
 def load_data_to_snowflake(**kwargs):
     url = "https://raw.githubusercontent.com/fivethirtyeight/data/master/airline-safety/airline-safety.csv"
     response = requests.get(url)
@@ -60,6 +62,8 @@ task_2 = PythonOperator(
     dag=dag,
 )
 
+# the function is getting records from table graterthan 698012498
+
 def print_records_all(**kwargs):
     snowflake_hook = SnowflakeHook(snowflake_conn_id="snowflake_conn")
     query = """ SELECT * FROM airflow_tasks WHERE avail_seat_km_per_week > 698012498 
@@ -75,7 +79,7 @@ task_3 = PythonOperator(
     provide_context=True,
     dag=dag,
 )
-
+# function working on condition 
 def print_records_limit(**kwargs):
     snowflake_hook = SnowflakeHook(snowflake_conn_id="snowflake_conn")
     query = "SELECT * FROM airflow_tasks WHERE avail_seat_km_per_week > 698012498 LIMIT 10"
