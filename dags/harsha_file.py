@@ -2,7 +2,6 @@ from airflow import DAG
 from airflow.operators.python_operator import PythonOperator
 from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
 from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
-from airflow.operators.python import ShortCircuitOperator
 from airflow.utils.dates import days_ago
 import os
 import requests
@@ -22,17 +21,12 @@ dag = DAG(
 
 # the function is checking the envirnoment veriable
 def check_env_variable(**kwargs):
-    if os.environ.get('harsha_air_env') == 'false':
-        return 'load_data_to_snowflake'
-    # variable_value = Variable.get('harsh_air_env')
-    # variable_value =os.environ.get('harsha_air_env')
-    # if variable_value == 'true':    
-    #    print ("True")        
+    if os.environ.get('harsh_air_env') == 'true':
+        return 'load_data_task'
     else:
-        print("Environment variable is set to False")
-        return 
+        return 'task_end'
 
-task_1 = ShortCircuitOperator(
+task_1 = PythonOperator(
     task_id='check_env_variable',
     python_callable=check_env_variable,
     provide_context=True,
@@ -47,7 +41,16 @@ def load_data_to_snowflake(**kwargs):
     if response.status_code == 200:
         data = response.text
         lines = data.strip().split('\n')[1:]
-        # Insert data into Snowflake
+        snowflake_hook = SnowflakeHook(snowflake_conn_id="snowflake_conn")
+        
+        for line in lines:
+            values = line.split(',')
+            query = f"""
+                INSERT INTO airflow_tasks (airline, avail_seat_km_per_week, incidents_85_99, fatal_accidents_85_99, fatalities_85_99, incidents_00_14, fatal_accidents_00_14, fatalities_00_14)
+                VALUES ('{values[0]}', '{values[1]}', '{values[2]}', '{values[3]}', '{values[4]}', '{values[5]}', '{values[6]}', '{values[7]}')
+            """
+            snowflake_hook.run(query)
+            
         print("Data loaded into Snowflake successfully.")
     else:
         raise Exception(f"Failed to fetch data from URL. Status code: {response.status_code}")
