@@ -96,7 +96,7 @@ if harsh_air_env == 'true':
         dag=dag,
     )
 
-    def print_completed(**kwargs):
+def print_completed(**kwargs):
     print("Process completed.")
 
 task_5 = PythonOperator(
