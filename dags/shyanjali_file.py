@@ -9,7 +9,6 @@ import pandas as pd
 import requests
 from airflow.models import Variable
 from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
-from airflow.providers.snowflake.transfers.s3_to_snowflake import SnowflakeOperator
 from airflow.operators.python import ShortCircuitOperator
 
 
