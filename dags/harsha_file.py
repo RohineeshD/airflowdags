@@ -27,10 +27,10 @@ def check_env_variable(**kwargs):
     #     return 'load_data_to_snowflake'
     variable_value = Variable.get('harsh_air_env')
     if variable_value =='true':    
-        True        
+       print ("True")        
     else:
         print("Environment variable is set to False")
-        raise AirflowSkipException
+        return 
     
    
 
