@@ -33,7 +33,10 @@ def check_environment_variable():
     # else:
     #     return 'print_success'
     env_variable_value = os.environ.get('AIRFLOW_LI')
-    return 'task_2' if env_variable_value  == 'True' else 'end_process'
+    if env_variable_value  == 'True':
+        return 'task_2' if env_variable_value  == 'True' 
+    else 
+        return 'end_process'
 
     
 
