@@ -56,7 +56,7 @@ def env_var_check():
     else:
         False
     
-with DAG('vikas_dag', default_args=default_args, schedule_interval=None) as dag:
+with DAG('vikas_dag2', default_args=default_args, schedule_interval=None) as dag:
 
         check_condition_task = PythonOperator(
         task_id='check_condition_task',
