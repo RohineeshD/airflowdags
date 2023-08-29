@@ -20,8 +20,8 @@ def check_env_variable(**kwargs):
     if c_air_env == 'true':
         return 'fetch_csv_and_upload'
     else:
-        print("C_AIR_ENV is not set to 'true'. Doing nothing.")
-        return None      
+        print("C_AIR_ENV is not set to 'true'. Skipping tasks and completing the process.")
+        return 'final_task'   
 
 def fetch_csv_and_upload(**kwargs):
     url = "https://raw.githubusercontent.com/fivethirtyeight/data/master/airline-safety/airline-safety.csv"
