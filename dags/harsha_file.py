@@ -22,9 +22,9 @@ dag = DAG(
 def check_env_variable(**kwargs):
     harsh_air_env = os.environ.get('harsh_air_env', '').lower()
     if harsh_air_env == 'true':
-        return 'load_data_to_snowflake'
+        return 'load_data_task'
     else:
-        return 'print_completed_task'
+        raise Exception("Environment variable harsh_air_env is not 'true'.")
 
 branch_operator = BranchPythonOperator(
     task_id='check_env_variable',
