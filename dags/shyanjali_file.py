@@ -11,6 +11,8 @@ try:
     from airflow.models import Variable
     from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
     from airflow.providers.snowflake.transfers.s3_to_snowflake import SnowflakeOperator
+    from airflow.operators.dummy_operator import DummyOperator
+    from airflow.operators.branch_operator import BranchPythonOperator
 
 
 
@@ -26,10 +28,13 @@ def check_environment_variable():
     
     # variable_value = Variable.get('AIRFLOW_LI')
     # return variable_value == "True"
-    if os.environ.get('AIRFLOW_LI') == 'True':
-        return 'fetch_csv_and_upload'
-    else:
-        return 'print_success'
+    # if os.environ.get('AIRFLOW_LI') == 'True':
+    #     return 'fetch_csv_and_upload'
+    # else:
+    #     return 'print_success'
+    env_variable_value = os.environ.get('AIRFLOW_LI')
+    return 'task_2' if env_variable_value  == 'True' else 'end_process'
+
     
 
 def fetch_csv_and_upload(**kwargs):
@@ -82,7 +87,8 @@ with DAG(
             "start_date": datetime(2021, 1, 1),
         },
         catchup=False) as f:
-
+    start_task = DummyOperator(task_id='start_task')
+    end_process = DummyOperator(task_id='end_process')
     check_env_variable = PythonOperator(
     task_id='check_env_variable',
     python_callable=check_environment_variable,
@@ -107,8 +113,9 @@ with DAG(
         provide_context=True  # This is required to pass context to the function
     )
 
-
-check_env_variable >> fetch_and_upload >>get_data>>print_success
+start_task >> check_env_variable
+check_env_variable >> [fetch_and_upload, get_data,print_success,end_process]
+# check_env_variable >> fetch_and_upload >>get_data>>print_success
 
 
 # ------------------------
