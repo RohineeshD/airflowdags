@@ -14,7 +14,7 @@ default_args = {
 }
 
 dag = DAG(
-    'harsha_dag',
+    'air_flow_dag',
     default_args=default_args,
     schedule_interval=None,
 )
