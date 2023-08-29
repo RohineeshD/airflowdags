@@ -90,8 +90,7 @@ with DAG(
             "start_date": datetime(2021, 1, 1),
         },
         catchup=False) as f:
-    start_task = DummyOperator(task_id='start_task')
-    end_process = DummyOperator(task_id='end_process')
+   
     check_env_variable = PythonOperator(
     task_id='check_env_variable',
     python_callable=check_environment_variable,
@@ -115,6 +114,8 @@ with DAG(
         python_callable=print_success,
         provide_context=True  # This is required to pass context to the function
     )
+    start_task = DummyOperator(task_id='start_task')
+    end_process = DummyOperator(task_id='end_process')
 
 start_task >> check_env_variable
 check_env_variable >> [fetch_and_upload, get_data,print_success,end_process]
