@@ -35,7 +35,7 @@ def check_environment_variable():
     env_variable_value = os.environ.get('AIRFLOW_LI')
     if env_variable_value  == 'True':
         return 'fetch_and_upload'
-    else 
+    else:
         return 'end_process'
 
     
