@@ -28,6 +28,8 @@ def check_environment_variable():
     # return variable_value == "True"
     if os.environ.get('AIRFLOW_LI') == 'True':
         return 'fetch_csv_and_upload'
+    else:
+        return 'print_success'
     
 
 def fetch_csv_and_upload(**kwargs):
@@ -42,20 +44,6 @@ def fetch_csv_and_upload(**kwargs):
     # Replace with your Snowflake schema and table name
     schema = 'PUBLIC'
     table_name = 'AIRLINE'
-    
-    # Replace with your column names and data types
-    # column_definitions = [
-    #     "col1 VARCHAR",
-    #     "col2 INTEGER",
-    #     # Define more columns here
-    # ]
-    
-    # create_table_query = f"""
-    #     CREATE OR REPLACE TABLE {schema}.{table_name} (
-    #         {', '.join(column_definitions)}
-    #     )
-    # """
-    
     connection = snowflake_hook.get_conn()
     snowflake_hook.insert_rows(table_name, df.values.tolist())
     connection.close()
@@ -67,9 +55,6 @@ def get_data(**kwargs):
     create_table_query="SELECT * FROM AIRLINE WHERE avail_seat_km_per_week >698012498 LIMIT 10"
     cursor = connection.cursor()
     records = cursor.execute(create_table_query)
-    # for row in cursor.fetchall():
-    #     print(row)
-    #     logging.info(row)
     if records:
         print("10 records")
     else:
@@ -86,11 +71,6 @@ def get_data(**kwargs):
     
 def print_success(**kwargs):
     logging.info("Process Completed")
-    
-# def get_all_env_variables(**kwargs):
-#     env_variables = os.environ
-#     for key, value in env_variables.items():
-#         logging.info(f"Variable: {key}, Value: {value}")
 
 with DAG(
         dag_id="shyanjali_dag",
