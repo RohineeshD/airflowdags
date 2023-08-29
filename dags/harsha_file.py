@@ -30,7 +30,7 @@ def check_env_variable(**kwargs):
         True        
     else:
         print("Environment variable is set to False")
-        raise AirflowSkipException(“skip”)
+        raise AirflowSkipException("skip")
     
    
 
