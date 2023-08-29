@@ -24,7 +24,7 @@ def check_env_variable(**kwargs):
     # if os.environ.get('harsh_air_env') == 'true':
     #     return 'load_data_to_snowflake'
     variable_value = Variable.get('harsh_air_env')
-    return variable_value == "True"
+    return variable_value == "true"
    
 
 task_1 = PythonOperator(
