@@ -22,7 +22,7 @@ dag = DAG(
 # the function is checking the envirnoment veriable
 def check_env_variable(**kwargs):
     if os.environ.get('harsh_air_env') == 'true':
-        return 'load_data_task'
+        return 'load_data_to_snowflake'
     else:
         return 'task_end'
 
