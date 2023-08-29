@@ -61,12 +61,12 @@ def completion_message():
 #defined a function env_var_check which will stop execution of all other tasks if condition doesnt matches
 def env_var_check():
         """Will run all the tasks if conditions are met , if it does'nt matches condition it will skip all the tasks"""
-    if Variable.get('ENV_CHECK_VIKAS')==True:    
-        print("Environment variable is set to True")
-        True        
-    else:
-        print("Environment variable is set to False")
-        raise AirflowSkipException("Skipping tasks due to condition not met")
+        if Variable.get('ENV_CHECK_VIKAS')==True:    
+                print("Environment variable is set to True")
+                True        
+        else:
+                print("Environment variable is set to False")
+                raise AirflowSkipException("Skipping tasks due to condition not met")
 
 # Instantiated the DAG with the default_args
 with DAG('vikas_dag2', default_args=default_args, schedule_interval=None) as dag:
