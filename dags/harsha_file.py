@@ -2,6 +2,7 @@ from airflow import DAG
 from airflow.operators.python_operator import PythonOperator
 from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
 from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
+from airflow.operators.python import ShortCircuitOperator
 from airflow.utils.dates import days_ago
 import os
 import requests
@@ -32,6 +33,37 @@ task_1 = PythonOperator(
     provide_context=True,
     dag=dag,
 )
+
+# the function is checking the envirnoment veriable
+# def check_env_variable(**kwargs):
+#     if os.environ.get('harsha_air_env') == 'false':
+#         return 'load_data_to_snowflake'
+#     # variable_value = Variable.get('harsh_air_env')
+#     # variable_value =os.environ.get('harsha_air_env')
+#     # if variable_value == 'true':    
+#     #    print ("True")        
+#     else:
+#         print("Environment variable is set to False")
+#         return 
+
+# task_1 = ShortCircuitOperator(
+#     task_id='check_env_variable',
+#     python_callable=check_env_variable,
+#     provide_context=True,
+#     dag=dag,
+# )
+
+# def check_env_variable(**kwargs):
+#     harsh_air_env = os.environ.get('harsh_air_env', '').lower()
+#     return harsh_air_env == 'true'
+
+# check_env_task = ShortCircuitOperator(
+#     task_id='check_env_task',
+#     python_callable=check_env_variable,
+#     provide_context=True,
+#     dag=dag,
+# )
+
 
 # the fucntion is loding the data from url to snowflake
 def load_data_to_snowflake(**kwargs):
