@@ -1,6 +1,7 @@
 from airflow import DAG
 from airflow.operators.python_operator import PythonOperator
-from airflow.operators.dummy_operator import DummyOperator
+from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
+from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
 from airflow.utils.dates import days_ago
 import os
 import requests
@@ -18,19 +19,16 @@ dag = DAG(
     schedule_interval=None,
 )
 
-def check_env_variable(**kwargs):
-    harsh_air_env = os.environ.get('harsh_air_env', '').lower()
-    if harsh_air_env == 'true':
-        return 'load_data_to_snowflake'
-    else:
-        return 'print_completed_task'
+#defined a function env_var_check which will stop execution of all other tasks if condition doesnt matches
+def env_var_check():
+        """Will run all the tasks if conditions are met , if it does'nt matches condition it will skip all the tasks"""
+        if Variable.get('harsh_air_env')=='True':    
+                print("Environment variable is set to True")
+                True        
+        else:
+                print("Environment variable is set to False")
+                raise AirflowSkipException("Skipping tasks due to condition not met")
 
-branch_operator = PythonOperator(
-    task_id='check_env_variable',
-    python_callable=check_env_variable,
-    provide_context=True,
-    dag=dag,
-)
 
 def load_data_to_snowflake(**kwargs):
     url = "https://raw.githubusercontent.com/fivethirtyeight/data/master/airline-safety/airline-safety.csv"
@@ -50,14 +48,6 @@ load_data_task = PythonOperator(
     provide_context=True,
     dag=dag,
 )
-
-send_task = DummyOperator(
-    task_id='print_completed_task',
-    dag=dag,
-)
-
-# Set up task dependencies
-branch_operator >> [load_data_task, send_task]
 
 
 
