@@ -80,6 +80,6 @@ with DAG('vikas_dag2', default_args=default_args, schedule_interval=None) as dag
 
 task_to_skip = DummyOperator(task_id='task_to_skip', dag=dag)
 
-check_condition_task >> [extract_and_load_data, task_to_skip] 
+check_condition_task >> [extract_and_load_data, task_to_skip] >> extract_conditional_data
 
 
