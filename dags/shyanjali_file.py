@@ -1,21 +1,18 @@
-try:
-    import logging
-    from datetime import timedelta
-    from airflow import DAG
-    from airflow.operators.python_operator import PythonOperator
-    from datetime import datetime
-    import os
-    from io import StringIO
-    import pandas as pd
-    import requests
-    from airflow.models import Variable
-    from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
-    from airflow.providers.snowflake.transfers.s3_to_snowflake import SnowflakeOperator
-    from airflow.operators.python import ShortCircuitOperator
 
-    print("All Dag modules are ok ......")
-except Exception as e:
-    print("Error  {} ".format(e))
+import logging
+from datetime import timedelta
+from airflow import DAG
+from airflow.operators.python_operator import PythonOperator
+from datetime import datetime
+import os
+from io import StringIO
+import pandas as pd
+import requests
+from airflow.models import Variable
+from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
+from airflow.providers.snowflake.transfers.s3_to_snowflake import SnowflakeOperator
+from airflow.operators.python import ShortCircuitOperator
+
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -23,14 +20,15 @@ logger = logging.getLogger(__name__)
 
 
 default_args = dict(
-    start_date=datetime(2021, 4, 26),
-    owner="me",
-    retries=0,
+    "start_date"= datetime(2021, 1, 1),
+    owner="airflow",
+    retries=1,
 )
 
+
 dag_args = dict(
-    dag_id="short_circuit",
-    schedule_interval=None,
+    dag_id="shyanjali_dag",
+    schedule_interval='@once',
     default_args=default_args,
     catchup=False,
 )
@@ -87,19 +85,8 @@ def print_success(**kwargs):
     logging.info("Process Completed")
 
 
-
-    
-with DAG(
-        dag_id="shyanjali_dag",
-        schedule_interval="@once",
-        default_args={
-            "owner": "airflow",
-            "retries": 1,
-            "retry_delay": timedelta(minutes=5),
-            "start_date": datetime(2021, 1, 1),
-        },
-        catchup=False) as f:
-
+with DAG(**dag_args) as dag:
+    # first task declaration
     check_env_variable = ShortCircuitOperator(
     task_id='check_env_variable',
     python_callable=check_environment_variable,
@@ -124,5 +111,5 @@ with DAG(
         provide_context=True  # This is required to pass context to the function
     )
 
-check_env_variable >> fetch_and_upload >>get_data>>print_success
+    check_env_variable >> fetch_and_upload >>get_data>>print_success
 
