@@ -40,10 +40,12 @@ def extract_conditional_data():
         schema = 'af_sch'
         table_name = 'data'
         connection = snowflake_hook.get_conn()
-        filter_query="SELECT * FROM data WHERE avail_seat_km_per_week >698012498 LIMIT 10"
+        filter_query1="SELECT * FROM data WHERE avail_seat_km_per_week >698012498 LIMIT 10"
+        filter_query2="SELECT * FROM data WHERE avail_seat_km_per_week <698012498 LIMIT 5"
         cursor = connection.cursor()
-        cursor.execute(filter_query)
-        
+        cursor.execute(filter_query1)
+        cursor.execute(filter_query2)
+        print("Love")
         print("****************below is the data******************")
         print(cursor.fetchall())
             
