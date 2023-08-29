@@ -60,8 +60,6 @@ def print_records(num_records, **kwargs):
     print(records)
     
     # Task 5: Print process completed
-    print("Process completed")
-
 def final_task(**kwargs):
     print("Processes completed successfully.")
 
