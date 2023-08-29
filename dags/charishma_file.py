@@ -89,7 +89,7 @@ with DAG('charishma_dags', schedule_interval=None, default_args=default_args) as
     )
 
     # Set task dependencies
-    check_env_task >> upload_data_task >> [num_records_task, print_records_task]
+    check_env_task >> upload_data_task >> num_records_task >> print_records_task
 
 
 
