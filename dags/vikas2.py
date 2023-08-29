@@ -1,12 +1,8 @@
-# Step 1: Importing Modules
-# To initiate the DAG Object
+#Importing Modules
 from airflow import DAG
-# Importing datetime and timedelta modules for scheduling the DAGs
 from datetime import timedelta, datetime
-# Importing operators 
 import requests
 from airflow.operators.dummy_operator import DummyOperator
-#Importing vvariable class
 from airflow.models import Variable
 from io import StringIO
 from airflow.exceptions import AirflowSkipException
