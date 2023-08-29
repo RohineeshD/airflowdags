@@ -26,7 +26,7 @@ harsh_air_env = os.environ.get('harsh_air_env', '').lower()  # Get the environme
 if harsh_air_env == 'true':
     from airflow.operators.dummy_operator import DummyOperator
 
-    task_1 = DummyOperator(
+task_1 = DummyOperator(
         task_id='check_env_variable',
         dag=dag,
     )
