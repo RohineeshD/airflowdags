@@ -1,14 +1,10 @@
 from airflow import DAG
-from airflow.models import Variable
+from airflow.operators.python_operator import BranchPythonOperator
+from airflow.operators.dummy_operator import DummyOperator
 from airflow.operators.python_operator import PythonOperator
-from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
-from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
-from airflow.operators.python import ShortCircuitOperator
 from airflow.utils.dates import days_ago
 import os
 import requests
-from airflow.exceptions import AirflowSkipException
-
 
 default_args = {
     'owner': 'airflow',
@@ -26,11 +22,11 @@ dag = DAG(
 def check_env_variable(**kwargs):
     harsh_air_env = os.environ.get('harsh_air_env', '').lower()
     if harsh_air_env == 'true':
-        return 'load_data_to_snowflake'
+        return 'load_data_task'
     else:
         return 'print_completed_task'
 
-task_1 = PythonOperator(
+branch_operator = BranchPythonOperator(
     task_id='check_env_variable',
     python_callable=check_env_variable,
     provide_context=True,
@@ -56,57 +52,57 @@ task_2 = PythonOperator(
     dag=dag,
 )
 
-def print_records_all(**kwargs):
-    snowflake_hook = SnowflakeHook(snowflake_conn_id="snowflake_conn")
-    query = """ SELECT * FROM airflow_tasks WHERE avail_seat_km_per_week > 698012498 
-     """
-    records = snowflake_hook.get_records(query)
-    print("Printing records:")
-    for record in records:
-        print(record)
+# def print_records_all(**kwargs):
+#     snowflake_hook = SnowflakeHook(snowflake_conn_id="snowflake_conn")
+#     query = """ SELECT * FROM airflow_tasks WHERE avail_seat_km_per_week > 698012498 
+#      """
+#     records = snowflake_hook.get_records(query)
+#     print("Printing records:")
+#     for record in records:
+#         print(record)
 
-task_3 = PythonOperator(
-    task_id='print_all_records_task',
-    python_callable=print_records_all,
-    provide_context=True,
-    dag=dag,
-)
+# task_3 = PythonOperator(
+#     task_id='print_all_records_task',
+#     python_callable=print_records_all,
+#     provide_context=True,
+#     dag=dag,
+# )
 
-def print_records_limit(**kwargs):
-    snowflake_hook = SnowflakeHook(snowflake_conn_id="snowflake_conn")
-    query = "SELECT * FROM airflow_tasks WHERE avail_seat_km_per_week > 698012498 LIMIT 10"
-    records = snowflake_hook.get_records(query)
+# def print_records_limit(**kwargs):
+#     snowflake_hook = SnowflakeHook(snowflake_conn_id="snowflake_conn")
+#     query = "SELECT * FROM airflow_tasks WHERE avail_seat_km_per_week > 698012498 LIMIT 10"
+#     records = snowflake_hook.get_records(query)
     
-    if records:
-        print("Printing 10 records:")
-    else:
-        query = "SELECT * FROM airflow_tasks LIMIT 5"
-        records = snowflake_hook.get_records(query)
-        print("Printing 5 records:")
+#     if records:
+#         print("Printing 10 records:")
+#     else:
+#         query = "SELECT * FROM airflow_tasks LIMIT 5"
+#         records = snowflake_hook.get_records(query)
+#         print("Printing 5 records:")
     
-    for record in records:
-        print(record)
+#     for record in records:
+#         print(record)
 
-task_4 = PythonOperator(
-    task_id='print_limit_records_task',
-    python_callable=print_records_limit,
-    provide_context=True,
-    dag=dag,
-)
+# task_4 = PythonOperator(
+#     task_id='print_limit_records_task',
+#     python_callable=print_records_limit,
+#     provide_context=True,
+#     dag=dag,
+# )
 
-def print_completed(**kwargs):
-    print("Process completed.")
+# def print_completed(**kwargs):
+#     print("Process completed.")
 
-task_5 = PythonOperator(
-    task_id='print_completed_task',
-    python_callable=print_completed,
-    provide_context=True,
-    dag=dag,
-)
+# task_5 = PythonOperator(
+#     task_id='print_completed_task',
+#     python_callable=print_completed,
+#     provide_context=True,
+#     dag=dag,
+# )
 
-# Set up task dependencies based on environment variable
-task_1 >> [task_2, task_5]
-task_2 >> task_3 >> task_4 >> task_5
+# # Set up task dependencies based on environment variable
+# task_1 >> [task_2, task_5]
+# task_2 >> task_3 >> task_4 >> task_5
 
 
 
