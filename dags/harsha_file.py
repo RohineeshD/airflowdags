@@ -32,12 +32,12 @@ check_env_task = ShortCircuitOperator(
 )
 
 
-task_1 = PythonOperator(
-    task_id='check_env_task',
-    python_callable=check_env_variable,
-    provide_context=True,
-    dag=dag,
-)
+# task_1 = PythonOperator(
+#     task_id='check_env_task',
+#     python_callable=check_env_variable,
+#     provide_context=True,
+#     dag=dag,
+# )
 
 def load_data_to_snowflake(**kwargs):
     url = "https://raw.githubusercontent.com/fivethirtyeight/data/master/airline-safety/airline-safety.csv"
