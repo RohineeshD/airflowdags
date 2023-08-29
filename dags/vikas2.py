@@ -61,7 +61,7 @@ def completion_message():
 #defined a function env_var_check which will stop execution of all other tasks if condition doesnt matches
 def env_var_check():
         """Will run all the tasks if conditions are met , if it does'nt matches condition it will skip all the tasks"""
-        if Variable.get('ENV_CHECK_VIKAS')==True:    
+        if Variable.get('ENV_CHECK_VIKAS')=='True':    
                 print("Environment variable is set to True")
                 True        
         else:
