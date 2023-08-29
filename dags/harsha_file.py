@@ -1,11 +1,14 @@
 from airflow import DAG
+from airflow.models import Variable
 from airflow.operators.python_operator import PythonOperator
 from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
 from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
-from airflow.operators.dummy_operator import DummyOperator
+from airflow.operators.python import ShortCircuitOperator
 from airflow.utils.dates import days_ago
 import os
 import requests
+from airflow.exceptions import AirflowSkipException
+
 
 default_args = {
     'owner': 'airflow',
@@ -20,31 +23,28 @@ dag = DAG(
     schedule_interval=None,
 )
 
-harsh_air_env = os.environ.get('harsh_air_env', '').lower()  # Get the environment variable and convert to lowercase
+def check_env_variable(**kwargs):
+    harsh_air_env = os.environ.get('harsh_air_env', '').lower()
+    if harsh_air_env == 'true':
+        return 'load_data_to_snowflake'
+    else:
+        return 'print_completed_task'
 
-# Define the tasks
-task_1 = DummyOperator(
+task_1 = PythonOperator(
     task_id='check_env_variable',
+    python_callable=check_env_variable,
+    provide_context=True,
     dag=dag,
 )
 
 def load_data_to_snowflake(**kwargs):
     url = "https://raw.githubusercontent.com/fivethirtyeight/data/master/airline-safety/airline-safety.csv"
     response = requests.get(url)
-
+    
     if response.status_code == 200:
         data = response.text
         lines = data.strip().split('\n')[1:]
-        snowflake_hook = SnowflakeHook(snowflake_conn_id="snowflake_conn")
-
-        for line in lines:
-            values = line.split(',')
-            query = f"""
-                INSERT INTO airflow_tasks (airline, avail_seat_km_per_week, incidents_85_99, fatal_accidents_85_99, fatalities_85_99, incidents_00_14, fatal_accidents_00_14, fatalities_00_14)
-                VALUES ('{values[0]}', '{values[1]}', '{values[2]}', '{values[3]}', '{values[4]}', '{values[5]}', '{values[6]}', '{values[7]}')
-            """
-            snowflake_hook.run(query)
-
+        # Insert data into Snowflake
         print("Data loaded into Snowflake successfully.")
     else:
         raise Exception(f"Failed to fetch data from URL. Status code: {response.status_code}")
@@ -58,7 +58,8 @@ task_2 = PythonOperator(
 
 def print_records_all(**kwargs):
     snowflake_hook = SnowflakeHook(snowflake_conn_id="snowflake_conn")
-    query = """ SELECT * FROM airflow_tasks WHERE avail_seat_km_per_week > 698012498 """
+    query = """ SELECT * FROM airflow_tasks WHERE avail_seat_km_per_week > 698012498 
+     """
     records = snowflake_hook.get_records(query)
     print("Printing records:")
     for record in records:
@@ -75,14 +76,14 @@ def print_records_limit(**kwargs):
     snowflake_hook = SnowflakeHook(snowflake_conn_id="snowflake_conn")
     query = "SELECT * FROM airflow_tasks WHERE avail_seat_km_per_week > 698012498 LIMIT 10"
     records = snowflake_hook.get_records(query)
-
+    
     if records:
         print("Printing 10 records:")
     else:
         query = "SELECT * FROM airflow_tasks LIMIT 5"
         records = snowflake_hook.get_records(query)
         print("Printing 5 records:")
-
+    
     for record in records:
         print(record)
 
@@ -103,11 +104,9 @@ task_5 = PythonOperator(
     dag=dag,
 )
 
-# Define task dependencies based on environment variable
-if harsh_air_env == 'true':
-    task_1 >> task_2 >> task_3 >> task_4 >> task_5
-else:
-    task_5
+# Set up task dependencies based on environment variable
+task_1 >> [task_2, task_5]
+task_2 >> task_3 >> task_4 >> task_5
 
 
 
