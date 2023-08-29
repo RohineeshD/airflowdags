@@ -28,40 +28,47 @@ default_args = {
 #         schedule_interval='@once', 
 #         catchup=False
 # )
-def check_and_extract_data():
-    if Variable.get('ENV_CHECK_VIKAS'):
-            url = "https://raw.githubusercontent.com/fivethirtyeight/data/master/airline-safety/airline-safety.csv"
-            response = requests.get(url)
-            data = response.text
-            df = pd.read_csv(StringIO(data))
-            snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake_connection')
-            schema = 'af_sch'
-            table_name = 'data'
-            connection = snowflake_hook.get_conn()
-            snowflake_hook.insert_rows(table_name, df.values.tolist())
-            filter_query="SELECT * FROM data WHERE avail_seat_km_per_week >698012498 LIMIT 10"
-            cursor = connection.cursor()
-            cursor.execute(filter_query)
+# def check_and_extract_data():
+#     if Variable.get('ENV_CHECK_VIKAS'):
+#             url = "https://raw.githubusercontent.com/fivethirtyeight/data/master/airline-safety/airline-safety.csv"
+#             response = requests.get(url)
+#             data = response.text
+#             df = pd.read_csv(StringIO(data))
+#             snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake_connection')
+#             schema = 'af_sch'
+#             table_name = 'data'
+#             connection = snowflake_hook.get_conn()
+#             snowflake_hook.insert_rows(table_name, df.values.tolist())
+#             filter_query="SELECT * FROM data WHERE avail_seat_km_per_week >698012498 LIMIT 10"
+#             cursor = connection.cursor()
+#             cursor.execute(filter_query)
 
-            print("****************below is the data******************")
-            print(cursor.fetchall())
-            connection.close()
-            print("process completed")
-    else:
-            pass
+#             print("****************below is the data******************")
+#             print(cursor.fetchall())
+#             connection.close()
+#             print("process completed")
+#     else:
+#             pass
             
         
+def env_var_check():
+    if Variable.get('ENV_CHECK_VIKAS'):
             
+    else:
+            pass
     
 
 
 with DAG('vikas_dag', default_args=default_args, schedule_interval=None) as dag:
+            
+        extract_data = PythonOperator(
+        task_id='extract_data',
+        python_callable=check_and_extract_data,
+        provide_context=True,
+        )
+
         
-    extract_data = PythonOperator(
-    task_id='extract_data',
-    python_callable=check_and_extract_data,
-    provide_context=True,
-    )
+        
 # extract_task = SnowflakeOperator(
 #         task_id='extract_data',
 #         sql='SELECT * FROM af_sch.data WHERE avail_seat_km_per_week >698012498 LIMIT 10',
