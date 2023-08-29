@@ -56,9 +56,11 @@ def completion_message():
             
 
 def env_var_check():
-    if Variable.get('ENV_CHECK_VIKAS'):        
+    if Variable.get('ENV_CHECK_VIKAS'):    
+        print("Environment variable is set to True")
         True        
     else:
+        print("Environment variable is set to False")
         False
     
 with DAG('vikas_dag2', default_args=default_args, schedule_interval=None) as dag:
