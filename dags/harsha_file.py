@@ -32,21 +32,21 @@ task_1 = DummyOperator(
     )
 
 def load_data_to_snowflake(**kwargs):
-        url = "https://raw.githubusercontent.com/fivethirtyeight/data/master/airline-safety/airline-safety.csv"
-        response = requests.get(url)
+    url = "https://raw.githubusercontent.com/fivethirtyeight/data/master/airline-safety/airline-safety.csv"
+    response = requests.get(url)
 
-        if response.status_code == 200:
-            data = response.text
-            lines = data.strip().split('\n')[1:]
-            snowflake_hook = SnowflakeHook(snowflake_conn_id="snowflake_conn")
+    if response.status_code == 200:
+        data = response.text
+        lines = data.strip().split('\n')[1:]
+        snowflake_hook = SnowflakeHook(snowflake_conn_id="snowflake_conn")
 
-            for line in lines:
-                values = line.split(',')
-                query = f"""
+        for line in lines:
+            values = line.split(',')
+            query = f"""
                     INSERT INTO airflow_tasks (airline, avail_seat_km_per_week, incidents_85_99, fatal_accidents_85_99, fatalities_85_99, incidents_00_14, fatal_accidents_00_14, fatalities_00_14)
                     VALUES ('{values[0]}', '{values[1]}', '{values[2]}', '{values[3]}', '{values[4]}', '{values[5]}', '{values[6]}', '{values[7]}')
                 """
-                snowflake_hook.run(query)
+            snowflake_hook.run(query)
 
             print("Data loaded into Snowflake successfully.")
         else:
