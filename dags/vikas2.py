@@ -9,6 +9,7 @@ from airflow.operators.dummy_operator import DummyOperator
 #Importing vvariable class
 from airflow.models import Variable
 from io import StringIO
+from airflow.exceptions import AirflowSkipException
 from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
 from airflow.operators.python_operator import PythonOperator
 from airflow.operators.python_operator import ShortCircuitOperator
@@ -61,7 +62,7 @@ def env_var_check():
         True        
     else:
         print("Environment variable is set to False")
-        False
+        raise AirflowSkipException("Skipping tasks due to condition not met")
     
 with DAG('vikas_dag2', default_args=default_args, schedule_interval=None) as dag:
 
@@ -91,8 +92,8 @@ with DAG('vikas_dag2', default_args=default_args, schedule_interval=None) as dag
         
         
 
-task_to_skip = DummyOperator(task_id='task_to_skip', dag=dag)
+# task_to_skip = DummyOperator(task_id='task_to_skip', dag=dag)
 
-check_condition_task >> [extract_and_load_data, task_to_skip] >> extract_conditional_data >> completion_message
+check_condition_task >> extract_and_load_data >> extract_conditional_data >> completion_message
 
 
