@@ -21,7 +21,7 @@ dag = DAG(
 
 def check_env_variable(**kwargs):
     harsh_air_env = os.environ.get('HARSHA_AIR_ENV', '').lower()
-    if harsh_air_env == 'true':
+    if harsh_air_env == 'TRUE':
         print("Environment variable is 'true'. Proceeding with the DAG.")
     else:
         raise Exception("Environment variable is not 'true'. DAG run failed.")
