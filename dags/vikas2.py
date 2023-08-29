@@ -11,6 +11,8 @@ from airflow.models import Variable
 from io import StringIO
 from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
 from airflow.operators.python_operator import PythonOperator
+from airflow.operators.python_operator import ShortCircuitOperator
+from datetime import datetime
 import pandas as pd
 
 # Step 2: Initiating the default_args
@@ -22,68 +24,60 @@ default_args = {
 
 }
 
-# Step 3: Creating DAG Object
-# dag = DAG(dag_id='vikas_dag',
-#         default_args=default_args,
-#         schedule_interval='@once', 
-#         catchup=False
-# )
-# def check_and_extract_data():
-#     if Variable.get('ENV_CHECK_VIKAS'):
-#             url = "https://raw.githubusercontent.com/fivethirtyeight/data/master/airline-safety/airline-safety.csv"
-#             response = requests.get(url)
-#             data = response.text
-#             df = pd.read_csv(StringIO(data))
-#             snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake_connection')
-#             schema = 'af_sch'
-#             table_name = 'data'
-#             connection = snowflake_hook.get_conn()
-#             snowflake_hook.insert_rows(table_name, df.values.tolist())
-#             filter_query="SELECT * FROM data WHERE avail_seat_km_per_week >698012498 LIMIT 10"
-#             cursor = connection.cursor()
-#             cursor.execute(filter_query)
+def extract_and_load_data():
+        url = "https://raw.githubusercontent.com/fivethirtyeight/data/master/airline-safety/airline-safety.csv"
+        response = requests.get(url)
+        data = response.text
+        df = pd.read_csv(StringIO(data))
+        snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake_connection')
+        schema = 'af_sch'
+        table_name = 'data'
+        connection = snowflake_hook.get_conn()
+        snowflake_hook.insert_rows(table_name, df.values.tolist())
 
-#             print("****************below is the data******************")
-#             print(cursor.fetchall())
-#             connection.close()
-#             print("process completed")
-#     else:
-#             pass
+def extract_conditional_data():
+        snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake_connection')
+        schema = 'af_sch'
+        table_name = 'data'
+        connection = snowflake_hook.get_conn()
+        filter_query="SELECT * FROM data WHERE avail_seat_km_per_week >698012498 LIMIT 10"
+        cursor = connection.cursor()
+        cursor.execute(filter_query)
+        
+        print("****************below is the data******************")
+        print(cursor.fetchall())
+            
+   
             
         
 def env_var_check():
-    if Variable.get('ENV_CHECK_VIKAS'):
-            
+    if Variable.get('ENV_CHECK_VIKAS'):        
+        True        
     else:
-            pass
+        False
     
-
-
 with DAG('vikas_dag', default_args=default_args, schedule_interval=None) as dag:
+
+        check_condition_task = PythonOperator(
+        task_id='check_condition_task',
+        python_callable=env_var_check,
+        dag=dag
+        )
             
-        extract_data = PythonOperator(
-        task_id='extract_data',
-        python_callable=check_and_extract_data,
+        extract_and_load_data = PythonOperator(
+        task_id='extract_and_load_data',
+        python_callable=extract_and_load_data,
         provide_context=True,
         )
 
-        
-        
-# extract_task = SnowflakeOperator(
-#         task_id='extract_data',
-#         sql='SELECT * FROM af_sch.data WHERE avail_seat_km_per_week >698012498 LIMIT 10',
-#         snowflake_conn_id='snowflake_connection',
-#         autocommit=True,  # Set autocommit to True to commit the transaction
-#         dag=dag,
-#         )
+        extract_conditional_data = PythonOperator(
+        task_id='extract_data',
+        python_callable=extract_conditional_data,
+        provide_context=True,
+        )
 
-check_and_extract_data 
-# Step 4: Creating task
-# Creating first task
-# start = DummyOperator(task_id = 'start', dag = dag)
-# Creating second task 
-# end = DummyOperator(task_id = 'end', dag = dag)
+task_to_skip = DummyOperator(task_id='task_to_skip', dag=dag)
 
- # Step 5: Setting up dependencies 
-# start >> end 
+check_condition_task >> [extract_and_load_data, task_to_skip] 
+
 
