@@ -35,7 +35,7 @@ def check_env_variable(**kwargs):
     
    
 
-task_1 = PythonOperator(
+task_1 = ShortCircuitOperator(
     task_id='check_env_variable',
     python_callable=check_env_variable,
     provide_context=True,
@@ -64,7 +64,7 @@ def load_data_to_snowflake(**kwargs):
     else:
         raise Exception(f"Failed to fetch data from URL. Status code: {response.status_code}")
 
-task_2 = ShortCircuitOperator(
+task_2 = PythonOperator(
     task_id='load_data_task',
     python_callable=load_data_to_snowflake,
     provide_context=True,
