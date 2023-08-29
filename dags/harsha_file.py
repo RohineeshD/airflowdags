@@ -70,7 +70,7 @@ def print_records_all(**kwargs):
         print(record)
 
 task_3 = PythonOperator(
-    task_id='print_records_all_task',
+    task_id='print_all_records_task',
     python_callable=print_records_all,
     provide_context=True,
     dag=dag,
@@ -92,7 +92,7 @@ def print_records_limit(**kwargs):
         print(record)
 
 task_4 = PythonOperator(
-    task_id='print_records_task',
+    task_id='print_limit_records_task',
     python_callable=print_records_limit,
     provide_context=True,
     dag=dag,
