@@ -20,15 +20,6 @@ dag = DAG(
     schedule_interval=None,
 )
 
-def print_completed(**kwargs):
-    print("Process completed.")
-
-task_5 = PythonOperator(
-    task_id='print_completed_task',
-    python_callable=print_completed,
-    provide_context=True,
-    dag=dag,
-)
 
 harsh_air_env = os.environ.get('harsh_air_env', '').lower()  # Get the environment variable and convert to lowercase
 
@@ -104,6 +95,17 @@ if harsh_air_env == 'true':
         provide_context=True,
         dag=dag,
     )
+
+    def print_completed(**kwargs):
+    print("Process completed.")
+
+task_5 = PythonOperator(
+    task_id='print_completed_task',
+    python_callable=print_completed,
+    provide_context=True,
+    dag=dag,
+)
+
 
     task_1 >> task_2 >> task_3 >> task_4 >> task_5
 else:
