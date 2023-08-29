@@ -22,7 +22,7 @@ dag_args = dict(
 def get_number_func(**kwargs):
     from random import randint
 
-    number = randint(0, 10)
+    number = 2
     print(number)
 
     if number >= 5:
