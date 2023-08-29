@@ -11,8 +11,6 @@ try:
     from airflow.models import Variable
     from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
     from airflow.providers.snowflake.transfers.s3_to_snowflake import SnowflakeOperator
-    from airflow.operators.dummy import DummyOperator
-    from airflow.operators.branch_operator import BranchPythonOperator
 
 
 
@@ -114,8 +112,6 @@ with DAG(
         python_callable=print_success,
         provide_context=True  # This is required to pass context to the function
     )
-    start_task = DummyOperator(task_id = 'start', dag = dag)
-    end_process = DummyOperator(task_id = 'end_process', dag = dag)
 
 # start_task >> check_env_variable
 # check_env_variable >> [fetch_and_upload, get_data,print_success,end_process]
