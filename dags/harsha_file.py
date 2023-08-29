@@ -31,7 +31,7 @@ task_1 = DummyOperator(
         dag=dag,
     )
 
-    def load_data_to_snowflake(**kwargs):
+def load_data_to_snowflake(**kwargs):
         url = "https://raw.githubusercontent.com/fivethirtyeight/data/master/airline-safety/airline-safety.csv"
         response = requests.get(url)
 
@@ -52,14 +52,14 @@ task_1 = DummyOperator(
         else:
             raise Exception(f"Failed to fetch data from URL. Status code: {response.status_code}")
 
-    task_2 = PythonOperator(
+task_2 = PythonOperator(
         task_id='load_data_task',
         python_callable=load_data_to_snowflake,
         provide_context=True,
         dag=dag,
     )
 
-    def print_records_all(**kwargs):
+def print_records_all(**kwargs):
         snowflake_hook = SnowflakeHook(snowflake_conn_id="snowflake_conn")
         query = """ SELECT * FROM airflow_tasks WHERE avail_seat_km_per_week > 698012498 """
         records = snowflake_hook.get_records(query)
@@ -67,14 +67,14 @@ task_1 = DummyOperator(
         for record in records:
             print(record)
 
-    task_3 = PythonOperator(
+task_3 = PythonOperator(
         task_id='print_all_records_task',
         python_callable=print_records_all,
         provide_context=True,
         dag=dag,
     )
 
-    def print_records_limit(**kwargs):
+def print_records_limit(**kwargs):
         snowflake_hook = SnowflakeHook(snowflake_conn_id="snowflake_conn")
         query = "SELECT * FROM airflow_tasks WHERE avail_seat_km_per_week > 698012498 LIMIT 10"
         records = snowflake_hook.get_records(query)
@@ -89,7 +89,7 @@ task_1 = DummyOperator(
         for record in records:
             print(record)
 
-    task_4 = PythonOperator(
+task_4 = PythonOperator(
         task_id='print_limit_records_task',
         python_callable=print_records_limit,
         provide_context=True,
