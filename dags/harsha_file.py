@@ -1,13 +1,11 @@
 from airflow import DAG
-from airflow.models import Variable
 from airflow.operators.python_operator import PythonOperator
 from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
 from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
-from airflow.operators.python import ShortCircuitOperator
+from airflow.operators.dummy_operator import DummyOperator
 from airflow.utils.dates import days_ago
 import os
 import requests
-from airflow.exceptions import AirflowSkipException
 
 default_args = {
     'owner': 'airflow',
@@ -22,95 +20,6 @@ dag = DAG(
     schedule_interval=None,
 )
 
-# the function is checking the envirnoment veriable
-def check_env_variable(**kwargs):
-    # if os.environ.get('harsh_air_env') == 'true':
-    #     return 'load_data_to_snowflake'
-    variable_value = Variable.get('harsh_air_env')
-    if variable_value =='true':    
-       print ("True")        
-    else:
-        print("Environment variable is set to False")
-        return 
-    
-   
-
-task_1 = ShortCircuitOperator(
-    task_id='check_env_variable',
-    python_callable=check_env_variable,
-    provide_context=True,
-    dag=dag,
-)
-
-# the fucntion is loding the data from url to snowflake
-def load_data_to_snowflake(**kwargs):
-    url = "https://raw.githubusercontent.com/fivethirtyeight/data/master/airline-safety/airline-safety.csv"
-    response = requests.get(url)
-    
-    if response.status_code == 200:
-        data = response.text
-        lines = data.strip().split('\n')[1:]
-        snowflake_hook = SnowflakeHook(snowflake_conn_id="snowflake_conn")
-        
-        for line in lines:
-            values = line.split(',')
-            query = f"""
-                INSERT INTO airflow_tasks (airline, avail_seat_km_per_week, incidents_85_99, fatal_accidents_85_99, fatalities_85_99, incidents_00_14, fatal_accidents_00_14, fatalities_00_14)
-                VALUES ('{values[0]}', '{values[1]}', '{values[2]}', '{values[3]}', '{values[4]}', '{values[5]}', '{values[6]}', '{values[7]}')
-            """
-            snowflake_hook.run(query)
-            
-        print("Data loaded into Snowflake successfully.")
-    else:
-        raise Exception(f"Failed to fetch data from URL. Status code: {response.status_code}")
-
-task_2 = PythonOperator(
-    task_id='load_data_task',
-    python_callable=load_data_to_snowflake,
-    provide_context=True,
-    dag=dag,
-)
-
-# the function is getting records from table graterthan 698012498
-
-def print_records_all(**kwargs):
-    snowflake_hook = SnowflakeHook(snowflake_conn_id="snowflake_conn")
-    query = """ SELECT * FROM airflow_tasks WHERE avail_seat_km_per_week > 698012498 
-     """
-    records = snowflake_hook.get_records(query)
-    print("Printing records:")
-    for record in records:
-        print(record)
-
-task_3 = PythonOperator(
-    task_id='print_all_records_task',
-    python_callable=print_records_all,
-    provide_context=True,
-    dag=dag,
-)
-# function working on condition 
-def print_records_limit(**kwargs):
-    snowflake_hook = SnowflakeHook(snowflake_conn_id="snowflake_conn")
-    query = "SELECT * FROM airflow_tasks WHERE avail_seat_km_per_week > 698012498 LIMIT 10"
-    records = snowflake_hook.get_records(query)
-    
-    if records:
-        print("Printing 10 records:")
-    else:
-        query = "SELECT * FROM airflow_tasks LIMIT 5"
-        records = snowflake_hook.get_records(query)
-        print("Printing 5 records:")
-    
-    for record in records:
-        print(record)
-
-task_4 = PythonOperator(
-    task_id='print_limit_records_task',
-    python_callable=print_records_limit,
-    provide_context=True,
-    dag=dag,
-)
-
 def print_completed(**kwargs):
     print("Process completed.")
 
@@ -121,7 +30,85 @@ task_5 = PythonOperator(
     dag=dag,
 )
 
-task_1 >> task_2 >> task_3 >> task_4 >> task_5
+harsh_air_env = os.environ.get('harsh_air_env', '').lower()  # Get the environment variable and convert to lowercase
+
+if harsh_air_env == 'true':
+    from airflow.operators.dummy_operator import DummyOperator
+
+    task_1 = DummyOperator(
+        task_id='check_env_variable',
+        dag=dag,
+    )
+
+    def load_data_to_snowflake(**kwargs):
+        url = "https://raw.githubusercontent.com/fivethirtyeight/data/master/airline-safety/airline-safety.csv"
+        response = requests.get(url)
+
+        if response.status_code == 200:
+            data = response.text
+            lines = data.strip().split('\n')[1:]
+            snowflake_hook = SnowflakeHook(snowflake_conn_id="snowflake_conn")
+
+            for line in lines:
+                values = line.split(',')
+                query = f"""
+                    INSERT INTO airflow_tasks (airline, avail_seat_km_per_week, incidents_85_99, fatal_accidents_85_99, fatalities_85_99, incidents_00_14, fatal_accidents_00_14, fatalities_00_14)
+                    VALUES ('{values[0]}', '{values[1]}', '{values[2]}', '{values[3]}', '{values[4]}', '{values[5]}', '{values[6]}', '{values[7]}')
+                """
+                snowflake_hook.run(query)
+
+            print("Data loaded into Snowflake successfully.")
+        else:
+            raise Exception(f"Failed to fetch data from URL. Status code: {response.status_code}")
+
+    task_2 = PythonOperator(
+        task_id='load_data_task',
+        python_callable=load_data_to_snowflake,
+        provide_context=True,
+        dag=dag,
+    )
+
+    def print_records_all(**kwargs):
+        snowflake_hook = SnowflakeHook(snowflake_conn_id="snowflake_conn")
+        query = """ SELECT * FROM airflow_tasks WHERE avail_seat_km_per_week > 698012498 """
+        records = snowflake_hook.get_records(query)
+        print("Printing records:")
+        for record in records:
+            print(record)
+
+    task_3 = PythonOperator(
+        task_id='print_all_records_task',
+        python_callable=print_records_all,
+        provide_context=True,
+        dag=dag,
+    )
+
+    def print_records_limit(**kwargs):
+        snowflake_hook = SnowflakeHook(snowflake_conn_id="snowflake_conn")
+        query = "SELECT * FROM airflow_tasks WHERE avail_seat_km_per_week > 698012498 LIMIT 10"
+        records = snowflake_hook.get_records(query)
+
+        if records:
+            print("Printing 10 records:")
+        else:
+            query = "SELECT * FROM airflow_tasks LIMIT 5"
+            records = snowflake_hook.get_records(query)
+            print("Printing 5 records:")
+
+        for record in records:
+            print(record)
+
+    task_4 = PythonOperator(
+        task_id='print_limit_records_task',
+        python_callable=print_records_limit,
+        provide_context=True,
+        dag=dag,
+    )
+
+    task_1 >> task_2 >> task_3 >> task_4 >> task_5
+else:
+    task_5
+
 
 
 
