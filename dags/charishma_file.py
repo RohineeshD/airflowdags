@@ -62,6 +62,9 @@ def print_records(num_records, **kwargs):
     # Task 5: Print process completed
     print("Process completed")
 
+def final_task(**kwargs):
+    print("Processes completed successfully.")
+
 with DAG('charishma_dags', schedule_interval=None, default_args=default_args) as dag:
     check_env_task = PythonOperator(
         task_id='check_env_variable',
@@ -87,9 +90,20 @@ with DAG('charishma_dags', schedule_interval=None, default_args=default_args) as
         op_args=[num_records_task.output],  
         provide_context=True,
     )
+    
+    final_task = PythonOperator(
+        task_id='final_task',
+        python_callable=final_task,
+        provide_context=True,
+    )
 
     # Set task dependencies
-    check_env_task >> upload_data_task >> num_records_task >> print_records_task
+    check_env_task >> upload_data_task >> num_records_task >> print_records_task >> final_task
+
+
+
+
+
 
 
 
