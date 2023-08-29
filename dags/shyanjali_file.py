@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 def check_environment_variable():
 
     # variable_value = Variable.get('AIRFLOW_LI')
-    if Variable.get('AIRFLOW_LI') == "True"
+    if os.environ.get('AIRFLOW_LI') == "True"
         print("True")
     # if os.environ.get('AIRFLOW_LI') == 'True':
     #     return 'fetch_csv_and_upload'
