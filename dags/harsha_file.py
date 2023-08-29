@@ -1,7 +1,6 @@
 from airflow import DAG
-from airflow.operators.python_operator import BranchPythonOperator
+from airflow.operators.python_operator import BranchPythonOperator, PythonOperator
 from airflow.operators.dummy_operator import DummyOperator
-from airflow.operators.python_operator import PythonOperator
 from airflow.utils.dates import days_ago
 import os
 import requests
@@ -24,7 +23,7 @@ def check_env_variable(**kwargs):
     if harsh_air_env == 'true':
         return 'load_data_to_snowflake'
     else:
-        raise Exception("Environment variable harsh_air_env is not 'true'.")
+        return 'print_completed_task'
 
 branch_operator = BranchPythonOperator(
     task_id='check_env_variable',
@@ -45,12 +44,21 @@ def load_data_to_snowflake(**kwargs):
     else:
         raise Exception(f"Failed to fetch data from URL. Status code: {response.status_code}")
 
-task_2 = PythonOperator(
+load_data_task = PythonOperator(
     task_id='load_data_task',
     python_callable=load_data_to_snowflake,
     provide_context=True,
     dag=dag,
 )
+
+send_task = DummyOperator(
+    task_id='print_completed_task',
+    dag=dag,
+)
+
+# Set up task dependencies
+branch_operator >> [load_data_task, send_task]
+
 
 # def print_records_all(**kwargs):
 #     snowflake_hook = SnowflakeHook(snowflake_conn_id="snowflake_conn")
