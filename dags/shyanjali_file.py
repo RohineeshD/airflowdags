@@ -34,7 +34,7 @@ def check_environment_variable():
     #     return 'print_success'
     env_variable_value = os.environ.get('AIRFLOW_LI')
     if env_variable_value  == 'True':
-        return 'task_2' if env_variable_value  == 'True' 
+        return 'fetch_and_upload'
     else 
         return 'end_process'
 
