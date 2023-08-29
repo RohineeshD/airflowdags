@@ -44,9 +44,10 @@ def extract_conditional_data():
         filter_query2="SELECT * FROM data WHERE avail_seat_km_per_week <698012498 LIMIT 5"
         cursor = connection.cursor()
         cursor.execute(filter_query1)
+        print("First 10 values are")
+        print(cursor.fetchall())
+        print("First 5 values are")
         cursor.execute(filter_query2)
-        print("Love")
-        print("****************below is the data******************")
         print(cursor.fetchall())
             
    
