@@ -1,4 +1,3 @@
-
 import logging
 from datetime import timedelta
 from airflow import DAG
@@ -91,24 +90,28 @@ with DAG(**dag_args) as dag:
     task_id='check_env_variable',
     python_callable=check_environment_variable,
     provide_context=True,
+    op_kwargs={},
     )
 
     fetch_and_upload = PythonOperator(
         task_id='fetch_and_upload',
         python_callable=fetch_csv_and_upload,
-        provide_context=True  # This is required to pass context to the function
+        provide_context=True,
+        op_kwargs={},# This is required to pass context to the function
     )
 
     get_data = PythonOperator(
         task_id='get_data',
         python_callable=get_data,
-        provide_context=True  # This is required to pass context to the function
+        provide_context=True,
+        op_kwargs={},# This is required to pass context to the function
     )
 
     print_success = PythonOperator(
         task_id='print_success',
         python_callable=print_success,
-        provide_context=True  # This is required to pass context to the function
+        provide_context=True,
+        op_kwargs={},# This is required to pass context to the function
     )
 
     check_env_variable >> fetch_and_upload >>get_data>>print_success
