@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 
 default_args = dict(
-    "start_date"= datetime(2021, 1, 1),
+    start_date= datetime(2021, 1, 1),
     owner="airflow",
     retries=1,
 )
