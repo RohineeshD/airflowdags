@@ -81,6 +81,14 @@ with DAG('vikas_dag2', default_args=default_args, schedule_interval=None) as dag
         provide_context=True,
         )
 
+        completion_message = PythonOperator(
+        task_id='completion_message',
+        python_callable=completion_message,
+        provide_context=True,
+        )
+        
+        
+
 task_to_skip = DummyOperator(task_id='task_to_skip', dag=dag)
 
 check_condition_task >> [extract_and_load_data, task_to_skip] >> extract_conditional_data >> completion_message
