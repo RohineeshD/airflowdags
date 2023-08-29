@@ -3,6 +3,7 @@ from airflow.models import Variable
 from airflow.operators.python_operator import PythonOperator
 from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
 from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
+from airflow.operators.python import ShortCircuitOperator
 from airflow.utils.dates import days_ago
 import os
 import requests
@@ -63,7 +64,7 @@ def load_data_to_snowflake(**kwargs):
     else:
         raise Exception(f"Failed to fetch data from URL. Status code: {response.status_code}")
 
-task_2 = PythonOperator(
+task_2 = ShortCircuitOperator(
     task_id='load_data_task',
     python_callable=load_data_to_snowflake,
     provide_context=True,
