@@ -56,7 +56,7 @@ def completion_message():
             
 
 def env_var_check():
-    if Variable.get('ENV_CHECK_VIKAS'):    
+    if Variable.get('ENV_CHECK_VIKAS')==True:    
         print("Environment variable is set to True")
         True        
     else:
