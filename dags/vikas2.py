@@ -25,7 +25,9 @@ default_args = {
 
 }
 
+#
 def extract_and_load_data():
+        """ Extracting data from url and loading it into snowflake database"""
         url = "https://raw.githubusercontent.com/fivethirtyeight/data/master/airline-safety/airline-safety.csv"
         response = requests.get(url)
         data = response.text
@@ -37,6 +39,7 @@ def extract_and_load_data():
         snowflake_hook.insert_rows(table_name, df.values.tolist())
 
 def extract_conditional_data():
+        """ Printing records according to conditions"""
         snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake_connection')
         schema = 'af_sch'
         table_name = 'data'
@@ -50,22 +53,24 @@ def extract_conditional_data():
         print("First 5 values are")
         cursor.execute(filter_query2)
         print(cursor.fetchall())
-            
 
 def completion_message():
+        """Printing completion message"""
         print("Process completed")
-            
 
+#defined a function env_var_check which will stop execution of all other tasks if condition doesnt matches
 def env_var_check():
+        """Will run all the tasks if conditions are met , if it does'nt matches condition it will skip all the tasks"""
     if Variable.get('ENV_CHECK_VIKAS')==True:    
         print("Environment variable is set to True")
         True        
     else:
         print("Environment variable is set to False")
         raise AirflowSkipException("Skipping tasks due to condition not met")
-    
-with DAG('vikas_dag2', default_args=default_args, schedule_interval=None) as dag:
 
+# Instantiated the DAG with the default_args
+with DAG('vikas_dag2', default_args=default_args, schedule_interval=None) as dag:
+      
         check_condition_task = PythonOperator(
         task_id='check_condition_task',
         python_callable=env_var_check,
@@ -89,11 +94,8 @@ with DAG('vikas_dag2', default_args=default_args, schedule_interval=None) as dag
         python_callable=completion_message,
         provide_context=True,
         )
-        
-        
 
-# task_to_skip = DummyOperator(task_id='task_to_skip', dag=dag)
-
+# Setting up task dependencies 
 check_condition_task >> extract_and_load_data >> extract_conditional_data >> completion_message
 
 
