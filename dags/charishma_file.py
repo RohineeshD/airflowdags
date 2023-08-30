@@ -6,6 +6,7 @@ import requests
 from io import StringIO
 from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
 import os
+from airflow.models import Variable
 
 # global Snowflake connection ID
 SNOWFLAKE_CONN_ID = 'snow_sc'
@@ -22,15 +23,20 @@ default_args = {
 #     else:
 #         return False
 def check_env_variable(**kwargs):
-    C_AIR_ENV = os.environ.get('C_AIR_ENV')
-    print("C_AIR_ENV:", C_AIR_ENV) 
-    print("Type of C_AIR_ENV:", type(C_AIR_ENV))  
-    if C_AIR_ENV == 'True':
-        print("Returning True")  
+    if Variable.get('C_AIR_ENV') == 'True':
         return True
     else:
-        print("Returning False") 
+        #stop dag
         return False
+#     C_AIR_ENV = os.environ.get('C_AIR_ENV')
+#     print("C_AIR_ENV:", C_AIR_ENV) 
+#     print("Type of C_AIR_ENV:", type(C_AIR_ENV))  
+#     if C_AIR_ENV == 'True':
+#         print("Returning True")  
+#         return True
+#     else:
+#         print("Returning False") 
+#         return False
 
 
 
