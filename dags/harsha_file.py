@@ -15,7 +15,7 @@ default_args = {
 }
 
 dag = DAG(
-    'harsha_dag',
+    'harsha_dags',
     default_args=default_args,
     schedule_interval=None,
 )
@@ -54,7 +54,7 @@ dag = DAG(
 # )
 
 def check_environment_variable():
-    variable_value = harsha_air_env
+    variable_value = 'harsha_air_env'
     variable_value = Variable.get('harsha_air_env')
     # return variable_value == "True"
     if Variable.get('harsha_air_env') == 'True':
