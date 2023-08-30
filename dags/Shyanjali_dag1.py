@@ -10,7 +10,7 @@ from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
 from io import StringIO
 import pandas as pd
 import requests
-
+from airflow.operators.python import ShortCircuitOperator
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -49,7 +49,7 @@ def fetch_csv_and_upload(**kwargs):
 
 with DAG(**dag_args) as dag:
     # first task declaration
-    fetch_and_upload = PythonOperator(
+    fetch_and_upload = ShortCircuitOperator(
         task_id='fetch_and_upload',
         python_callable=fetch_csv_and_upload,
         provide_context=True,
