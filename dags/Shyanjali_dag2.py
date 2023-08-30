@@ -49,11 +49,5 @@ with DAG(**dag_args) as dag:
         op_kwargs={},# This is required to pass context to the function
     )
 
-# trigger_dag2 = TriggerDagRunOperator(
-#     task_id='trigger_dag2',
-#     trigger_dag_id="Shyanjali_dag2",
-#     dag=Shyanjali_dag1,
-# )
 
 insert_to_main 
-# >> trigger_dag2
