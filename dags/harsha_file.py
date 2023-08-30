@@ -47,33 +47,33 @@ dag = DAG(
 #         return 
 
 
-def check_environment_variable():
+# def check_environment_variable():
 
-    variable_value = Variable.get('harsha_air_env')
-    # return variable_value == "True"
-    if Variable.get('harsha_air_env') == 'True':
-        return True
-    else:
-        #stop dag
-        return False
+#     variable_value = Variable.get('harsha_air_env')
+#     # return variable_value == "True"
+#     if Variable.get('harsha_air_env') == 'True':
+#         return True
+#     else:
+#         #stop dag
+#         return False
 
-task_1 = ShortCircuitOperator(
-    task_id='check_env_variable',
-    python_callable=check_environment_variable,
-    provide_context=True,
-    dag=dag,
-)
-
-# def check_env_variable(**kwargs):
-#     harsh_air_env = os.environ.get('harsh_air_env', '').lower()
-#     return harsh_air_env == 'true'
-
-# check_env_task = ShortCircuitOperator(
-#     task_id='check_env_task',
-#     python_callable=check_env_variable,
+# task_1 = ShortCircuitOperator(
+#     task_id='check_env_variable',
+#     python_callable=check_environment_variable,
 #     provide_context=True,
 #     dag=dag,
 # )
+
+def check_env_variable(**kwargs):
+    harsha_air_env = os.environ.get('harsha_air_env', '').lower()
+    return harsha_air_env == 'true'
+
+task_1 = ShortCircuitOperator(
+    task_id='check_env_task',
+    python_callable=check_env_variable,
+    provide_context=True,
+    dag=dag,
+)
 
 
 # the fucntion is loding the data from url to snowflake
