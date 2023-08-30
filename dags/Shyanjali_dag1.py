@@ -7,6 +7,9 @@ from airflow.operators.trigger_dagrun import TriggerDagRunOperator
 from datetime import datetime
 from airflow.operators.python_operator import PythonOperator
 from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
+from io import StringIO
+import pandas as pd
+import requests
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
