@@ -1,11 +1,11 @@
-from airflow import DAG
-from airflow.operators.python import PythonOperator, ShortCircuitOperator
-from datetime import datetime
-import pandas as pd
-import requests
-from io import StringIO
-from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
-import os
+# from airflow import DAG
+# from airflow.operators.python import PythonOperator, ShortCircuitOperator
+# from datetime import datetime
+# import pandas as pd
+# import requests
+# from io import StringIO
+# from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
+# import os
 from airflow.operators.bash_operator import BashOperator
 
 log_env_task = BashOperator(
