@@ -34,19 +34,11 @@ dag_args = dict(
 
 def check_environment_variable():
     # print(os.environ.get("AIRFLOW_SS"))
-    # if Variable.get('AIRFLOW_SS') == True:
-    #     return True
-    # else:
-    #     #stop dag
-    #     return False
-
-    my_variable = os.environ.get('AIRFLOW_SS', '').lower()  # Get the environment variable and convert to lowercase
-    if my_variable == 'true':
+    if Variable.get('AIRFLOW_SS').lower() == 'true':
         return True
-    # elif my_variable == 'false':
-    #     return False
     else:
-        return False  # Invalid value or not set
+        #stop dag
+        return False
     
 def fetch_csv_and_upload(**kwargs):
     url = "https://raw.githubusercontent.com/fivethirtyeight/data/master/airline-safety/airline-safety.csv"
