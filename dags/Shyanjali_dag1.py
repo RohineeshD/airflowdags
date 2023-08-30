@@ -37,7 +37,7 @@ def fetch_csv_and_upload(**kwargs):
         snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake_li')
         # Replace with your Snowflake schema and table name
         schema = 'PUBLIC'
-        table_name = 'STAGING_TABL'
+        table_name = 'STAGING_TABLE'
         connection = snowflake_hook.get_conn()
         snowflake_hook.insert_rows(table_name, df.values.tolist())
         connection.close()
