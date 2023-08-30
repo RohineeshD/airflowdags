@@ -24,6 +24,8 @@ def read_file(**kwargs):
     response = requests.get(csv_file_url)
     data = response.text
     df = pd.read_csv(StringIO(data))
+    print("thedata")
+    print(df)
     df_json = df.to_json()
     kwargs['ti'].xcom_push(key='my_dataframe', value=df_json)
 
