@@ -74,7 +74,7 @@ def print_records(num_records, **kwargs):
     print("Printing records:")
     print(records)
     
-    Task 5: Print process completed
+    #Task 5: Print process completed
 def final_task(**kwargs):
     print("Processes completed successfully.")
 
