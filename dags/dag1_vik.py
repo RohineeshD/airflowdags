@@ -38,7 +38,7 @@ with DAG('dag1_vik', default_args=default_args, schedule_interval=None) as dag:
   read_file = PythonOperator(
   task_id='read_file',
   python_callable=read_file,
-  dag=dag
+  dag=dag,
   provide_context=True
   )
 
@@ -46,7 +46,7 @@ with DAG('dag1_vik', default_args=default_args, schedule_interval=None) as dag:
   task_id='load_data_task',
   python_callable=load_data_task,
   provide_context=True,
-  dag=dag,
+  dag=dag
   )
  
         )
