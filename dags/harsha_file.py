@@ -21,18 +21,18 @@ dag = DAG(
 )
 
 # the function is checking the envirnoment veriable
-def check_env_variable(**kwargs):
-    if os.environ.get('harsh_air_env') == 'true':
-        return 'load_data_task'
-    else:
-        return 'task_end'
+# def check_env_variable(**kwargs):
+#     if os.environ.get('harsh_air_env') == 'true':
+#         return 'load_data_task'
+#     else:
+#         return 'task_end'
 
-task_1 = PythonOperator(
-    task_id='check_env_variable',
-    python_callable=check_env_variable,
-    provide_context=True,
-    dag=dag,
-)
+# task_1 = PythonOperator(
+#     task_id='check_env_variable',
+#     python_callable=check_env_variable,
+#     provide_context=True,
+#     dag=dag,
+# )
 
 # the function is checking the envirnoment veriable
 # def check_env_variable(**kwargs):
@@ -46,12 +46,23 @@ task_1 = PythonOperator(
 #         print("Environment variable is set to False")
 #         return 
 
-# task_1 = ShortCircuitOperator(
-#     task_id='check_env_variable',
-#     python_callable=check_env_variable,
-#     provide_context=True,
-#     dag=dag,
-# )
+
+def check_environment_variable():
+
+    # variable_value = Variable.get('AIRFLOW_LI')
+    # return variable_value == "True"
+    if Variable.get('harsha_air_env') == 'True':
+        return True
+    else:
+        #stop dag
+        return False
+
+task_1 = ShortCircuitOperator(
+    task_id='check_env_variable',
+    python_callable=check_env_variable,
+    provide_context=True,
+    dag=dag,
+)
 
 # def check_env_variable(**kwargs):
 #     harsh_air_env = os.environ.get('harsh_air_env', '').lower()
