@@ -47,8 +47,7 @@ with DAG('dag1_vik', default_args=default_args, schedule_interval=None) as dag:
   provide_context=True,
   dag=dag
   )
- 
-        )
+
 
 # Setting up task dependencies 
 read_file << load_data_task 
