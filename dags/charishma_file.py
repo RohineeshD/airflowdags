@@ -26,10 +26,10 @@ def check_env_variable(**kwargs):
     C_AIR_ENV = os.environ.get('C_AIR_ENV')
     print("C_AIR_ENV:", C_AIR_ENV)  # Add this line
     if C_AIR_ENV == 'True':
-        print("Condition met: Returning True")  # Add this line
+        print(" Returning True")  
         return True
     else:
-        print("Condition not met: Returning False")  # Add this line
+        print("Returning False") 
         return False
 
 
