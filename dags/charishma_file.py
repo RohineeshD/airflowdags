@@ -1,7 +1,7 @@
 from airflow import DAG
 from airflow.operators.python import PythonOperator, ShortCircuitOperator
 from airflow.operators.dummy import DummyOperator
-from airflow.operators.branch import BranchPythonOperator
+from airflow.operators.python_operator import BranchPythonOperator
 from datetime import datetime
 import pandas as pd
 import requests
