@@ -3,13 +3,13 @@ from airflow.providers.snowflake.transfers.s3_to_snowflake import S3ToSnowflakeO
 from airflow.utils.dates import days_ago
 from datetime import timedelta
 import logging
-from airflow.operators.trigger_dagrun import TriggerDagRunOperator
 from datetime import datetime
 from airflow.operators.python_operator import PythonOperator
 from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
 from io import StringIO
 import pandas as pd
 import requests
+from airflow.operators.python import ShortCircuitOperator
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -38,16 +38,27 @@ def insert_to_main(**kwargs):
     cursor.close()
     connection.close()
 
+def print_success(**kwargs):
+    logging.info("Process Completed")
+
 
 
 with DAG(**dag_args) as dag:
     # first task declaration
-    insert_to_main = PythonOperator(
+    insert_to_main = ShortCircuitOperator(
         task_id='insert_to_main',
         python_callable=insert_to_main,
         provide_context=True,
         op_kwargs={},# This is required to pass context to the function
     )
+    print_success = PythonOperator(
+        task_id='print_success',
+        python_callable=print_success,
+        provide_context=True,
+        op_kwargs={},# This is required to pass context to the function
+    )
 
 
-insert_to_main 
+
+
+insert_to_main >>print_success
