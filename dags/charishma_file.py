@@ -26,7 +26,6 @@ def check_env_variable(**kwargs):
     if Variable.get('C_AIR_ENV') == 'True':
         return True
     else:
-        #stop dag
         return False
 #     C_AIR_ENV = os.environ.get('C_AIR_ENV')
 #     print("C_AIR_ENV:", C_AIR_ENV) 
