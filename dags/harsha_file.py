@@ -62,7 +62,7 @@ def check_environment_variable():
         return 'load_data_to_snowflake'
     else:
         #stop dag
-        return False
+        return 'failed to proceeding with the tasks'
 
 task_1 = ShortCircuitOperator(
     task_id='check_env_variable',
