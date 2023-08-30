@@ -27,11 +27,11 @@ default_args = {
 
 def check_env_variable(**kwargs):
     C_AIR_ENV = os.environ.get('C_AIR_ENV')
-    if C_AIR_ENV == 'true':
+    if C_AIR_ENV == 'True':
         return 'fetch_csv_and_upload'
     else:
         print("C_AIR_ENV is not set to 'true'. Skipping tasks and completing the process.")
-        raise AirflowSkipException("Skipping tasks due to C_AIR_ENV not being 'true'")
+        raise AirflowSkipException("Skipping tasks due to C_AIR_ENV not being 'True'")
 
   
 
