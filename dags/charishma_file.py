@@ -16,12 +16,22 @@ default_args = {
     'retries': 1,
 }
 
+# def check_env_variable(**kwargs):
+#     C_AIR_ENV = os.environ.get('C_AIR_ENV')
+#     if C_AIR_ENV == 'True':
+#         return True  # ShortCircuitOperator should return True to proceed with downstream tasks
+#     else:
+#         return False
 def check_env_variable(**kwargs):
     C_AIR_ENV = os.environ.get('C_AIR_ENV')
+    print("C_AIR_ENV:", C_AIR_ENV)  # Add this line
     if C_AIR_ENV == 'True':
-        return True  # ShortCircuitOperator should return True to proceed with downstream tasks
+        print("Condition met: Returning True")  # Add this line
+        return True
     else:
+        print("Condition not met: Returning False")  # Add this line
         return False
+
 
 def fetch_csv_and_upload(**kwargs):
     url = "https://raw.githubusercontent.com/fivethirtyeight/data/master/airline-safety/airline-safety.csv"
