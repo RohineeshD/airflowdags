@@ -4,7 +4,12 @@ from airflow.utils.dates import days_ago
 from datetime import timedelta
 import logging
 from airflow.operators.trigger_dagrun import TriggerDagRunOperator
-
+from datetime import datetime
+from airflow.operators.python_operator import PythonOperator
+from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
+from io import StringIO
+import pandas as pd
+import requests
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -16,32 +21,30 @@ default_args = dict(
 )
 
 dag_args = dict(
-    dag_id="Shyanjali_dag1",
+    dag_id="Shyanjali_dag2",
     schedule_interval='@once',
     default_args=default_args,
     catchup=False,
 )
 
-def fetch_csv_and_upload(**kwargs):
-    url = "https://raw.githubusercontent.com/cs109/2014_data/master/countries.csv"
-    response = requests.get(url)
-    data = response.text
-    df = pd.read_csv(StringIO(data))
-    # Upload DataFrame to Snowflake
+
+
+def insert_to_main(**kwargs):
     snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake_li')
-    # Replace with your Snowflake schema and table name
-    schema = 'PUBLIC'
-    table_name = 'MAIN_TABLE'
     connection = snowflake_hook.get_conn()
-    snowflake_hook.insert_rows(table_name, df.values.tolist())
+    create_table_query="INSERT INTO PUBLIC.MAIN_TABLE SELECT * FROM PUBLIC.STAGING_TABLE;"
+    cursor = connection.cursor()
+    cursor.execute(create_table_query)
+    cursor.close()
     connection.close()
+
 
 
 with DAG(**dag_args) as dag:
     # first task declaration
-    fetch_and_upload = PythonOperator(
-        task_id='fetch_and_upload',
-        python_callable=fetch_csv_and_upload,
+    insert_to_main = PythonOperator(
+        task_id='insert_to_main',
+        python_callable=insert_to_main,
         provide_context=True,
         op_kwargs={},# This is required to pass context to the function
     )
@@ -52,5 +55,5 @@ with DAG(**dag_args) as dag:
 #     dag=Shyanjali_dag1,
 # )
 
-fetch_and_upload 
+insert_to_main 
 # >> trigger_dag2
