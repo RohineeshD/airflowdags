@@ -10,7 +10,7 @@ default_args = {
     'owner': 'exusia_team',
     'start_date': datetime(2023, 8, 31),
     'schedule_interval' : '@daily'
-    'retries': 1,
+    'retries': 1
 }
 
 snowflake_conn_id = 'snowflake_connection'
