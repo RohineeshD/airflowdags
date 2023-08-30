@@ -35,16 +35,6 @@ def check_env_variable(**kwargs):
         # print("C_AIR_ENV is not set to 'true'. Skipping tasks and completing the process.")
         # raise AirflowSkipException("Skipping tasks due to C_AIR_ENV not being 'True'")
 
-  
-def check_environment_variable():
-    # variable_value = 'harsha_air_env'
-    # variable_value = Variable.get('harsha_air_env')
-    # return variable_value == "True"
-    if Variable.get('harsha_air_env') == 'True':
-        return True
-    else:
-        #stop dag
-        return False
 
 task_1 = ShortCircuitOperator(
     task_id='check_env_variable',
