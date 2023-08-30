@@ -30,13 +30,19 @@ dag_args = dict(
 
 
 def insert_to_main(**kwargs):
-    snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake_li')
-    connection = snowflake_hook.get_conn()
-    create_table_query="INSERT INTO PUBLIC.MAIN_TABLE SELECT * FROM PUBLIC.STAGING_TABLE;"
-    cursor = connection.cursor()
-    cursor.execute(create_table_query)
-    cursor.close()
-    connection.close()
+    try:
+        snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake_li')
+        connection = snowflake_hook.get_conn()
+        create_table_query="INSERT INTO PUBLIC.MAIN_TABLE SELECT * FROM PUBLIC.STAGING_TABLE;"
+        cursor = connection.cursor()
+        cursor.execute(create_table_query)
+        cursor.close()
+        connection.close()
+        print("Data transfer and insertion successful!")
+        return True
+    except Exception as e:
+        print(f"An error occurred: {str(e)}")
+        return False
 
 def print_success(**kwargs):
     logging.info("Process Completed")
