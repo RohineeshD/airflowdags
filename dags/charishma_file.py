@@ -216,8 +216,7 @@ with DAG('charishma_dags', schedule_interval=None, default_args=default_args) as
     )
     
     # Set task dependencies within the branches
-    upload_data_task >> num_records_task >> print_records_task >> final_print_task
-    final_print_task >> final_task
+    upload_data_task >> num_records_task >> print_records_task >> final_print_task >> final_task
 
 
 
