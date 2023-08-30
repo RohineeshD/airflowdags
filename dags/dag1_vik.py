@@ -9,7 +9,7 @@ from io import StringIO
 default_args = {
     'owner': 'exusia_team',
     'start_date': datetime(2023, 8, 31),
-    'retries': 1
+    'retries': 1,
     'retry_delay': timedelta(minutes=5)
 }
 
