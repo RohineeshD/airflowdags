@@ -10,6 +10,7 @@ default_args = {
     'owner': 'exusia_team',
     'start_date': datetime(2023, 8, 31),
     'retries': 1
+    'retry_delay': timedelta(minutes=5)
 }
 
 snowflake_conn_id = 'snowflake_connection'
