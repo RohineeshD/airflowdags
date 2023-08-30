@@ -36,7 +36,7 @@ def check_environment_variable():
 
     # variable_value = Variable.get('AIRFLOW_LI')
     # return variable_value == "True"
-    if Variable.get('AIRFLOW_SS') == 'True':
+    if Variable.get('AIRFLOW_SS') == True:
         return True
     else:
         #stop dag
