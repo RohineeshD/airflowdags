@@ -64,6 +64,7 @@ def print_records(num_records, **kwargs):
 def final_task(**kwargs):
     print("Processes completed successfully.")
 
+# Define the DAG
 with DAG('charishma_dags', schedule_interval=None, default_args=default_args) as dag:
     check_env_task = ShortCircuitOperator(
         task_id='check_env_variable',
@@ -98,6 +99,7 @@ with DAG('charishma_dags', schedule_interval=None, default_args=default_args) as
 
     # Set task dependencies
     check_env_task >> upload_data_task >> num_records_task >> print_records_task >> final_print_task
+
 
 
 
