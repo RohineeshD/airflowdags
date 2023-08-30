@@ -29,7 +29,11 @@ def read_file(**kwargs):
 
 def load_data_task(**kwargs):
     df_json = kwargs['ti'].xcom_pull(task_ids='create_dataframe_task', key='my_dataframe')
+    print("thedata")
+    print(df_json)
+    
     df = pd.read_json(df_json)
+    print(df)
     snowflake_conn_id = 'snowflake_connection'
     snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake_connection')
     schema = 'af_sch'
