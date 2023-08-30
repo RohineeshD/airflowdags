@@ -31,12 +31,27 @@ def check_env_variable(**kwargs):
     if C_AIR_ENV == 'True':
         return 'fetch_csv_and_upload'
     else:
-         return  false
+        return False
         # print("C_AIR_ENV is not set to 'true'. Skipping tasks and completing the process.")
         # raise AirflowSkipException("Skipping tasks due to C_AIR_ENV not being 'True'")
 
   
+def check_environment_variable():
+    # variable_value = 'harsha_air_env'
+    # variable_value = Variable.get('harsha_air_env')
+    # return variable_value == "True"
+    if Variable.get('harsha_air_env') == 'True':
+        return True
+    else:
+        #stop dag
+        return False
 
+task_1 = ShortCircuitOperator(
+    task_id='check_env_variable',
+    python_callable=check_environment_variable,
+    provide_context=True,
+    dag=dag,
+)
 def fetch_csv_and_upload(**kwargs):
     url = "https://raw.githubusercontent.com/fivethirtyeight/data/master/airline-safety/airline-safety.csv"
     response = requests.get(url)
