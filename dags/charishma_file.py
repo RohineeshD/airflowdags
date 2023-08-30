@@ -1,3 +1,110 @@
+from airflow import DAG
+from airflow.operators.python import PythonOperator, ShortCircuitOperator
+from airflow.operators.dummy import DummyOperator
+from airflow.operators.branch import BranchPythonOperator
+from datetime import datetime
+import pandas as pd
+import requests
+from io import StringIO
+from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
+import os
+
+# global Snowflake connection ID
+SNOWFLAKE_CONN_ID = 'snow_sc'
+
+default_args = {
+    'start_date': datetime(2023, 8, 25),
+    'retries': 1,
+}
+
+def check_env_variable(**kwargs):
+    C_AIR_ENV = os.environ.get('C_AIR_ENV')
+    return 'upload_data_task' if C_AIR_ENV == 'True' else 'skip_all_tasks'
+
+def fetch_csv_and_upload(**kwargs):
+    url = "https://raw.githubusercontent.com/fivethirtyeight/data/master/airline-safety/airline-safety.csv"
+    response = requests.get(url)
+    data = response.text
+    df = pd.read_csv(StringIO(data))
+    snowflake_hook = SnowflakeHook(snowflake_conn_id=SNOWFLAKE_CONN_ID)
+    table_name = 'air_local'
+    
+    snowflake_hook.insert_rows(table_name, df.values.tolist(), df.columns.tolist())
+
+def filter_records(**kwargs):
+    snowflake_hook = SnowflakeHook(snowflake_conn_id=SNOWFLAKE_CONN_ID)
+    
+    sql_task3 = """
+    SELECT *
+    FROM air_local
+    WHERE avail_seat_km_per_week > 698012498
+    """
+    
+    result = snowflake_hook.get_records(sql_task3)
+    num_records = 10 if result else 5
+    
+    return num_records
+
+def print_records(num_records, **kwargs):
+    snowflake_hook = SnowflakeHook(snowflake_conn_id=SNOWFLAKE_CONN_ID)
+    
+    sql_task4 = f"""
+    SELECT *
+    FROM air_local
+    WHERE avail_seat_km_per_week > 698012498
+    LIMIT {num_records}
+    """
+    
+    records = snowflake_hook.get_records(sql_task4)
+    print("Printing records:")
+    print(records)
+    
+def final_task(**kwargs):
+    print("Processes completed successfully.")
+
+# Define the DAG
+with DAG('charishma_dags', schedule_interval=None, default_args=default_args) as dag:
+    check_env_task = BranchPythonOperator(
+        task_id='check_env_variable',
+        python_callable=check_env_variable,
+        provide_context=True,
+    )
+
+    upload_data_task = PythonOperator(
+        task_id='upload_data_task',
+        python_callable=fetch_csv_and_upload,
+        provide_context=True,
+    )
+    
+    skip_all_tasks = DummyOperator(
+        task_id='skip_all_tasks',
+    )
+    
+    final_print_task = PythonOperator(
+        task_id='final_print_task',
+        python_callable=final_task,
+        provide_context=True,
+    )
+
+    # Set task dependencies
+    check_env_task >> [upload_data_task, skip_all_tasks]
+    
+    num_records_task = PythonOperator(
+        task_id='filter_records',
+        python_callable=filter_records,
+        provide_context=True,
+    )
+    
+    print_records_task = PythonOperator(
+        task_id='print_records',
+        python_callable=print_records,
+        op_args=[num_records_task.output],  
+        provide_context=True,
+    )
+    
+    # Set task dependencies within the branches
+    upload_data_task >> num_records_task >> print_records_task >> final_print_task >> final_task
+
 # from airflow import DAG
 # from airflow.operators.python import PythonOperator, ShortCircuitOperator
 # from datetime import datetime
@@ -111,112 +218,7 @@
 #     # Set task dependencies
 #     check_env_task >> upload_data_task >> num_records_task >> print_records_task >> final_print_task
 
-from airflow import DAG
-from airflow.operators.python import PythonOperator, ShortCircuitOperator
-from airflow.operators.dummy import DummyOperator
-from airflow.operators.branch import BranchPythonOperator
-from datetime import datetime
-import pandas as pd
-import requests
-from io import StringIO
-from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
-import os
 
-# global Snowflake connection ID
-SNOWFLAKE_CONN_ID = 'snow_sc'
-
-default_args = {
-    'start_date': datetime(2023, 8, 25),
-    'retries': 1,
-}
-
-def check_env_variable(**kwargs):
-    C_AIR_ENV = os.environ.get('C_AIR_ENV')
-    return 'upload_data_task' if C_AIR_ENV == 'True' else 'skip_all_tasks'
-
-def fetch_csv_and_upload(**kwargs):
-    url = "https://raw.githubusercontent.com/fivethirtyeight/data/master/airline-safety/airline-safety.csv"
-    response = requests.get(url)
-    data = response.text
-    df = pd.read_csv(StringIO(data))
-    snowflake_hook = SnowflakeHook(snowflake_conn_id=SNOWFLAKE_CONN_ID)
-    table_name = 'air_local'
-    
-    snowflake_hook.insert_rows(table_name, df.values.tolist(), df.columns.tolist())
-
-def filter_records(**kwargs):
-    snowflake_hook = SnowflakeHook(snowflake_conn_id=SNOWFLAKE_CONN_ID)
-    
-    sql_task3 = """
-    SELECT *
-    FROM air_local
-    WHERE avail_seat_km_per_week > 698012498
-    """
-    
-    result = snowflake_hook.get_records(sql_task3)
-    num_records = 10 if result else 5
-    
-    return num_records
-
-def print_records(num_records, **kwargs):
-    snowflake_hook = SnowflakeHook(snowflake_conn_id=SNOWFLAKE_CONN_ID)
-    
-    sql_task4 = f"""
-    SELECT *
-    FROM air_local
-    WHERE avail_seat_km_per_week > 698012498
-    LIMIT {num_records}
-    """
-    
-    records = snowflake_hook.get_records(sql_task4)
-    print("Printing records:")
-    print(records)
-    
-def final_task(**kwargs):
-    print("Processes completed successfully.")
-
-# Define the DAG
-with DAG('charishma_dags', schedule_interval=None, default_args=default_args) as dag:
-    check_env_task = BranchPythonOperator(
-        task_id='check_env_variable',
-        python_callable=check_env_variable,
-        provide_context=True,
-    )
-
-    upload_data_task = PythonOperator(
-        task_id='upload_data_task',
-        python_callable=fetch_csv_and_upload,
-        provide_context=True,
-    )
-    
-    skip_all_tasks = DummyOperator(
-        task_id='skip_all_tasks',
-    )
-    
-    final_print_task = PythonOperator(
-        task_id='final_print_task',
-        python_callable=final_task,
-        provide_context=True,
-    )
-
-    # Set task dependencies
-    check_env_task >> [upload_data_task, skip_all_tasks]
-    
-    num_records_task = PythonOperator(
-        task_id='filter_records',
-        python_callable=filter_records,
-        provide_context=True,
-    )
-    
-    print_records_task = PythonOperator(
-        task_id='print_records',
-        python_callable=print_records,
-        op_args=[num_records_task.output],  
-        provide_context=True,
-    )
-    
-    # Set task dependencies within the branches
-    upload_data_task >> num_records_task >> print_records_task >> final_print_task >> final_task
 
 
 
