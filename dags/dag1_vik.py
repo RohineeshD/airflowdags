@@ -9,7 +9,7 @@ from io import StringIO
 # Define default arguments for the DAG
 default_args = {
     'owner': 'exusia_team',
-    'start_date': datetime(2023, 8, 31),
+    'start_date': datetime(2023, 8, 30),
     'retries': 1,
     'retry_delay': timedelta(minutes=5)
 }
