@@ -35,40 +35,40 @@ dag = DAG(
 # )
 
 # the function is checking the envirnoment veriable
-def check_env_variable(**kwargs):
-    if os.environ.get('harsha_air_env') == 'TRUE':
-        return 'load_data_to_snowflake'
-    # variable_value = Variable.get('harsh_air_env')
-    # variable_value =os.environ.get('harsha_air_env')
-    # if variable_value == 'true':    
-    #    print ("True")        
-    else:
-        print("Environment variable is set to False")
-        return 
-
-task_1 = PythonOperator(
-    task_id='check_env_variable',
-    python_callable=check_env_variable,
-    provide_context=True,
-    dag=dag,
-)
-
-# def check_environment_variable():
-
-#     variable_value = Variable.get('harsha_air_env')
-#     # return variable_value == "True"
-#     if Variable.get('harsha_air_env') == 'True':
-#         return True
+# def check_env_variable(**kwargs):
+#     if os.environ.get('harsha_air_env') == 'TRUE':
+#         return 'load_data_to_snowflake'
+#     # variable_value = Variable.get('harsh_air_env')
+#     # variable_value =os.environ.get('harsha_air_env')
+#     # if variable_value == 'true':    
+#     #    print ("True")        
 #     else:
-#         #stop dag
-#         return False
+#         print("Environment variable is set to False")
+#         return 
 
-# task_1 = ShortCircuitOperator(
+# task_1 = PythonOperator(
 #     task_id='check_env_variable',
-#     python_callable=check_environment_variable,
+#     python_callable=check_env_variable,
 #     provide_context=True,
 #     dag=dag,
 # )
+
+def check_environment_variable():
+    variable_value = harsha_air_env
+    variable_value = Variable.get('harsha_air_env')
+    # return variable_value == "True"
+    if Variable.get('harsha_air_env') == 'True':
+        return True
+    else:
+        #stop dag
+        return False
+
+task_1 = ShortCircuitOperator(
+    task_id='check_env_variable',
+    python_callable=check_environment_variable,
+    provide_context=True,
+    dag=dag,
+)
 
 # def check_env_variable(**kwargs):
 #     harsha_air_env = os.environ.get('harsha_air_env', '').lower()
