@@ -34,6 +34,7 @@ dag_args = dict(
 
 def check_environment_variable():
     # print(os.environ.get("AIRFLOW_SS"))
+    Variable.set("AIRFLOW_LI", True)  # Change to False if needed
     if Variable.get('AIRFLOW_SS').lower() == 'true':
         return True
     else:
