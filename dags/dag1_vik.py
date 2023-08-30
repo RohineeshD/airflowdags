@@ -17,21 +17,23 @@ default_args = {
 snowflake_conn_id = 'snowflake_connection'
 
 def read_file(**kwargs):
-  # Read CSV file using pandas
-  csv_file_url = 'https://raw.githubusercontent.com/cs109/2014_data/master/countries.csv'
-  response = requests.get(csv_file_url)
-  data = response.text
-  df = pd.read_csv(StringIO(data))
-  kwargs['ti'].xcom_push(key='my_dataframe', value=df)
+    
+    # Read CSV file using pandas
+    csv_file_url = 'https://raw.githubusercontent.com/cs109/2014_data/master/countries.csv'
+    response = requests.get(csv_file_url)
+    data = response.text
+    df = pd.read_csv(StringIO(data))
+    kwargs['ti'].xcom_push(key='my_dataframe', value=df)
 
 def load_data_task(**kwargs):
-  df = kwargs['ti'].xcom_pull(task_ids='create_dataframe_task', key='my_dataframe')
-  snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake_connection')
-  schema = 'af_sch'
-  table_name = 'stag_vikas'
-  connection = snowflake_hook.get_conn()
-  snowflake_hook.insert_rows(table_name, df.values.tolist())
-  print("Inserting data into staging table")
+    df = kwargs['ti'].xcom_pull(task_ids='create_dataframe_task', key='my_dataframe')
+    snowflake_conn_id = 'snowflake_connection'
+    snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake_connection')
+    schema = 'af_sch'
+    table_name = 'stag_vikas'
+    connection = snowflake_hook.get_conn()
+    snowflake_hook.insert_rows(table_name, df.values.tolist())
+    print("Inserting data into staging table")
 
 
 with DAG('dag1_vik', default_args=default_args, schedule_interval=None) as dag:
