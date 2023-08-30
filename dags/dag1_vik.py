@@ -24,10 +24,12 @@ def read_file(**kwargs):
     response = requests.get(csv_file_url)
     data = response.text
     df = pd.read_csv(StringIO(data))
-    kwargs['ti'].xcom_push(key='my_dataframe', value=df)
+    df_json = df.to_json()
+    kwargs['ti'].xcom_push(key='my_dataframe', value=df_json)
 
 def load_data_task(**kwargs):
-    df = kwargs['ti'].xcom_pull(task_ids='create_dataframe_task', key='my_dataframe')
+    df_json = kwargs['ti'].xcom_pull(task_ids='create_dataframe_task', key='my_dataframe')
+    df = pd.read_json(df_json)
     snowflake_conn_id = 'snowflake_connection'
     snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake_connection')
     schema = 'af_sch'
