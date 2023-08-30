@@ -36,6 +36,7 @@ def check_environment_variable():
 
     # variable_value = Variable.get('AIRFLOW_LI')
     # return variable_value == "True"
+    print(os.environ["AIRFLOW_SS"])
     if Variable.get('AIRFLOW_SS') == True:
         return True
     else:
