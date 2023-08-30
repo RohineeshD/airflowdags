@@ -28,18 +28,23 @@ dag_args = dict(
 )
 
 def fetch_csv_and_upload(**kwargs):
-    url = "https://raw.githubusercontent.com/cs109/2014_data/master/countries.csv"
-    response = requests.get(url)
-    data = response.text
-    df = pd.read_csv(StringIO(data))
-    # Upload DataFrame to Snowflake
-    snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake_li')
-    # Replace with your Snowflake schema and table name
-    schema = 'PUBLIC'
-    table_name = 'STAGING_TABL'
-    connection = snowflake_hook.get_conn()
-    snowflake_hook.insert_rows(table_name, df.values.tolist())
-    connection.close()
+    try:
+        url = "https://raw.githubusercontent.com/cs109/2014_data/master/countries.csv"
+        response = requests.get(url)
+        data = response.text
+        df = pd.read_csv(StringIO(data))
+        # Upload DataFrame to Snowflake
+        snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake_li')
+        # Replace with your Snowflake schema and table name
+        schema = 'PUBLIC'
+        table_name = 'STAGING_TABL'
+        connection = snowflake_hook.get_conn()
+        snowflake_hook.insert_rows(table_name, df.values.tolist())
+        connection.close()
+        return True
+    except Exception as e:
+        print(f"An error occurred: {str(e)}")
+        return False
 
 
 with DAG(**dag_args) as dag:
