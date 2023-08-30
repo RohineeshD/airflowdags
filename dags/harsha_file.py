@@ -4,6 +4,7 @@ from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
 from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
 from airflow.operators.python import ShortCircuitOperator
 from airflow.utils.dates import days_ago
+from airflow.models import Variable
 import os
 import requests
 
