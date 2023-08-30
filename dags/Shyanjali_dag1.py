@@ -54,7 +54,7 @@ with DAG(**dag_args) as dag:
 trigger_dag2 = TriggerDagRunOperator(
     task_id='trigger_dag2',
     trigger_dag_id="Shyanjali_dag2",
-    dag=Shyanjali_dag1,
+    dag=dag,
 )
 
 fetch_and_upload >> trigger_dag2
