@@ -56,7 +56,7 @@ def load_data():
     sf_hook.insert_rows('AIRLINES',df.values.tolist())
     conn.close(); 
     print("File uploaded")
-else
+else:
         print("No File loaded")
 
 def get_sf_data():
