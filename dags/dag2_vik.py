@@ -6,7 +6,7 @@ from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
 from airflow.operators.python_operator import PythonOperator
 from io import StringIO
 import pandas as pd
-
+from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
 
 # Define default arguments for the DAG
 default_args = {
