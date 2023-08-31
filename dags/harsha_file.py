@@ -31,17 +31,26 @@ task_1 = PythonOperator(
     dag=dag_1,
 )
 
-query = f"""
-    INSERT INTO temp_harsha (Country, Region)
-    VALUES ('{values[0]}', '{values[1]}')
-    """
+def load_data_into_snowflake(**kwargs):
+    ti = kwargs['ti']
+    response_text = ti.xcom_pull(task_ids='read_file_from_url')
+    
+    # Split the response_text and insert into Snowflake
+    for line in response_text.strip().split('\n')[1:]:
+        values = line.split(',')
+        query = f"""
+            INSERT INTO temp_harsha (Country, Region)
+            VALUES ('{values[0]}', '{values[1]}')
+        """
+        
+        # Execute the query in Snowflake
+        snowflake_hook = SnowflakeHook(snowflake_conn_id="snowflake_conn")
+        snowflake_hook.run(query)
 
-
-load_data_into_snowflake_task = SnowflakeOperator(
+load_data_into_snowflake_task = PythonOperator(
     task_id="load_data_into_snowflake",
-    sql=load_data_sql,
-    snowflake_conn_id="snowflake_conn",  
-    autocommit=True,
+    python_callable=load_data_into_snowflake,
+    provide_context=True,
     dag=dag_1,
 )
 
@@ -63,6 +72,7 @@ trigger_dag_2 = TriggerDagRunOperator(
 )
 
 task_1 >> load_data_into_snowflake_task >> check_load_success >> trigger_dag_2
+
 
 
 # import requests
