@@ -60,16 +60,15 @@ with DAG('dag1_vik', default_args=default_args, schedule_interval=None) as dag:
     dag=dag
     )
 
-    # check_data_loading = PythonOperator(
-    # task_id='check_data_loading',
-    # python_callable=check_data_loading,
-    # dag=dag,
-    # )
+    check_data_loading = PythonOperator(
+    task_id='check_data_loading',
+    python_callable=check_data_loading,
+    dag=dag,
+    )
 
     trigger_dag2_task = TriggerDagRunOperator(
     task_id='trigger_dag2_task',
-    trigger_dag_id="dag2_vik", 
-    python_callable=check_data_loading,  # Condition to trigger DAG2
+    trigger_dag_id="dag2_vik",
     dag=dag,
     )
 
