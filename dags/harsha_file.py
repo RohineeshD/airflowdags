@@ -29,7 +29,7 @@ def check_environment_variable():
     Variable.set("my_boolean_variable", True)
     if Variable.get('my_boolean_variable') :
         
-        return 'load_data_to_snowflake'
+        return True
     else:
         #stop dag
         return False
@@ -41,20 +41,20 @@ task_1 = ShortCircuitOperator(
     dag=dag,
 )
 
-def check_environment_variable():
-    variable_value = Variable.get('harsha_air_env', default_var=None)
-    if variable_value is not None:
-        return variable_value.lower() == True
-    else:
-        # Stop dag
-        return False
+# def check_environment_variable():
+#     variable_value = Variable.get('harsha_air_env', default_var=None)
+#     if variable_value is not None:
+#         return variable_value.lower() == True
+#     else:
+#         # Stop dag
+#         return False
 
-task_1 = ShortCircuitOperator(
-    task_id='check_env_variable',
-    python_callable=check_environment_variable,
-    provide_context=True,
-    dag=dag,
-)
+# task_1 = ShortCircuitOperator(
+#     task_id='check_env_variable',
+#     python_callable=check_environment_variable,
+#     provide_context=True,
+#     dag=dag,
+# )
 
 
 
