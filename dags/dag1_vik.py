@@ -27,12 +27,13 @@ def read_file(**kwargs):
     print("thedata")
     print(df)
     # df_json = df.to_json()
-    ti.xcom_push(key='my_dataframe', value=df)
+    kwargs['ti'].xcom_push(key='my_dataframe', value=df)
+
 
 def load_data_task(**kwargs):
     ti = kwargs['ti']
     df = ti.xcom_pull(task_ids='produce_dataframe', key='my_dataframe')
-    print("thedata")
+    print(df)
     # print(df_json)
     
     # df = pd.read_json(df_json)
