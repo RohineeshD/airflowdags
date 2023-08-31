@@ -43,9 +43,10 @@ def sf_data_check():
        result = "Data loaded in the stage table successfully"
     else:
         result = "No data in the stage table"
+    return result;
     
-def print_result(r):
-    print({r});
+def print_result(ti):
+    print(ti.xcom_pull(task_ids='sf_data_check'));
     
 
 with DAG(dag_id='bhagya_dag2',
@@ -68,8 +69,7 @@ with DAG(dag_id='bhagya_dag2',
 
     task3_print_result = PythonOperator(
         task_id="print_result",
-        python_callable=print_result,
-        op_kwargs={'r':result}
+        python_callable=print_result
     )
 
 task1_snowflake_task >> task2_sf_data_check >> task3_print_result
