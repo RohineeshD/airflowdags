@@ -40,9 +40,13 @@ def load_data_into_snowflake(**kwargs):
         for line in response_text.strip().split('\n')[1:]:
             values = line.split(',')
             query = f"""
-                INSERT INTO exusi_schema.temp_harsha (Country, Region)
+                INSERT INTO exusia_schema.temp_harsha (country, region)
                 VALUES ('{values[0]}', '{values[1]}')
             """
+            
+            # Log the SQL query for debugging
+            print("Executing SQL query:")
+            print(query)
             
             # Execute the query in Snowflake
             snowflake_hook = SnowflakeHook(snowflake_conn_id="snowflake_conn")
@@ -63,6 +67,9 @@ load_data_into_snowflake_task = PythonOperator(
 )
 
 # Define the rest of your DAG tasks and dependencies here
+
+task_1 >> load_data_into_snowflake_task
+
 
 task_1 >> load_data_into_snowflake_task
 # from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
