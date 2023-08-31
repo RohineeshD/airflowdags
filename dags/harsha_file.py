@@ -3,6 +3,8 @@ from airflow import DAG
 from airflow.models import Variable
 from airflow.operators.python_operator import PythonOperator
 from datetime import datetime
+from airflow.providers.snowflake.transfers.s3_to_snowflake import S3ToSnowflakeOperator
+from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
 
 # Default arguments for the DAG
 default_args = {
@@ -33,30 +35,30 @@ task_1 = PythonOperator(
 )
 
 def load_data_temp_table(**kwargs):
-    data = response.text
-    lines = data.strip().split('\n')[1:]
+    response = kwargs['ti'].xcom_pull(task_ids='read_file_from_url')
+    lines = response.strip().split('\n')[1:]
     snowflake_hook = SnowflakeHook(snowflake_conn_id="snowflake_conn")
         
-    	for line in lines:
-            values = line.split(',')
-    	    query = f"""
-            	INSERT INTO temp_harsha (Country, Region)
-            	VALUES ('{values[0]}', '{values[1]}')
-            	"""
-            snowflake_hook.run(query)
-            
-            print("Data loaded into Snowflake successfully.")
-    	else:
-            raise Exception(f"Failed to fetch data from URL. Status code: {response.status_code}")
+    for line in lines:
+        values = line.split(',')
+        query = f"""
+            INSERT INTO temp_harsha (Country, Region)
+            VALUES ('{values[0]}', '{values[1]}')
+            """
+        snowflake_hook.run(query)
+        print("Data loaded into Snowflake successfully.")
+    else:
+        raise Exception(f"Failed to fetch data from URL. Status code: {response.status_code}")
 
 task_2 = PythonOperator(
-			task_id = 'load_data_stage_table',
-			python_callable = load_data_temp_table,
-			provide_context = True,
-			dag = dag,
+    task_id='load_data_stage_table',
+    python_callable=load_data_temp_table,
+    provide_context=True,
+    dag=dag,
 )
 
 task_1 >> task_2
+
 
 
 
