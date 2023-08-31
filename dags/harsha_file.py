@@ -35,17 +35,19 @@ def load_data_into_snowflake(**kwargs):
     ti = kwargs['ti']
     response_text = ti.xcom_pull(task_ids='read_file_from_url')
     
-    # Split the response_text and insert into Snowflake
-    for line in response_text.strip().split('\n')[1:]:
-        values = line.split(',')
-        query = f"""
-            INSERT INTO exusi_schema.temp_harsha (Country, Region)
-            VALUES ('{values[0]}', '{values[1]}')
-        """
+    try:
+        # Split the response_text and insert into Snowflake
+        for line in response_text.strip().split('\n')[1:]:
+            values = line.split(',')
+            query = f"""
+                INSERT INTO exusi_schema.temp_harsha (Country, Region)
+                VALUES ('{values[0]}', '{values[1]}')
+            """
+            
+            # Execute the query in Snowflake
+            snowflake_hook = SnowflakeHook(snowflake_conn_id="snowflake_conn")
+            snowflake_hook.run(query)
         
-        # Execute the query in Snowflake
-        snowflake_hook = SnowflakeHook(snowflake_conn_id="snowflake_conn")
-        snowflake_hook.run(query)
         print("Data loaded into Snowflake successfully.")
     
     except Exception as e:
@@ -60,24 +62,89 @@ load_data_into_snowflake_task = PythonOperator(
     dag=dag_1,
 )
 
-check_load_success = SnowflakeOperator(
-    task_id='check_load_success',
-    sql="SELECT COUNT(*) FROM temp_harsha",  
-    snowflake_conn_id="snowflake_conn_id",  
-    # mode='reschedule',
-    # timeout=3600,
-    # poke_interval=60,
-    dag=dag_1,
-)
+# Define the rest of your DAG tasks and dependencies here
 
-trigger_dag_2 = TriggerDagRunOperator(
-    task_id='trigger_dag_2',
-    trigger_dag_id="dag_2_h",
-    dag=dag_1,
-    trigger_rule="all_success",
-)
+task_1 >> load_data_into_snowflake_task
+# from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
+# from airflow.operators.python_operator import PythonOperator
+# from airflow.operators.trigger_dagrun import TriggerDagRunOperator
+# from airflow import DAG
+# from datetime import datetime
+# import requests
 
-task_1 >> load_data_into_snowflake_task >> check_load_success >> trigger_dag_2
+# default_args = {
+#     'start_date': datetime(2023, 8, 31),
+#     'catchup': False,
+# }
+
+# dag_1 = DAG(
+#     'dag_1_h',
+#     default_args=default_args,
+#     schedule_interval=None,
+#     catchup=False,
+# )
+
+# def read_file_from_url():
+#     url = 'https://raw.githubusercontent.com/cs109/2014_data/master/countries.csv'
+#     response = requests.get(url)
+#     if response.status_code == 200:
+#         return response.text
+#     else:
+#         raise Exception(f"Failed to retrieve data from URL: {url}. Status code: {response.status_code}")
+
+# task_1 = PythonOperator(
+#     task_id='read_file_from_url',
+#     python_callable=read_file_from_url,
+#     dag=dag_1,
+# )
+
+# def load_data_into_snowflake(**kwargs):
+#     ti = kwargs['ti']
+#     response_text = ti.xcom_pull(task_ids='read_file_from_url')
+    
+#     # Split the response_text and insert into Snowflake
+#     for line in response_text.strip().split('\n')[1:]:
+#         values = line.split(',')
+#         query = f"""
+#             INSERT INTO exusi_schema.temp_harsha (Country, Region)
+#             VALUES ('{values[0]}', '{values[1]}')
+#         """
+        
+#         # Execute the query in Snowflake
+#         snowflake_hook = SnowflakeHook(snowflake_conn_id="snowflake_conn")
+#         snowflake_hook.run(query)
+#         print("Data loaded into Snowflake successfully.")
+    
+#     except Exception as e:
+#         # Handle the exception
+#         print(f"Error loading data into Snowflake: {str(e)}")
+#         raise
+
+# load_data_into_snowflake_task = PythonOperator(
+#     task_id="load_data_into_snowflake",
+#     python_callable=load_data_into_snowflake,
+#     provide_context=True,
+#     dag=dag_1,
+# )
+
+# check_load_success = SnowflakeOperator(
+#     task_id='check_load_success',
+#     sql="SELECT COUNT(*) FROM temp_harsha",  
+#     snowflake_conn_id="snowflake_conn_id",  
+#     # mode='reschedule',
+#     # timeout=3600,
+#     # poke_interval=60,
+#     dag=dag_1,
+# )
+
+# trigger_dag_2 = TriggerDagRunOperator(
+#     task_id='trigger_dag_2',
+#     trigger_dag_id="dag_2_h",
+#     dag=dag_1,
+#     trigger_rule="all_success",
+# )
+
+# task_1 >> load_data_into_snowflake_task >> check_load_success >> trigger_dag_2
 
 
 
