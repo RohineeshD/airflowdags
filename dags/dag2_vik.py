@@ -7,6 +7,7 @@ from airflow.operators.python_operator import PythonOperator
 from io import StringIO
 import pandas as pd
 
+
 # Define default arguments for the DAG
 default_args = {
     'owner': 'exusia_team',
