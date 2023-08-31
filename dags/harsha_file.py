@@ -45,8 +45,15 @@ def load_data_temp_table(**kwargs):
             INSERT INTO temp_harsha (Country, Region)
             VALUES ('{values[0]}', '{values[1]}')
             """
-        snowflake_hook.run(query)
-        print("Data loaded into Snowflake successfully.")
+        # snowflake_hook.run(query)
+        # print("Data loaded into Snowflake successfully.")
+        try:
+           snowflake_hook.run(query)
+    print("Data loaded into Snowflake successfully.")
+except Exception as e:
+    print(f"Error loading data into Snowflake: {str(e)}")
+    raise
+
 
 # Add a task to check if the load is successful or not
 def check_load_success(**kwargs):
