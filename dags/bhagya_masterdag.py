@@ -1,5 +1,5 @@
 
-from airflow.operators.trigger_dagrum import TriggerDagRunOperator
+from airflow.operators.trigger_dagrun import TriggerDagRunOperator
 from airflow.operators.python_operator import PythonOperator
 from io import StringIO
 from airflow import DAG
