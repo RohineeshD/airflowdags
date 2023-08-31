@@ -8,6 +8,7 @@ from io import StringIO
 import pandas as pd
 from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
 
+
 # Define default arguments for the DAG
 default_args = {
     'owner': 'exusia_team',
