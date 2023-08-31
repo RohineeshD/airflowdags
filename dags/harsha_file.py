@@ -45,9 +45,9 @@ def load_data_temp_table(**kwargs):
             	"""
             snowflake_hook.run(query)
             
-        print("Data loaded into Snowflake successfully.")
-    else:
-        raise Exception(f"Failed to fetch data from URL. Status code: {response.status_code}")
+            print("Data loaded into Snowflake successfully.")
+    	else:
+            raise Exception(f"Failed to fetch data from URL. Status code: {response.status_code}")
 
 task_2 = PythonOperator(
 			task_id = 'load_data_stage_table',
