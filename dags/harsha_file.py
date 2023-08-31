@@ -3,6 +3,8 @@ from airflow.operators.snowflake import SnowflakeOperator
 from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
 from datetime import datetime
 from airflow.providers.snowflake.transfers.s3_to_snowflake import S3ToSnowflakeOperator
+from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
+
 
 # Default arguments for the DAG
 default_args = {
