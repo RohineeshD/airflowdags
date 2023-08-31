@@ -46,6 +46,12 @@ def load_data_into_snowflake(**kwargs):
         # Execute the query in Snowflake
         snowflake_hook = SnowflakeHook(snowflake_conn_id="snowflake_conn")
         snowflake_hook.run(query)
+        print("Data loaded into Snowflake successfully.")
+    
+    except Exception as e:
+        # Handle the exception
+        print(f"Error loading data into Snowflake: {str(e)}")
+        raise
 
 load_data_into_snowflake_task = PythonOperator(
     task_id="load_data_into_snowflake",
