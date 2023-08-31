@@ -88,7 +88,7 @@ successful_load_task = DummyOperator(
 )
 
 # Define the trigger to dag_2
-task_1 >> task_2 >> task_3 successful_load_task
+task_1 >> task_2 >> task_3 >> successful_load_task
 
 
 
