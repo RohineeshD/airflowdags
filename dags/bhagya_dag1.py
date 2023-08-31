@@ -23,18 +23,19 @@ default_args = {
         'start_date' :days_ago(2)
     }
 
+df =''
+
 def read_data():
     url = r"https://raw.githubusercontent.com/cs109/2014_data/master/countries.csv"
     response = requests.get(url)
     data = response.text
     df = pd.read_csv(StringIO(data))
 
-def load_data():
+def load_data(df1):
  
-    read_data()
     sf_hook = SnowflakeHook(snowflake_conn_id='sf_bhagya')
     conn = sf_hook.get_conn()
-    sf_hook.insert_rows('PLACE_STAGE',df.values.tolist())
+    sf_hook.insert_rows('PLACE_STAGE',df1.values.tolist())
     conn.close(); 
     print("File uploaded");
 
@@ -56,28 +57,26 @@ def get_data():
     else:
         print("No data in the stage table")
 
-dag = DAG(dag_id='bhagya_dag1',
+with DAG(dag_id='bhagya_dag1',
         default_args=default_args,
         schedule_interval='@once', 
         catchup=False
+    ) as dag:
+
+    task1_read_data = PythonOperator(
+        task_id="read_data",
+        python_callable=read_data
     )
 
-task1_read_data = PythonOperator(
-    task_id="read_data",
-    python_callable=read_data,
-    dag=dag
-)
+    task2_load_data = PythonOperator(
+        task_id="load_data",
+        python_callable=load_data
+        op_kwargs={'df1':df}
+    )
 
-task2_load_data = PythonOperator(
-    task_id="load_data",
-    python_callable=load_data,
-    dag=dag
-)
-
-task3_get_data = PythonOperator(
-    task_id="get_data",
-    python_callable=get_data,
-    dag=dag
-)
+    task3_get_data = PythonOperator(
+        task_id="get_data",
+        python_callable=get_data
+    )
 
 task1_read_data >> task2_load_data >> task3_get_data
