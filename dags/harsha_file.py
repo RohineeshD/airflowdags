@@ -41,7 +41,11 @@ dag = DAG(
 
 def check_environment_variable():
     variable_value = Variable.get('harsha_air_env', default_var=None)
-    return variable_value == True
+    if variable_value is not None:
+        return variable_value.lower() == 'true'
+    else:
+        # Stop dag
+        return False
 
 task_1 = ShortCircuitOperator(
     task_id='check_env_variable',
@@ -49,6 +53,7 @@ task_1 = ShortCircuitOperator(
     provide_context=True,
     dag=dag,
 )
+
 
 
 
