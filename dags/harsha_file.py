@@ -37,7 +37,10 @@ task_1 = PythonOperator(
 def load_data_temp_table(**kwargs):
     response_content = kwargs['ti'].xcom_pull(task_ids='read_file_from_url')
     lines = response_content.strip().split('\n')[1:]
+    # snowflake_hook = SnowflakeHook(snowflake_conn_id="snowflake_conn")
     snowflake_hook = SnowflakeHook(snowflake_conn_id="snowflake_conn")
+    snowflake_hook.get_conn()
+
         
     for line in lines:
         values = line.split(',')
