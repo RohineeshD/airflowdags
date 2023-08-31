@@ -34,10 +34,10 @@ task_1 = PythonOperator(
 
 def load_data_temp_table(**kwargs):
 	data = response.text
-        lines = data.strip().split('\n')[1:]
-        snowflake_hook = SnowflakeHook(snowflake_conn_id="snowflake_conn")
+        	lines = data.strip().split('\n')[1:]
+        	snowflake_hook = SnowflakeHook(snowflake_conn_id="snowflake_conn")
         
-        for line in lines:
+       	for line in lines:
             values = line.split(',')
             query = f"""
                 INSERT INTO temp_harsha (Country, Region)
