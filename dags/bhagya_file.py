@@ -119,13 +119,13 @@ task_load_data = PythonOperator(
 )
 
 task_get_sf_data5 = PythonOperator(
-    task_id="Get_Data_From_Snowflake",
+    task_id="Get_Data_From_Snowflake5",
     python_callable=get_sf_data5,
     dag=dag
 )
 
 task_get_sf_data10 = PythonOperator(
-    task_id="Get_Data_From_Snowflake",
+    task_id="Get_Data_From_Snowflake10",
     python_callable=get_sf_data10,
     dag=dag
 )
