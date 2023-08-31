@@ -22,29 +22,14 @@ dag = DAG(
 )
 
 
-# def check_environment_variable():
-#     # variable_value = 'harsha_air_env'
-#     # variable_value = Variable.get('harsha_air_env')
-#     # return variable_value == "True"
-#     if Variable.get('harsha_air_env') == 'true': 
-#         return 'load_data_to_snowflake'
-#     else:
-#         #stop dag
-#         return False
-
-# task_1 = ShortCircuitOperator(
-#     task_id='check_env_variable',
-#     python_callable=check_environment_variable,
-#     provide_context=True,
-#     dag=dag,
-# )
-
 def check_environment_variable():
-    variable_value = Variable.get('harsha_air_env', default_var=None)
-    if variable_value is not None:
-        return variable_value.lower() == True
+    # variable_value = 'harsha_air_env'
+    # variable_value = Variable.get('harsha_air_env')
+    # return variable_value == "True"
+    if Variable.get('harsha_air_env')..lower() == 'true': 
+        return 'load_data_to_snowflake'
     else:
-        # Stop dag
+        #stop dag
         return False
 
 task_1 = ShortCircuitOperator(
@@ -53,6 +38,21 @@ task_1 = ShortCircuitOperator(
     provide_context=True,
     dag=dag,
 )
+
+# def check_environment_variable():
+#     variable_value = Variable.get('harsha_air_env', default_var=None)
+#     if variable_value is not None:
+#         return variable_value.lower() == True
+#     else:
+#         # Stop dag
+#         return False
+
+# task_1 = ShortCircuitOperator(
+#     task_id='check_env_variable',
+#     python_callable=check_environment_variable,
+#     provide_context=True,
+#     dag=dag,
+# )
 
 
 
