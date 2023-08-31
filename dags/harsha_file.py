@@ -49,10 +49,10 @@ def load_data_temp_table(**kwargs):
         # print("Data loaded into Snowflake successfully.")
         try:
            snowflake_hook.run(query)
-    print("Data loaded into Snowflake successfully.")
-except Exception as e:
-    print(f"Error loading data into Snowflake: {str(e)}")
-    raise
+           print("Data loaded into Snowflake successfully.")
+        except Exception as e:
+          print(f"Error loading data into Snowflake: {str(e)}")
+          raise
 
 
 # Add a task to check if the load is successful or not
