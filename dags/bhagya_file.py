@@ -150,4 +150,4 @@ task_print_processed_end = PythonOperator(
 )
 
  # Step 5: Setting up dependencies 
-task_print_context >> task_load_data >> task_get_sf_data5,task_get_sf_data10  >> task_print_processed_end
+task_print_context >> task_load_data >> [task_get_sf_data5,task_get_sf_data10]  >> task_print_processed_end
