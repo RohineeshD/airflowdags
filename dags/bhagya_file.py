@@ -56,7 +56,7 @@ def load_data():
     sf_hook.insert_rows('AIRLINES',df.values.tolist())
     conn.close(); 
     print("File uploaded")
-else:
+  else:
         print("No File loaded")
 
 def get_sf_data():
@@ -64,17 +64,18 @@ def get_sf_data():
     sf_hook = SnowflakeHook(snowflake_conn_id='sf_bhagya')
     conn = sf_hook.get_conn()
     cur = conn.cursor();
-    data = '';
+    data = '';  
 
-    if my_regular_var < 698012498: 
+    query1 = "SELECT * FROM AIRLINES WHERE AVAIL_SEAT_KM_PER_WEEK <= 698012498 LIMIT 5"
+    data = cur.execute(query1)
+    print("Printing 5 records")
+    for record in data:
+        print(record)
 
-        query1 = "SELECT * FROM AIRLINES WHERE AVAIL_SEAT_KM_PER_WEEK <= 698012498 LIMIT 5"
-        data = cur.execute(query1)
-    else:
-        
-        query1 = "SELECT * FROM AIRLINES WHERE AVAIL_SEAT_KM_PER_WEEK > 698012498 LIMIT 10"
-        data = cur.execute(query1)
     
+    query1 = "SELECT * FROM AIRLINES WHERE AVAIL_SEAT_KM_PER_WEEK > 698012498 LIMIT 10"
+    data = cur.execute(query1)
+    print("Printing 10 records")
     for record in data:
         print(record)
         
