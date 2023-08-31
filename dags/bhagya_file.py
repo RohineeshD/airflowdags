@@ -46,7 +46,7 @@ def get_var_regular():
     print("Variable value: ",my_regular_var)
 
 def load_data():
-  if my_regular_var.upper() == TRUE:
+  if my_regular_var == 'True':
     url = r"https://raw.githubusercontent.com/fivethirtyeight/data/master/airline-safety/airline-safety.csv"
     response = requests.get(url)
     data = response.text
