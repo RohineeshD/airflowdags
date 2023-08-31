@@ -69,7 +69,7 @@ with DAG('dag1_vik', default_args=default_args, schedule_interval=None) as dag:
     trigger_dag2_task = TriggerDagRunOperator(
     task_id='trigger_dag2_task',
     trigger_dag_id="dag2_vik", 
-    python_callable=check_condition,  # Condition to trigger DAG2
+    python_callable=check_data_loading,  # Condition to trigger DAG2
     dag=dag,
     )
 
