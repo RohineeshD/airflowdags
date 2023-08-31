@@ -1,5 +1,6 @@
 from airflow import DAG
 from airflow.operators.snowflake import SnowflakeOperator
+from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
 from datetime import datetime
 from airflow.providers.snowflake.transfers.s3_to_snowflake import S3ToSnowflakeOperator
 
