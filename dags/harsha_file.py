@@ -32,9 +32,9 @@ task_1 = PythonOperator(
 )
 
 query = f"""
-                INSERT INTO temp_harsha (Country, Region)
-                VALUES ('{values[0]}', '{values[1]}')
-            """
+    INSERT INTO temp_harsha (Country, Region)
+    VALUES ('{values[0]}', '{values[1]}')
+    """
 
 
 load_data_into_snowflake_task = SnowflakeOperator(
