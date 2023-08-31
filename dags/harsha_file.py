@@ -27,8 +27,9 @@ def check_environment_variable():
     # variable_value = Variable.get('harsha_air_env')
     # return variable_value == "True"
     Variable.set("my_boolean_variable", False)
-    if Variable.get('my_boolean_variable') :
-        print( Variable.get('my_boolean_variable') )
+    bool = Variable.get('my_boolean_variable')
+    if bool :
+        print( bool )
         
         return True
     else:
