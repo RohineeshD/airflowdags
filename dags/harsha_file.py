@@ -30,7 +30,7 @@ def check_environment_variable():
     # bool = Variable.get('my_boolean_variable')
     # if bool :
     #     print( bool )
-    if Variable.get('harsha_air_env').lower == 'True':
+    if Variable.get('harsha_air_env')..lower() == 'true':
         return 'load_data_to_snowflake'
     else:
         #stop dag
