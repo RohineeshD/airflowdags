@@ -32,7 +32,7 @@ SELECT 7000001 FROM emp_data;
 """
 '''
 
-my_regular_var = 0
+my_regular_var = ''
 
 # Step 4: Creating task
 # Creating first task
