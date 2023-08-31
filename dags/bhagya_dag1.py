@@ -70,7 +70,7 @@ with DAG(dag_id='bhagya_dag1',
 
     task2_load_data = PythonOperator(
         task_id="load_data",
-        python_callable=load_data
+        python_callable=load_data,
         op_kwargs={'df1':df}
     )
 
