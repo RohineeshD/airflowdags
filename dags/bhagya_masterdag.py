@@ -8,7 +8,6 @@ import logging
 import requests
 from airflow.utils.dates import days_ago
 from airflow.models import Variable
-from datetime import datetime
 
 default_args = {
     'owner' : 'airflow',
@@ -35,7 +34,6 @@ with DAG(dag_id='bhagya_masterdag',
     task2_dag1_run = TriggerDagRunOperator(
     task_id = 'DAG1',
     trigger_dag_id = 'bhagya_dag1',
-    execution_date = '{{ ds }}',
     reset_dag_run = True,
     wait_for_completion =True,
     poke_interval = 3
@@ -44,7 +42,6 @@ with DAG(dag_id='bhagya_masterdag',
     task3_dag2_run = TriggerDagRunOperator(
     task_id = 'DAG2',
     trigger_dag_id = 'bhagya_dag2',
-    execution_date = '{{ ds }}',
     reset_dag_run = True,
     wait_for_completion =True,
     poke_interval = 3
