@@ -27,6 +27,22 @@ FROM stag_vikas;
 
 """
 
+
+def check_data_loading():
+    
+    snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake_connection')
+    schema = 'af_sch'
+    table_name = 'stag_vikas'
+    connection = snowflake_hook.get_conn()
+    query = "SELECT COUNT(*) FROM main_vikas;"
+    result = snowflake_hook.get_first(query)
+    
+    if result[0] > 0:
+        print("data loading is Successful")
+    else:
+        print("Data not loaded")
+
+
 with DAG('dag2_vik', default_args=default_args, schedule_interval=None) as dag:
     
        
@@ -40,6 +56,12 @@ with DAG('dag2_vik', default_args=default_args, schedule_interval=None) as dag:
     dag=dag,
     )
 
+    check_data_loading = PythonOperator(
+    task_id='check_data_loading',
+    python_callable=check_data_loading,
+    dag=dag,
+    )
+
 
 # Setting up task dependencies 
-stag_to_main
+stag_to_main  >>  check_data_loading
