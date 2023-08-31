@@ -38,7 +38,7 @@ def load_data_temp_table(**kwargs):
     snowflake_hook = SnowflakeHook(snowflake_conn_id="snowflake_conn")
         
     	for line in lines:
-        values = line.split(',')
+            values = line.split(',')
     query = f"""
     INSERT INTO temp_harsha (Country, Region)
     VALUES ('{values[0]}', '{values[1]}')
