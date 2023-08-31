@@ -41,17 +41,17 @@ load_data_task = S3ToSnowflakeOperator(
     dag=dag,
 )
 
-# Define a Snowflake operator to run additional SQL after data load if needed
-# run_additional_sql = SnowflakeOperator(
-#     task_id='run_additional_sql',
-#     sql="INSERT INTO YOUR_TARGET_TABLE SELECT * FROM {} ".format(table_name),  # Modify the SQL as needed
-#     snowflake_conn_id=snowflake_conn_id,
-#     autocommit=True,
-#     dag=dag,
-# )
+Define a Snowflake operator to run additional SQL after data load if needed
+run_additional_sql = SnowflakeOperator(
+    task_id='run_additional_sql',
+    sql="INSERT INTO YOUR_TARGET_TABLE SELECT * FROM {} ".format(table_name),  # Modify the SQL as needed
+    snowflake_conn_id=snowflake_conn_id,
+    autocommit=True,
+    dag=dag,
+)
 
 # # Define the task dependencies
-# load_data_task >> run_additional_sql
+load_data_task >> run_additional_sql
 
 # # Define DAG 2 (dag_2_h) here, replace with your actual DAG definition
 # dag_2 = DAG(
