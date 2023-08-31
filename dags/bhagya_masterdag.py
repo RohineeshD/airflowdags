@@ -8,6 +8,7 @@ import logging
 import requests
 from airflow.utils.dates import days_ago
 from airflow.models import Variable
+from datetime import datetime
 
 default_args = {
     'owner' : 'airflow',
