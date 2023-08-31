@@ -58,9 +58,9 @@ check_load_success = SnowflakeOperator(
     task_id='check_load_success',
     sql="SELECT COUNT(*) FROM temp_harsha",  
     snowflake_conn_id="snowflake_conn",  
-    mode='reschedule',
-    timeout=3600,
-    poke_interval=60,
+    # mode='reschedule',
+    # timeout=3600,
+    # poke_interval=60,
     dag=dag_1,
 )
 
