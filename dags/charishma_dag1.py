@@ -74,7 +74,12 @@ def load_data_to_main(**kwargs):
     
     try:
         
-        insert_query = "INSERT INTO main_table SELECT * FROM stage_table;"
+        # insert_query = "INSERT INTO main_table SELECT * FROM stage_table;"
+        insert_query = """ INSERT INTO main_table  SELECT *FROM stage_table  WHERE timestamp_column = (
+        SELECT MAX(timestamp_column)
+        FROM stage_table
+    );
+"""
         cursor = connection.cursor()
         cursor.execute(insert_query)
         connection.commit()
