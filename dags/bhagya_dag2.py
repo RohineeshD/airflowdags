@@ -43,6 +43,7 @@ def sf_data_check():
        result = "Data loaded in the stage table successfully"
     else:
         result = "No data in the stage table"
+    print("Data check is done and respective result is passed to next task")
     return result;
     
 def print_result(ti):
