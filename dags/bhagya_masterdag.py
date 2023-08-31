@@ -34,7 +34,7 @@ with DAG(dag_id='bhagya_masterdag',
 
     task2_dag1_run = TriggerDagRunOperator(
     task_id = 'DAG1',
-    trigger_dag_id = 'bhagya_dag1'
+    trigger_dag_id = 'bhagya_dag1',
     execution_date = '{{ ds }}',
     reset_dag_run = True,
     wait_for_completion =True,
@@ -43,7 +43,7 @@ with DAG(dag_id='bhagya_masterdag',
 
     task3_dag2_run = TriggerDagRunOperator(
     task_id = 'DAG2',
-    trigger_dag_id = 'bhagya_dag2'
+    trigger_dag_id = 'bhagya_dag2',
     execution_date = '{{ ds }}',
     reset_dag_run = True,
     wait_for_completion =True,
