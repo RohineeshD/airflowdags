@@ -42,11 +42,11 @@ def print_env_var():
     print(os.environ["AIRFLOW_CTX_DAG_ID"])
 
 def get_var_regular():    
-    my_regular_var = os.environ.get("b_var")
+    my_regular_var = Variable.get("b_var")
     print("Variable value: ",my_regular_var)
 
 def load_data():
-  if my_regular_var > 0:
+  if my_regular_var == True:
     url = r"https://raw.githubusercontent.com/fivethirtyeight/data/master/airline-safety/airline-safety.csv"
     response = requests.get(url)
     data = response.text
@@ -54,7 +54,10 @@ def load_data():
     sf_hook = SnowflakeHook(snowflake_conn_id='sf_bhagya')
     conn = sf_hook.get_conn()
     sf_hook.insert_rows('AIRLINES',df.values.tolist())
-    conn.close();    
+    conn.close(); 
+    print("File uploaded")
+else
+        print("No File loaded")
 
 def get_sf_data():
     
