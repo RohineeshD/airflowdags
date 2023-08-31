@@ -1,7 +1,7 @@
 import requests
 from airflow import DAG
-from airflow.models import Variable
 from airflow.operators.python_operator import PythonOperator
+from airflow.operators.dummy_operator import DummyOperator
 from datetime import datetime
 from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
 
@@ -22,7 +22,7 @@ def read_file_from_url(**kwargs):
     url = 'https://raw.githubusercontent.com/cs109/2014_data/master/countries.csv'
     response = requests.get(url)
     if response.status_code == 200:
-        return response.text, response.status_code
+        return response.text
     else:
         raise Exception(f"Failed to retrieve data from URL: {url}. Status code: {response.status_code}")
 
@@ -34,7 +34,7 @@ task_1 = PythonOperator(
 )
 
 def load_data_temp_table(**kwargs):
-    response_content, response_status_code = kwargs['ti'].xcom_pull(task_ids='read_file_from_url')
+    response_content = kwargs['ti'].xcom_pull(task_ids='read_file_from_url')
     lines = response_content.strip().split('\n')[1:]
     snowflake_hook = SnowflakeHook(snowflake_conn_id="snowflake_conn")
         
@@ -46,8 +46,16 @@ def load_data_temp_table(**kwargs):
             """
         snowflake_hook.run(query)
         print("Data loaded into Snowflake successfully.")
+
+# Add a task to check if the load is successful or not
+def check_load_success(**kwargs):
+    # Assuming you have some criteria to check the success of the load
+    # For example, check if records were inserted successfully
+    successful_load = True  # Replace with your own logic
+    if successful_load:
+        return 'success'
     else:
-        raise Exception(f"Failed to fetch data from URL. Status code: {response_status_code}")
+        return 'failure'
 
 task_2 = PythonOperator(
     task_id='load_data_stage_table',
@@ -56,7 +64,32 @@ task_2 = PythonOperator(
     dag=dag,
 )
 
-task_1 >> task_2
+task_3 = PythonOperator(
+    task_id='check_load_success',
+    python_callable=check_load_success,
+    provide_context=True,
+    dag=dag,
+)
+
+# Define DAG 2 (dag_2) here, replace with your actual DAG definition
+dag_2 = DAG(
+    'dag_2_h',
+    default_args=default_args,
+    schedule_interval=None,
+    catchup=False,
+)
+
+# Define tasks in DAG 2 here
+
+# Dummy task to represent successful load
+successful_load_task = DummyOperator(
+    task_id='successful_load',
+    dag=dag_2,
+)
+
+# Define the trigger to dag_2
+check_load >> successful_load_task
+
 
 
 
