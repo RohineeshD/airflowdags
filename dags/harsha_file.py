@@ -1,10 +1,7 @@
-import requests
 from airflow import DAG
-from airflow.operators.python_operator import PythonOperator
-from airflow.operators.dummy_operator import DummyOperator
-from airflow.operators.trigger_dagrun import TriggerDagRunOperator
+from airflow.operators.snowflake import SnowflakeOperator
 from datetime import datetime
-from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
+from airflow.providers.snowflake.transfers.s3_to_snowflake import S3ToSnowflakeOperator
 
 # Default arguments for the DAG
 default_args = {
@@ -19,88 +16,159 @@ dag = DAG(
     catchup=False,
 )
 
-def read_file_from_url(**kwargs):
-    url = 'https://raw.githubusercontent.com/cs109/2014_data/master/countries.csv'
-    response = requests.get(url)
-    if response.status_code == 200:
-        return response.text
-    else:
-        raise Exception(f"Failed to retrieve data from URL: {url}. Status code: {response.status_code}")
+# Snowflake connection parameters
+snowflake_conn_id = "snowflake_conn"  # Update with your Snowflake connection ID
+database_name = "exusia_db"  # Update with your Snowflake database name
+warehouse_name = "COMPUTE_WH"  # Update with your Snowflake warehouse name
+# stage_name = "YOUR_STAGE_NAME"  # Update with your Snowflake stage name
+table_name = "temp_harsha"  # Update with your Snowflake table name
 
-task_1 = PythonOperator(
-    task_id='read_file_from_url',
-    python_callable=read_file_from_url,
-    provide_context=True,
-    dag=dag,
-)
-
-def load_data_temp_table(**kwargs):
-    response_content = kwargs['ti'].xcom_pull(task_ids='read_file_from_url')
-    lines = response_content.strip().split('\n')[1:]
-    # snowflake_hook = SnowflakeHook(snowflake_conn_id="snowflake_conn")
-    snowflake_hook = SnowflakeHook(snowflake_conn_id="snowflake_conn")
-    snowflake_hook.get_conn()
-
-        
-    for line in lines:
-        values = line.split(',')
-        query = f"""
-            INSERT INTO temp_harsha (Country, Region)
-            VALUES ('{values[0]}', '{values[1]}')
-            """
-        # snowflake_hook.run(query)
-        # print("Data loaded into Snowflake successfully.")
-        try:
-           snowflake_hook.run(query)
-           print("Data loaded into Snowflake successfully.")
-        except Exception as e:
-          print(f"Error loading data into Snowflake: {str(e)}")
-          raise
-
-
-# Add a task to check if the load is successful or not
-def check_load_success(**kwargs):
-    # Assuming you have some criteria to check the success of the load
-    # For example, check if records were inserted successfully
-    successful_load = True  # Replace with your own logic
-    if successful_load:
-        return 'success'
-    else:
-        return 'failure'
-
-task_2 = PythonOperator(
+# Load data from URL into Snowflake stage
+load_data_task = S3ToSnowflakeOperator(
     task_id='load_data_stage_table',
-    python_callable=load_data_temp_table,
-    provide_context=True,
+    schema='exusia_schema',  # Update with your schema name
+    table=table_name,
+    # stage=stage_name,
+    # file_format='YOUR_FILE_FORMAT',  # Update with your Snowflake file format
+    source_s3_key='https://raw.githubusercontent.com/cs109/2014_data/master/countries.csv',
+    source_format='CSV',
+    snowflake_conn_id=snowflake_conn_id,
+    copy_options=["SKIP_HEADER=1"],  # Skip the header line in the CSV
+    autocommit=True,
     dag=dag,
 )
 
-task_3 = PythonOperator(
-    task_id='check_load_success',
-    python_callable=check_load_success,
-    provide_context=True,
-    dag=dag,
-)
+# Define a Snowflake operator to run additional SQL after data load if needed
+# run_additional_sql = SnowflakeOperator(
+#     task_id='run_additional_sql',
+#     sql="INSERT INTO YOUR_TARGET_TABLE SELECT * FROM {} ".format(table_name),  # Modify the SQL as needed
+#     snowflake_conn_id=snowflake_conn_id,
+#     autocommit=True,
+#     dag=dag,
+# )
 
-# Define DAG 2 (dag_2_h) here, replace with your actual DAG definition
-dag_2 = DAG(
-    'dag_2_h',
-    default_args=default_args,
-    schedule_interval=None,
-    catchup=False,
-)
+# # Define the task dependencies
+# load_data_task >> run_additional_sql
+
+# # Define DAG 2 (dag_2_h) here, replace with your actual DAG definition
+# dag_2 = DAG(
+#     'dag_2_h',
+#     default_args=default_args,
+#     schedule_interval=None,
+#     catchup=False,
+# )
 
 # Define tasks in DAG 2 here
 
-# TriggerDagRunOperator to trigger dag_2_h
-trigger_dag_2 = TriggerDagRunOperator(
-    task_id='trigger_dag_2',
-    trigger_dag_id="dag_2_h",  # Trigger dag_2_h
-    dag=dag,
-)
-
 # Define the task dependencies in dag_1_h
-task_1 >> task_2 >> task_3 >> trigger_dag_2
+# ...
+
+# Ensure that your Snowflake connection parameters are correctly configured
+
+
+# import requests
+# from airflow import DAG
+# from airflow.operators.python_operator import PythonOperator
+# from airflow.operators.dummy_operator import DummyOperator
+# from airflow.operators.trigger_dagrun import TriggerDagRunOperator
+# from datetime import datetime
+# from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
+
+# # Default arguments for the DAG
+# default_args = {
+#     'start_date': datetime(2023, 8, 31),
+#     'catchup': False,
+# }
+
+# dag = DAG(
+#     'dag_1_h',
+#     default_args=default_args,
+#     schedule_interval=None,
+#     catchup=False,
+# )
+
+# def read_file_from_url(**kwargs):
+#     url = 'https://raw.githubusercontent.com/cs109/2014_data/master/countries.csv'
+#     response = requests.get(url)
+#     if response.status_code == 200:
+#         return response.text
+#     else:
+#         raise Exception(f"Failed to retrieve data from URL: {url}. Status code: {response.status_code}")
+
+# task_1 = PythonOperator(
+#     task_id='read_file_from_url',
+#     python_callable=read_file_from_url,
+#     provide_context=True,
+#     dag=dag,
+# )
+
+# def load_data_temp_table(**kwargs):
+#     response_content = kwargs['ti'].xcom_pull(task_ids='read_file_from_url')
+#     lines = response_content.strip().split('\n')[1:]
+#     # snowflake_hook = SnowflakeHook(snowflake_conn_id="snowflake_conn")
+#     snowflake_hook = SnowflakeHook(snowflake_conn_id="snowflake_conn")
+#     snowflake_hook.get_conn()
+
+        
+#     for line in lines:
+#         values = line.split(',')
+#         query = f"""
+#             INSERT INTO temp_harsha (Country, Region)
+#             VALUES ('{values[0]}', '{values[1]}')
+#             """
+#         # snowflake_hook.run(query)
+#         # print("Data loaded into Snowflake successfully.")
+#         try:
+#            snowflake_hook.run(query)
+#            print("Data loaded into Snowflake successfully.")
+#         except Exception as e:
+#           print(f"Error loading data into Snowflake: {str(e)}")
+#           raise
+
+
+# # Add a task to check if the load is successful or not
+# def check_load_success(**kwargs):
+#     # Assuming you have some criteria to check the success of the load
+#     # For example, check if records were inserted successfully
+#     successful_load = True  # Replace with your own logic
+#     if successful_load:
+#         return 'success'
+#     else:
+#         return 'failure'
+
+# task_2 = PythonOperator(
+#     task_id='load_data_stage_table',
+#     python_callable=load_data_temp_table,
+#     provide_context=True,
+#     dag=dag,
+# )
+
+# task_3 = PythonOperator(
+#     task_id='check_load_success',
+#     python_callable=check_load_success,
+#     provide_context=True,
+#     dag=dag,
+# )
+
+# # Define DAG 2 (dag_2_h) here, replace with your actual DAG definition
+# dag_2 = DAG(
+#     'dag_2_h',
+#     default_args=default_args,
+#     schedule_interval=None,
+#     catchup=False,
+# )
+
+# # Define tasks in DAG 2 here
+
+# # TriggerDagRunOperator to trigger dag_2_h
+# trigger_dag_2 = TriggerDagRunOperator(
+#     task_id='trigger_dag_2',
+#     trigger_dag_id="dag_2_h",  # Trigger dag_2_h
+#     dag=dag,
+# )
+
+# # Define the task dependencies in dag_1_h
+# task_1 >> task_2 >> task_3 >> trigger_dag_2
 
 
 
