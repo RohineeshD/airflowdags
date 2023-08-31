@@ -2,6 +2,7 @@ import requests
 from airflow import DAG
 from airflow.operators.python_operator import PythonOperator
 from airflow.operators.dummy_operator import DummyOperator
+from airflow.operators.trigger_dagrun import TriggerDagRunOperator
 from datetime import datetime
 from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
 
@@ -71,7 +72,7 @@ task_3 = PythonOperator(
     dag=dag,
 )
 
-# Define DAG 2 (dag_2) here, replace with your actual DAG definition
+# Define DAG 2 (dag_2_h) here, replace with your actual DAG definition
 dag_2 = DAG(
     'dag_2_h',
     default_args=default_args,
@@ -81,14 +82,15 @@ dag_2 = DAG(
 
 # Define tasks in DAG 2 here
 
-# Dummy task to represent successful load
-successful_load_task = DummyOperator(
-    task_id='successful_load',
-    dag=dag_2,
+# TriggerDagRunOperator to trigger dag_2_h
+trigger_dag_2 = TriggerDagRunOperator(
+    task_id='trigger_dag_2',
+    trigger_dag_id="dag_2_h",  # Trigger dag_2_h
+    dag=dag,
 )
 
-# Define the trigger to dag_2
-task_1 >> task_2 >> task_3 >> successful_load_task
+# Define the task dependencies in dag_1_h
+task_1 >> task_2 >> task_3 >> trigger_dag_2
 
 
 
