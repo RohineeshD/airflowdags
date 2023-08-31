@@ -39,7 +39,7 @@ def load_data_into_snowflake(**kwargs):
     for line in response_text.strip().split('\n')[1:]:
         values = line.split(',')
         query = f"""
-            INSERT INTO temp_harsha (Country, Region)
+            INSERT INTO exusi_schema.temp_harsha (Country, Region)
             VALUES ('{values[0]}', '{values[1]}')
         """
         
