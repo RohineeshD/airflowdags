@@ -26,7 +26,7 @@ FROM stag_vikas;
 
 """
 
-with DAG('dag1_vik', default_args=default_args, schedule_interval=None) as dag:
+with DAG('dag2_vik', default_args=default_args, schedule_interval=None) as dag:
     
        
     stag_to_main = SnowflakeOperator(
