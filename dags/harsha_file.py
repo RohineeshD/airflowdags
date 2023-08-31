@@ -41,7 +41,7 @@ load_data_task = S3ToSnowflakeOperator(
     dag=dag,
 )
 
-Define a Snowflake operator to run additional SQL after data load if needed
+# Define a Snowflake operator to run additional SQL after data load if needed
 run_additional_sql = SnowflakeOperator(
     task_id='run_additional_sql',
     sql="INSERT INTO temp_harsha SELECT * FROM {} ".format(table_name),  # Modify the SQL as needed
