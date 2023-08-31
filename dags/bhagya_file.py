@@ -60,7 +60,7 @@ def load_data():
   else:
         print("No File loaded")
 
-def get_sf_data():
+def get_sf_data5():
     
     sf_hook = SnowflakeHook(snowflake_conn_id='sf_bhagya')
     conn = sf_hook.get_conn()
@@ -72,8 +72,17 @@ def get_sf_data():
     print("Printing 5 records")
     for record in data:
         print(record)
+   
+    conn.close();
 
+def get_sf_data10():
     
+    sf_hook = SnowflakeHook(snowflake_conn_id='sf_bhagya')
+    conn = sf_hook.get_conn()
+    cur = conn.cursor();
+    data = '';  
+
+   
     query1 = "SELECT * FROM AIRLINES WHERE AVAIL_SEAT_KM_PER_WEEK > 698012498 LIMIT 10"
     data = cur.execute(query1)
     print("Printing 10 records")
@@ -109,11 +118,18 @@ task_load_data = PythonOperator(
     dag=dag
 )
 
-task_get_sf_data = PythonOperator(
+task_get_sf_data5 = PythonOperator(
     task_id="Get_Data_From_Snowflake",
-    python_callable=get_sf_data,
+    python_callable=get_sf_data5,
     dag=dag
 )
+
+task_get_sf_data10 = PythonOperator(
+    task_id="Get_Data_From_Snowflake",
+    python_callable=get_sf_data10,
+    dag=dag
+)
+
 '''
 # Create a SnowflakeOperator task
 task_snowflake_task = SnowflakeOperator(
@@ -134,4 +150,4 @@ task_print_processed_end = PythonOperator(
 )
 
  # Step 5: Setting up dependencies 
-task_print_context >> task_load_data >> task_get_sf_data  >> task_print_processed_end
+task_print_context >> task_load_data >> task_get_sf_data5,task_get_sf_data10  >> task_print_processed_end
