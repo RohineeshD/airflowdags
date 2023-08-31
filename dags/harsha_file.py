@@ -28,6 +28,7 @@ def check_environment_variable():
     # return variable_value == "True"
     Variable.set("my_boolean_variable", True)
     if Variable.get('my_boolean_variable') :
+        print( Variable.get('my_boolean_variable') )
         
         return True
     else:
