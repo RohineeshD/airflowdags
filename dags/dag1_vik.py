@@ -36,7 +36,19 @@ def read_and_load_data(**kwargs):
     snowflake_hook.insert_rows(table_name, df.values.tolist())
     print("Inserting data into staging table")
 
+def check_data_loading():
     
+    snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake_connection')
+    schema = 'af_sch'
+    table_name = 'stag_vikas'
+    connection = snowflake_hook.get_conn()
+    query = "SELECT COUNT(*) FROM stag_vikas;"
+    result = snowflake_hook.get_first(query)
+    
+    if result[0] > 0:
+        print("Data loaded successfully")
+    else:
+        print("Data not loaded")
 
 # def load_data_task(**kwargs):
 #     ti = kwargs['ti']
@@ -64,6 +76,12 @@ with DAG('dag1_vik', default_args=default_args, schedule_interval=None) as dag:
     dag=dag
     )
 
+    check_data_loading = PythonOperator(
+    task_id='check_data_loading',
+    python_callable=check_data_loading,
+    dag=dag,
+    )
+
     # load_data_task = PythonOperator(
     # task_id='load_data_task',
     # python_callable=load_data_task,
@@ -72,4 +90,4 @@ with DAG('dag1_vik', default_args=default_args, schedule_interval=None) as dag:
     # )
 
 # Setting up task dependencies 
-read_and_load_data
+read_and_load_data  >>  check_data_loading
