@@ -34,7 +34,7 @@ def read_data():
 
 
 def load_data(ti):
-    df1 = ti.xcoms_pull(task_ids='read_data')
+    df1 = ti.xcom_pull(task_ids='read_data')
     sf_hook = SnowflakeHook(snowflake_conn_id='sf_bhagya')
     conn = sf_hook.get_conn()
     sf_hook.insert_rows('PLACE_STAGE',df1.values.tolist())
