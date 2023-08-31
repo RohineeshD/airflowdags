@@ -30,9 +30,11 @@ def read_data():
     response = requests.get(url)
     data = response.text
     df = pd.read_csv(StringIO(data))
+    return df;
 
-def load_data(df1):
- 
+
+def load_data(ti):
+    df1 = ti.xcoms_pull(task_ids='read_data')
     sf_hook = SnowflakeHook(snowflake_conn_id='sf_bhagya')
     conn = sf_hook.get_conn()
     sf_hook.insert_rows('PLACE_STAGE',df1.values.tolist())
@@ -70,8 +72,7 @@ with DAG(dag_id='bhagya_dag1',
 
     task2_load_data = PythonOperator(
         task_id="load_data",
-        python_callable=load_data,
-        op_kwargs={'df1':df}
+        python_callable=load_data
     )
 
     task3_get_data = PythonOperator(
