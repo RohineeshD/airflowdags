@@ -35,7 +35,7 @@ task_1 = PythonOperator(
 def load_data_temp_table(**kwargs):
 	data = response.text
 	lines = data.strip().split('\n')[1:]
-        snowflake_hook = SnowflakeHook(snowflake_conn_id="snowflake_conn")
+	snowflake_hook = SnowflakeHook(snowflake_conn_id="snowflake_conn")
         
        	for line in lines:
             values = line.split(',')
