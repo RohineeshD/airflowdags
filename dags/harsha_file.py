@@ -42,15 +42,15 @@ read_data_task = PythonOperator(
 
 # Task 2: Load data into Snowflake using SnowflakeHook
 def load_data():
-    snowflake_hook = SnowflakeHook(snowflake_conn_id='snow_harsha') 
+    snowflake_hook = SnowflakeHook(snowflake_conn_id='snow_sc') 
     connection = snowflake_hook.get_conn()
     cursor = connection.cursor()
 
     try:
        
-        database_name = "exusia_db"
-        schema_name = "exusia_schema"
-        table_name = "temp_harsha"
+        database_name = "demo"
+        schema_name = "sc1"
+        table_name = "stage_harsha"
 
         df = pd.read_csv(io.StringIO(data))  
         records = df.values.tolist()
