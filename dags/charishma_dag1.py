@@ -1,3 +1,117 @@
+# from airflow import DAG
+# from airflow.operators.python import PythonOperator, BranchPythonOperator
+# from airflow.operators.dummy import DummyOperator 
+# from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
+# from airflow.operators.trigger_dagrun import TriggerDagRunOperator
+# from datetime import datetime, timedelta
+# import requests
+# from io import StringIO
+# import pandas as pd
+# import logging
+
+# # Snowflake connection ID
+# SNOWFLAKE_CONN_ID = 'snow_sc'
+
+# default_args = {
+#     'start_date': datetime(2023, 8, 25),
+#     'retries': 1,
+#     'catchup': True, 
+# }
+
+# dag_args = {
+#     'dag_id': 'charishma_dags',
+#     'schedule_interval': None,
+#     'default_args': default_args,
+#     'catchup': False,  
+# }
+# dag = DAG(**dag_args)
+
+
+
+# def read_file_from_url():
+#     url = "https://raw.githubusercontent.com/cs109/2014_data/master/countries.csv"
+#     response = requests.get(url)
+#     return response.text
+
+# def load_data_to_staging(data):
+#     df = pd.read_csv(StringIO(data))
+#     snowflake_hook = SnowflakeHook(snowflake_conn_id=SNOWFLAKE_CONN_ID)
+#     table_name = 'demo.sc1.stage_table'
+#     snowflake_hook.insert_rows(table_name, df.values.tolist(), df.columns.tolist())
+
+# def check_load_success(**kwargs):
+#     return True  # Placeholder for your actual success condition
+
+# with dag:
+#     read_file_task = PythonOperator(
+#         task_id='read_file_task',
+#         python_callable=read_file_from_url,
+#     )
+
+#     load_to_staging_task = PythonOperator(
+#         task_id='load_to_staging_task',
+#         python_callable=load_data_to_staging,
+#         op_args=[read_file_task.output],
+#     )
+
+#     check_load_task = PythonOperator(
+#         task_id='check_load_task',
+#         python_callable=check_load_success,
+#     )
+
+#     trigger_dag2_task = TriggerDagRunOperator(
+#         task_id='trigger_dag2_task',
+#         trigger_dag_id='charishma_dag2',
+#     )
+
+#     read_file_task >> load_to_staging_task >> check_load_task >> trigger_dag2_task
+
+# dag2 = DAG(dag_id='charishma_dag2', default_args=default_args, schedule_interval=None, catchup=False)
+
+# def load_data_to_main(**kwargs):
+#     snowflake_hook = SnowflakeHook(snowflake_conn_id=SNOWFLAKE_CONN_ID)
+#     connection = snowflake_hook.get_conn()
+    
+#     try:
+        
+#         insert_query = "INSERT INTO main_table SELECT * FROM stage_table;"
+#         cursor = connection.cursor()
+#         cursor.execute(insert_query)
+#         connection.commit()
+#         cursor.close()
+#         connection.close()
+#         return True
+#     except Exception as e:
+#         logging.error(f"Error loading data to main table: {str(e)}")
+#         return False
+# def check_load_main_success(**kwargs):
+  
+#     return True  
+
+
+# def print_status(**kwargs):
+#     logging.info("Process Completed")
+
+# with dag2:
+#     load_main_task = PythonOperator(
+#         task_id='load_main_task',
+#         python_callable=load_data_to_main,
+#     )
+
+#     check_load_main_task = PythonOperator(
+#         task_id='check_load_main_task',
+#         python_callable=check_load_main_success,
+#     )
+
+#     print_status_task = PythonOperator(
+#         task_id='print_status_task',
+#         python_callable=print_status,
+#     )
+
+#     load_main_task >> check_load_main_task >> print_status_task
+
+
+
 from airflow import DAG
 from airflow.operators.python import PythonOperator, BranchPythonOperator
 from airflow.operators.dummy import DummyOperator 
@@ -26,8 +140,6 @@ dag_args = {
 }
 dag = DAG(**dag_args)
 
-
-
 def read_file_from_url():
     url = "https://raw.githubusercontent.com/cs109/2014_data/master/countries.csv"
     response = requests.get(url)
@@ -40,7 +152,8 @@ def load_data_to_staging(data):
     snowflake_hook.insert_rows(table_name, df.values.tolist(), df.columns.tolist())
 
 def check_load_success(**kwargs):
-    return True  # Placeholder for your actual success condition
+    print("Check Load Success Task: Data load successfully completed.")
+    return True  
 
 with dag:
     read_file_task = PythonOperator(
@@ -73,23 +186,24 @@ def load_data_to_main(**kwargs):
     connection = snowflake_hook.get_conn()
     
     try:
-        
         insert_query = "INSERT INTO main_table SELECT * FROM stage_table;"
         cursor = connection.cursor()
         cursor.execute(insert_query)
         connection.commit()
         cursor.close()
         connection.close()
+        print("Data loaded to main table successfully.")
         return True
     except Exception as e:
         logging.error(f"Error loading data to main table: {str(e)}")
         return False
+
 def check_load_main_success(**kwargs):
-  
+    print("Data load to main table was successful.")
     return True  
 
-
 def print_status(**kwargs):
+    print("Process Completed")
     logging.info("Process Completed")
 
 with dag2:
@@ -109,6 +223,7 @@ with dag2:
     )
 
     load_main_task >> check_load_main_task >> print_status_task
+
 
 
 
