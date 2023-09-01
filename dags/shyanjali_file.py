@@ -5,12 +5,54 @@ from datetime import datetime
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
+from io import StringIO
+import pandas as pd
+import requests
+
+default_args = dict(
+    start_date= datetime(2021, 1, 1),
+    owner="airflow",
+    retries=1,
+)
+
+dag_args = dict(
+    dag_id="shyanjali_send_email",
+    schedule_interval='@once',
+    default_args=default_args,
+    catchup=False,
+)
+
+def fetch_csv_and_upload(**kwargs):
+    try:
+        url = "https://raw.githubusercontent.com/cs109/2014_data/master/countries.csv"
+        response = requests.get(url)
+        data = response.text
+        df = pd.read_csv(StringIO(data))
+        # Upload DataFrame to Snowflake
+        snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake_li')
+        # Replace with your Snowflake schema and table name
+        schema = 'PUBLIC'
+        table_name = 'STAGING_TABLE'
+        connection = snowflake_hook.get_conn()
+        snowflake_hook.insert_rows(table_name, df.values.tolist())
+        connection.close()
+        return True
+    except Exception as e:
+        print(f"An error occurred: {str(e)}")
+        return False
+
 
 # Specify the connection ID you want to retrieve details for
 connection_id = 'EMAIL_LI'
 
 # Function to send an email using SMTP connection details
-def send_email():
+def send_email(**kwargs):
+
+    ti = kwargs['ti']  # Get the TaskInstance
+    status = ti.xcom_pull(task_ids='load_csv_into_snowflake')  # Retrieve the status from Task 1 XCom
+    email_content = f"CSV Load Status: {status}"
+
     # Use BaseHook to get the connection
     connection = BaseHook.get_connection(connection_id)
 
@@ -24,7 +66,7 @@ def send_email():
 
     # Email details
     email_subject = "Airflow Email Notification"
-    email_body = "This is a test 2 email from Airflow using a connection."
+    email_body = "This is a test  email from Airflow using a connection." + email_content
 
     # Create the email message
     message = MIMEMultipart()
@@ -45,26 +87,33 @@ def send_email():
         print(f"Failed to send email: {str(e)}")
 
 # Define your DAG
-default_args = {
-    'owner': 'airflow',
-    'depends_on_past': False,
-    'start_date': datetime(2023, 9, 1),
-    'retries': 1,
-}
+# default_args = {
+#     'owner': 'airflow',
+#     'depends_on_past': False,
+#     'start_date': datetime(2023, 9, 1),
+#     'retries': 1,
+# }
 
-dag = DAG(
-    'shyanjali_send_email',
-    default_args=default_args,
-    schedule_interval='@once',  # Set your desired schedule interval
-    catchup=False,
-)
+# dag = DAG(
+#     'shyanjali_send_email',
+#     default_args=default_args,
+#     schedule_interval='@once',  # Set your desired schedule interval
+#     catchup=False,
+# )
 
 # Task to send the email using the defined function
+with DAG(**dag_args) as dag:
+    # first task declaration
+    fetch_and_upload = PythonOperator(
+        task_id='fetch_and_upload',
+        python_callable=fetch_csv_and_upload,
+        provide_context=True,
+        op_kwargs={},# This is required to pass context to the function
+    )
 send_email_task = PythonOperator(
     task_id='send_email_task',
     python_callable=send_email,
     dag=dag,
 )
 
-if __name__ == "__main__":
-    dag.cli()
+fetch_and_upload >>send_email_task
