@@ -1,51 +1,64 @@
 from airflow import DAG
-from airflow.providers.http.operators.http_download import HttpDownloadOperator
-from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
+from airflow.operators.python_operator import PythonOperator
 from airflow.utils.dates import days_ago
+import requests
+import snowflake.connector
+import json
 
 # Define your Airflow DAG
-default_args = {
-    'owner': 'airflow',
-    'start_date': days_ago(1),
-    'catchup': False,
-    'provide_context': True,
-}
-
 dag = DAG(
     'harsha_dag_1',
-    default_args=default_args,
-    schedule_interval=None,
+    default_args={
+        'owner': 'airflow',
+        'start_date': days_ago(1),
+    },
+    schedule_interval=None,  # Set your desired schedule interval
 )
 
-# Define the HttpDownloadOperator to fetch data from the URL
-download_data_task = HttpDownloadOperator(
+# Define a Python function to download data from the URL
+def download_data():
+    url = 'https://raw.githubusercontent.com/cs109/2014_data/master/countries.csv'
+    response = requests.get(url)
+    with open('/tmp/countries.csv', 'wb') as file:
+        file.write(response.content)
+
+# Define a Python function to load data into Snowflake
+def load_data_to_snowflake():
+    # Load Snowflake credentials from creds.json
+    with open('creds.json', 'r') as file:
+        snowflake_config = json.load(file)
+
+    # Connect to Snowflake
+    conn = snowflake.connector.connect(**snowflake_config)
+
+    # Load data into Snowflake
+    cursor = conn.cursor()
+    cursor.execute("""
+    COPY INTO stage_harsha
+    FROM @/tmp/countries.csv
+    FILE_FORMAT = (TYPE = CSV SKIP_HEADER = 1);
+    """)
+    cursor.close()
+
+    # Close Snowflake connection
+    conn.close()
+
+# Define Python operators to execute the functions
+download_task = PythonOperator(
     task_id='download_data',
-    method='GET',
-    endpoint='https://raw.githubusercontent.com/cs109/2014_data/master/countries.csv',
-    save_to='/tmp/countries.csv',  # Local file path to save the downloaded data
-    headers={},  # Optional headers
+    python_callable=download_data,
     dag=dag,
 )
 
-# Define the SnowflakeOperator to load data from the local file into Snowflake
-load_data_task = SnowflakeOperator(
+load_task = PythonOperator(
     task_id='load_data_to_snowflake',
-    sql="""
-    COPY INTO your_table
-    FROM 'file:///tmp/countries.csv'
-    FILE_FORMAT = (TYPE = CSV SKIP_HEADER = 1);
-    """,
-    snowflake_conn_id='snowflake_conn',  # Replace with your Snowflake connection ID
-    warehouse='COMPUTE_WH',  # Replace with your Snowflake warehouse
-    database='exusia_db',  # Replace with your Snowflake database
-    schema='exusia_schema',  # Replace with your Snowflake schema
-    role='accountadmin',  # Replace with your Snowflake role
-    autocommit=True,  # Automatically commit the transaction
+    python_callable=load_data_to_snowflake,
     dag=dag,
 )
 
 # Set the task dependencies
-download_data_task >> load_data_task
+download_task >> load_task
+
 
 
 # from airflow import DAG
