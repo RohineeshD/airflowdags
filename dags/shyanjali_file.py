@@ -6,16 +6,16 @@ from datetime import datetime
 
 # Define your default arguments for the DAG
 default_args = {
-    'owner': 'airflow',
+    'owner': 'your_name',
     'start_date': datetime(2023, 9, 1),
     'retries': 1,
 }
 
 # Create a DAG instance
 dag = DAG(
-    'shyanjali_example_status_email',
+    'shyanjali_email_dag',
     default_args=default_args,
-    schedule_interval='@once',  # You can set the schedule interval as needed
+    schedule_interval=None,  # You can set the schedule interval as needed
     catchup=False,
 )
 
@@ -33,148 +33,36 @@ success_task = PythonOperator(
 )
 
 # Define a PythonOperator task that simulates failure
-# def failure_task():
-#     raise Exception("Failure task failed intentionally")
+def failure_task():
+    raise Exception("Failure task failed intentionally")
 
-# failure_task = PythonOperator(
-#     task_id='failure_task',
-#     python_callable=failure_task,
-#     dag=dag,
-# )
+failure_task = PythonOperator(
+    task_id='failure_task',
+    python_callable=failure_task,
+    dag=dag,
+)
 
 # Define the email notification task
 send_email_task = EmailOperator(
     task_id='send_email',
-    to=['shyanjali.kantumuchu@exusia.com'],  # List of email recipients
+    to=['shyanjali47@gmail.com'],  # List of email recipients
     subject='Airflow DAG Status Email',
-    html_content='The Airflow DAG has completed successfully.',  # You can customize the email content
+    html_content='The Airflow DAG has completed successfully.',
+    mime_charset='utf-8',  # Set the character encoding
+    files=None,  # Attach files if needed
+    cc=None,  # Add CC recipients if needed
+    bcc=None,  # Add BCC recipients if needed
+    mime_subtype='mixed',  # Use 'mixed' to include both text and HTML content
+    conn_id='EMAIL_LI,  # Specify the SMTP connection ID
     dag=dag,
 )
 
 # Set task dependencies
 start_task >> success_task
-# start_task >> failure_task
+start_task >> failure_task
 
 # Send the email on success
 success_task >> send_email_task
 
 # Send the email on failure
-# failure_task >> send_email_task
-
-
-# import logging
-# from datetime import timedelta
-# from airflow import DAG
-# from airflow.operators.python_operator import PythonOperator
-# from datetime import datetime
-# import os
-# from io import StringIO
-# import pandas as pd
-# import requests
-# from airflow.models import Variable
-# from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
-# from airflow.operators.python import ShortCircuitOperator
-
-
-# logging.basicConfig(level=logging.INFO)
-# logger = logging.getLogger(__name__)
-
-
-
-# default_args = dict(
-#     start_date= datetime(2021, 1, 1),
-#     owner="airflow",
-#     retries=1,
-# )
-
-
-# dag_args = dict(
-#     dag_id="shyanjali_dag",
-#     schedule_interval='@once',
-#     default_args=default_args,
-#     catchup=False,
-# )
-
-
-# def check_environment_variable():
-#     # print(os.environ.get("AIRFLOW_SS"))
-#     # Variable.set("AIRFLOW_LI", True)  # Change to False if needed
-#     if Variable.get('AIRFLOW_LI') == True:
-#         return True
-#     else:
-#         #stop dag
-#         return False
-    
-# def fetch_csv_and_upload(**kwargs):
-#     url = "https://raw.githubusercontent.com/fivethirtyeight/data/master/airline-safety/airline-safety.csv"
-#     response = requests.get(url)
-#     data = response.text
-#     df = pd.read_csv(StringIO(data))
-
-
-#     # Upload DataFrame to Snowflake
-#     snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake_li')
-#     # Replace with your Snowflake schema and table name
-#     schema = 'PUBLIC'
-#     table_name = 'AIRLINE'
-#     connection = snowflake_hook.get_conn()
-#     snowflake_hook.insert_rows(table_name, df.values.tolist())
-#     connection.close()
-
-
-# def get_data(**kwargs):
-#     snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake_li')
-#     connection = snowflake_hook.get_conn()
-#     create_table_query="SELECT * FROM AIRLINE WHERE avail_seat_km_per_week >698012498 LIMIT 10"
-#     cursor = connection.cursor()
-#     records = cursor.execute(create_table_query)
-#     if records:
-#         print("10 records")
-#     else:
-#         create_table_query="SELECT * FROM AIRLINE WHERE avail_seat_km_per_week LIMIT 5"
-#         cursor = connection.cursor()
-#         records = cursor.execute(create_table_query)
-#         print("5 records")
-
-#     for record in records:
-#         print(record)
-
-#     cursor.close()
-#     connection.close()
-
-# def print_success(**kwargs):
-#     logging.info("Process Completed")
-
-
-# with DAG(**dag_args) as dag:
-#     # first task declaration
-#     check_env_variable = ShortCircuitOperator(
-#     task_id='check_env_variable',
-#     python_callable=check_environment_variable,
-#     provide_context=True,
-#     op_kwargs={},
-#     )
-
-#     fetch_and_upload = PythonOperator(
-#         task_id='fetch_and_upload',
-#         python_callable=fetch_csv_and_upload,
-#         provide_context=True,
-#         op_kwargs={},# This is required to pass context to the function
-#     )
-
-#     get_data = PythonOperator(
-#         task_id='get_data',
-#         python_callable=get_data,
-#         provide_context=True,
-#         op_kwargs={},# This is required to pass context to the function
-#     )
-
-#     print_success = PythonOperator(
-#         task_id='print_success',
-#         python_callable=print_success,
-#         provide_context=True,
-#         op_kwargs={},# This is required to pass context to the function
-#     )
-
-#     check_env_variable >> fetch_and_upload >>get_data>>print_success
-
+failure_task >> send_email_task
