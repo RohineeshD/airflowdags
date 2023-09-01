@@ -46,7 +46,7 @@ def load_data(**kwargs):
     df = ti.xcom_pull(task_ids='read_data')  # Get the data from the previous task
 
     if not df.empty:
-        snowflake_hook = SnowflakeHook(snowflake_conn_id="snowflake_conn")
+        snowflake_hook = SnowflakeHook(snowflake_conn_id="snow_harsha")
         connection = snowflake_hook.get_conn()
 
         # Assuming you have a table called 'temp_harsha' in Snowflake
