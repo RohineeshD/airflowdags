@@ -34,7 +34,8 @@ def load_data_to_snowflake(**kwargs):
             region = values[1].strip()
             query = f"""
                 INSERT INTO stage_harsha (Contry, Region)
-                VALUES ('{country}', '{region}')
+                VALUES ('{country[0]}', '{region[1]}')
+                # VALUES ('{values[0]}', '{values[1]}')
             """
             snowflake_hook.run(query)
             
@@ -42,14 +43,14 @@ def load_data_to_snowflake(**kwargs):
     else:
         raise Exception(f"Failed to fetch data from URL. Status code: {response.status_code}")
 
-task_2 = PythonOperator(
+task_1 = PythonOperator(
     task_id='load_data_task',
     python_callable=load_data_to_snowflake,
     provide_context=True,
     dag=dag_1,
 )
 
-task_2
+task_1
 
 
 # # Trigger the loading task only if the reading task succeeds
