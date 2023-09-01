@@ -63,7 +63,7 @@ def load_data(**kwargs):
         # cursor.execute(f"TRUNCATE TABLE {database_name}.{schema_name}.{table_name}")
 
         # Use COPY INTO to load data into Snowflake efficiently
-        cursor.executemany(f"INSERT INTO {database_name}.{schema_name}.{table_name} (Contry, Region) VALUES (?, ?)", records)
+        cursor.execute(f"INSERT INTO {database_name}.{schema_name}.{table_name} (Contry, Region) VALUES (?, ?)", records)
 
         # Commit the changes
         connection.commit()
@@ -84,14 +84,14 @@ load_data_task = PythonOperator(
 # Set task dependencies
 read_data_task >> load_data_task
 
-# Trigger the loading task only if the reading task succeeds
-trigger_load_data_task = TriggerDagRunOperator(
-    task_id='trigger_load_data',
-    trigger_dag_id="dag_1_hars",
-    dag=dag_1,
-)
+# # Trigger the loading task only if the reading task succeeds
+# trigger_load_data_task = TriggerDagRunOperator(
+#     task_id='trigger_load_data',
+#     trigger_dag_id="dag_1_hars",
+#     dag=dag_1,
+# )
 
-read_data_task >> trigger_load_data_task
+# read_data_task >> trigger_load_data_task
 
 
 # from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
