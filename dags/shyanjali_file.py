@@ -24,7 +24,7 @@ def send_email():
 
     # Email details
     email_subject = "Airflow Email Notification"
-    email_body = "This is a test email from Airflow using a connection."
+    email_body = "This is a test 2 email from Airflow using a connection."
 
     # Create the email message
     message = MIMEMultipart()
