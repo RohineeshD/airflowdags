@@ -33,16 +33,14 @@ def fetch_csv_and_upload(**kwargs):
         snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake_li')
         # Replace with your Snowflake schema and table name
         schema = 'PUBLIC'
-        table_name = 'STAGING_TABLE'
+        table_name = 'STAGING_TABL'
         connection = snowflake_hook.get_conn()
         snowflake_hook.insert_rows(table_name, df.values.tolist())
         connection.close()
         status =" DATA ADDED IN SNOWFLAKE STAGING TABLE "
-        return status
     except Exception as e:
-        print(f"An error occurred: {str(e)}")
-        status =" DATA NOT ADDED IN SNOWFLAKE STAGING TABLE "+str(e)
-        return status
+        status = f"Error loading CSV into Snowflake: {str(e)}"
+    return status
 
 
 # Specify the connection ID you want to retrieve details for
@@ -53,8 +51,13 @@ def send_email(**kwargs):
 
     ti = kwargs['ti']  # Get the TaskInstance
     status = ti.xcom_pull(task_ids='load_csv_into_snowflake')  # Retrieve the status from Task 1 XCom
-    email_content = f"CSV Load Status: {status}"
+    
+    if status and status.startswith("Error"):
+        subject = 'CSV Load Failed'
+    else:
+        subject = 'CSV Load Success'
 
+    email_content = f"CSV Load Status: {status}"
     # Use BaseHook to get the connection
     connection = BaseHook.get_connection(connection_id)
 
@@ -68,7 +71,7 @@ def send_email(**kwargs):
 
     # Email details
     email_subject = "Airflow Email Notification"
-    email_body = "This is a test  email from Airflow using a connection. " + email_content
+    email_body =  email_content
 
     # Create the email message
     message = MIMEMultipart()
