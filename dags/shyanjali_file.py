@@ -33,14 +33,14 @@ success_task = PythonOperator(
 )
 
 # Define a PythonOperator task that simulates failure
-def failure_task():
-    raise Exception("Failure task failed intentionally")
+# def failure_task():
+#     raise Exception("Failure task failed intentionally")
 
-failure_task = PythonOperator(
-    task_id='failure_task',
-    python_callable=failure_task,
-    dag=dag,
-)
+# failure_task = PythonOperator(
+#     task_id='failure_task',
+#     python_callable=failure_task,
+#     dag=dag,
+# )
 
 # Define the email notification task
 send_email_task = EmailOperator(
@@ -53,13 +53,13 @@ send_email_task = EmailOperator(
 
 # Set task dependencies
 start_task >> success_task
-start_task >> failure_task
+# start_task >> failure_task
 
 # Send the email on success
 success_task >> send_email_task
 
 # Send the email on failure
-failure_task >> send_email_task
+# failure_task >> send_email_task
 
 
 # import logging
