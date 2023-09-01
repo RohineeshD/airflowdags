@@ -3,7 +3,7 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.mime.application import MIMEApplication
 from airflow.operators.python_operator import PythonOperator
-
+from datetime import datetime
 
 
 default_args = dict(
