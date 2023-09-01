@@ -17,58 +17,87 @@ dag_1 = DAG(
     catchup=False,
 )
 
-def read_file_from_url():
-    url = 'https://raw.githubusercontent.com/cs109/2014_data/master/countries.csv'
+# the fucntion is loding the data from url to snowflake
+def load_data_to_snowflake(**kwargs):
+    url = " https://raw.githubusercontent.com/cs109/2014_data/master/countries.csv"
     response = requests.get(url)
-    if response.status_code == 200:
-        return response.text
-    else:
-        raise Exception(f"Failed to retrieve data from URL: {url}. Status code: {response.status_code}")
-
-task_1 = PythonOperator(
-    task_id='read_file_from_url',
-    python_callable=read_file_from_url,
-    dag=dag_1,
-)
-
-def load_data_into_snowflake(**kwargs):
-    ti = kwargs['ti']
-    response_text = ti.xcom_pull(task_ids='read_file_from_url')
     
-    try:
-        # Split the response_text and insert into Snowflake
-        for line in response_text.strip().split('\n')[1:]:
+    if response.status_code == 200:
+        data = response.text
+        lines = data.strip().split('\n')[1:]
+        snowflake_hook = SnowflakeHook(snowflake_conn_id="snowflake_conn")
+        
+        for line in lines:
             values = line.split(',')
             query = f"""
-                INSERT INTO exusia_schema.temp_harsha (country, region)
+                INSERT INTO temp_harsha (country, region)
                 VALUES ('{values[0]}', '{values[1]}')
             """
-            
-            # Log the SQL query for debugging
-            print("Executing SQL query:")
-            print(query)
-            
-            # Execute the query in Snowflake
-            snowflake_hook = SnowflakeHook(snowflake_conn_id="snowflake_conn")
             snowflake_hook.run(query)
-        
+            
         print("Data loaded into Snowflake successfully.")
-    
-    except Exception as e:
-        # Handle the exception
-        print(f"Error loading data into Snowflake: {str(e)}")
-        raise
+    else:
+        raise Exception(f"Failed to fetch data from URL. Status code: {response.status_code}")
 
-load_data_into_snowflake_task = PythonOperator(
-    task_id="load_data_into_snowflake",
-    python_callable=load_data_into_snowflake,
+task_1 = PythonOperator(
+    task_id='load_data_task',
+    python_callable=load_data_to_snowflake,
     provide_context=True,
-    dag=dag_1,
+    dag=dag,
 )
 
-# Define the rest of your DAG tasks and dependencies here
+# def read_file_from_url():
+#     url = 'https://raw.githubusercontent.com/cs109/2014_data/master/countries.csv'
+#     response = requests.get(url)
+#     if response.status_code == 200:
+#         return response.text
+#     else:
+#         raise Exception(f"Failed to retrieve data from URL: {url}. Status code: {response.status_code}")
 
-task_1 >> load_data_into_snowflake_task
+# task_1 = PythonOperator(
+#     task_id='read_file_from_url',
+#     python_callable=read_file_from_url,
+#     dag=dag_1,
+# )
+
+# def load_data_into_snowflake(**kwargs):
+#     ti = kwargs['ti']
+#     response_text = ti.xcom_pull(task_ids='read_file_from_url')
+    
+#     try:
+#         # Split the response_text and insert into Snowflake
+#         for line in response_text.strip().split('\n')[1:]:
+#             values = line.split(',')
+#             query = f"""
+#                 INSERT INTO exusia_schema.temp_harsha (country, region)
+#                 VALUES ('{values[0]}', '{values[1]}')
+#             """
+            
+#             # Log the SQL query for debugging
+#             print("Executing SQL query:")
+#             print(query)
+            
+#             # Execute the query in Snowflake
+#             snowflake_hook = SnowflakeHook(snowflake_conn_id="snowflake_conn")
+#             snowflake_hook.run(query)
+        
+#         print("Data loaded into Snowflake successfully.")
+    
+#     except Exception as e:
+#         # Handle the exception
+#         print(f"Error loading data into Snowflake: {str(e)}")
+#         raise
+
+# load_data_into_snowflake_task = PythonOperator(
+#     task_id="load_data_into_snowflake",
+#     python_callable=load_data_into_snowflake,
+#     provide_context=True,
+#     dag=dag_1,
+# )
+
+# # Define the rest of your DAG tasks and dependencies here
+
+# task_1 >> load_data_into_snowflake_task
 
 
 task_1 >> load_data_into_snowflake_task
