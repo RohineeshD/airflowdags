@@ -1,7 +1,7 @@
 from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
 from airflow.operators.python_operator import PythonOperator
 from airflow import DAG
-from retry import retry
+# from retry import retry
 from datetime import datetime
 import requests
 import pandas as pd
