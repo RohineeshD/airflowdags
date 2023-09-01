@@ -76,7 +76,7 @@ def check_data_loaded(**kwargs):
         cursor.close()
         connection.close()
 
-check_data_loaded_task = SnowflakeOperator(
+check_data_loaded_task = PythonOperator(
     task_id='check_data_loaded',
     python_callable=check_data_loaded,
     provide_context=True,
