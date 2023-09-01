@@ -143,7 +143,9 @@ dag = DAG(**dag_args)
 def read_file_from_url():
     url = "https://raw.githubusercontent.com/cs109/2014_data/master/countries.csv"
     response = requests.get(url)
-    return response.text
+    data = response.text
+    print(f"Read data from URL. Content: {data}")
+    return data
 
 def load_data_to_staging(data):
     df = pd.read_csv(StringIO(data))
