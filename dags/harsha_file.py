@@ -41,7 +41,7 @@ read_data_task = PythonOperator(
 )
 
 # Task 2: Load data into Snowflake using SnowflakeHook
-def load_data():
+def load_data(**kwargs):
     ti = kwargs['ti']
     data = ti.xcom_pull(task_ids='read_data')
     snowflake_hook = SnowflakeHook(snowflake_conn_id='snow_sc') 
@@ -49,11 +49,9 @@ def load_data():
     cursor = connection.cursor()
 
     try:
-       
         database_name = "demo"
         schema_name = "sc1"
         table_name = "stage_harsha"
-        
 
         df = pd.read_csv(io.StringIO(data))  
         records = df.values.tolist()
@@ -72,6 +70,40 @@ def load_data():
     finally:
         cursor.close()
         connection.close()
+
+
+# Task 2: Load data into Snowflake using SnowflakeHook
+# def load_data():
+#     ti = kwargs['ti']
+#     data = ti.xcom_pull(task_ids='read_data')
+#     snowflake_hook = SnowflakeHook(snowflake_conn_id='snow_sc') 
+#     connection = snowflake_hook.get_conn()
+#     cursor = connection.cursor()
+
+#     try:
+       
+#         database_name = "demo"
+#         schema_name = "sc1"
+#         table_name = "stage_harsha"
+        
+
+#         df = pd.read_csv(io.StringIO(data))  
+#         records = df.values.tolist()
+
+#         # Truncate the table before inserting new data (optional)
+#         cursor.execute(f"TRUNCATE TABLE {database_name}.{schema_name}.{table_name}")
+
+#         # Use COPY INTO to load data into Snowflake efficiently
+#         cursor.executemany(f"INSERT INTO {database_name}.{schema_name}.{table_name} (column1, column2) VALUES (?, ?)", records)
+
+#         # Commit the changes
+#         connection.commit()
+#         print("Data loaded into Snowflake successfully")
+#     except Exception as e:
+#         print(f"Error loading data into Snowflake: {str(e)}")
+#     finally:
+#         cursor.close()
+#         connection.close()
 
 load_data_task = PythonOperator(
     task_id='load_data',
