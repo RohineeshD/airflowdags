@@ -4,6 +4,7 @@ from airflow.utils.dates import days_ago
 import requests
 import snowflake.connector
 import json
+import os
 
 # Define your Airflow DAG
 dag = DAG(
@@ -24,7 +25,7 @@ def download_data():
 
 # Define a Python function to load data into Snowflake
 def load_data_to_snowflake():
-    creds_json_path = 'Users/User/Desktop/creds.json'
+    creds_json_path = os.path.expanduser('Users/User/Desktop/creds.json')
     # Load Snowflake credentials from creds.json
     with open(creds_json_path, 'r') as file:
         snowflake_config = json.load(file)
