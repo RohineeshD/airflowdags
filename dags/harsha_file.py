@@ -27,7 +27,7 @@ def read_and_load_to_snowflake(**kwargs):
     if response.status_code == 200:
         data = response.text
         lines = data.strip().split('\n')[1:]
-        snowflake_hook = SnowflakeHook(snowflake_conn_id='s_h_connection')
+        snowflake_hook = SnowflakeHook(snowflake_conn_id="s_h_connection")
         
         for line in lines:
             values = line.split(',')
@@ -52,7 +52,7 @@ task_1 = PythonOperator(
 )
 
 def check_data_loaded(**kwargs):
-    snowflake_hook = SnowflakeHook(snowflake_conn_id='s_h_connection')
+    snowflake_hook = SnowflakeHook(snowflake_conn_id="s_h_connection")
     connection = snowflake_hook.get_conn()
     cursor = connection.cursor()
 
