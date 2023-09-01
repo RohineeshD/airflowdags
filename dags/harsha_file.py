@@ -1,6 +1,5 @@
 from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
 from airflow.operators.python_operator import PythonOperator
-from airflow.operators.trigger_dagrun import TriggerDagRunOperator
 from airflow import DAG
 from datetime import datetime
 import requests
@@ -17,35 +16,43 @@ dag_1 = DAG(
     catchup=False,
 )
 
-# the function is loading the data from URL to Snowflake
-def load_data_to_snowflake(**kwargs):
+# The function is loading the data from URL to Snowflake
+def load_data_to_snowflake():
     url = "https://raw.githubusercontent.com/cs109/2014_data/master/countries.csv"
     response = requests.get(url)
     
     if response.status_code == 200:
         data = response.text
         lines = data.strip().split('\n')[1:]
-        snowflake_hook = SnowflakeHook(snowflake_conn_id="snowflake_conn")
         
-        for line in lines:
-            values = line.split(',')
-            query = f"""
-                INSERT INTO temp_harsha (country, region)
-                VALUES ('{values[0]}', '{values[1]}')
-            """
-            snowflake_hook.run(query)
-            
-        print("Data loaded into Snowflake successfully.")
+        # Assuming you have defined Snowflake connection properly
+        snowflake_task = SnowflakeOperator(
+            task_id='load_data_task',
+            sql=[
+                f"INSERT INTO temp_harsha (country, region) VALUES ('{line.split(',')[0]}', '{line.split(',')[1]}')"
+                for line in lines
+            ],
+            snowflake_conn_id="snowflake_conn",
+            autocommit=True,  # Set to True if autocommit is enabled in Snowflake
+            dag=dag_1,
+        )
+        return snowflake_task
     else:
         raise Exception(f"Failed to fetch data from URL. Status code: {response.status_code}")
 
-task_1 = PythonOperator(
-    task_id='load_data_task',
+# Create the PythonOperator task
+load_data_task = PythonOperator(
+    task_id='fetch_and_load_data',
     python_callable=load_data_to_snowflake,
-    provide_context=True,
     dag=dag_1,  
 )
-task_1
+
+
+load_data_task 
+
+
+
+
 
 # def read_file_from_url():
 #     url = 'https://raw.githubusercontent.com/cs109/2014_data/master/countries.csv'
