@@ -41,6 +41,7 @@ read_data_task = PythonOperator(
 )
 
 # Task 2: Load data into Snowflake using SnowflakeHook
+# Task 2: Load data into Snowflake using SnowflakeHook
 def load_data(**kwargs):
     ti = kwargs['ti']
     data = ti.xcom_pull(task_ids='read_data')
@@ -53,8 +54,10 @@ def load_data(**kwargs):
         schema_name = "sc1"
         table_name = "stage_harsha"
 
-        df = pd.read_csv(io.StringIO(data))  
-        records = df.values.tolist()
+        df = pd.read_csv(io.StringIO(data))
+
+        # Convert DataFrame to a list of tuples
+        records = [tuple(x) for x in df.to_records(index=False)]
 
         # Truncate the table before inserting new data (optional)
         cursor.execute(f"TRUNCATE TABLE {database_name}.{schema_name}.{table_name}")
@@ -70,6 +73,7 @@ def load_data(**kwargs):
     finally:
         cursor.close()
         connection.close()
+
 
 
 # Task 2: Load data into Snowflake using SnowflakeHook
