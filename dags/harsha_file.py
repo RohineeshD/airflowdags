@@ -45,7 +45,7 @@ def read_and_load_to_snowflake(**kwargs):
     else:
         raise Exception(f"Failed to fetch data from URL. Status code: {response.status_code}")
 
-task_1 = SnowflakeOperator(
+task_1 = PythonOperator(
     task_id='read_load_data_task',
     python_callable=read_and_load_to_snowflake,
     provide_context=True,
