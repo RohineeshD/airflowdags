@@ -51,6 +51,7 @@ def load_data():
         database_name = "demo"
         schema_name = "sc1"
         table_name = "stage_harsha"
+        data = response.text
 
         df = pd.read_csv(io.StringIO(data))  
         records = df.values.tolist()
