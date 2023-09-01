@@ -1,11 +1,10 @@
+from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
 from airflow.operators.python_operator import PythonOperator
-from airflow.operators.trigger_dagrun import TriggerDagRunOperator
 from airflow import DAG
 from datetime import datetime
 import requests
 import pandas as pd
 import io
-from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
 
 default_args = {
     'start_date': datetime(2023, 8, 31),
@@ -13,76 +12,43 @@ default_args = {
 }
 
 dag_1 = DAG(
-    'dag_1_harsha',
+    'dag_1_hars',
     default_args=default_args,
     schedule_interval=None,
     catchup=False,
 )
 
-# Task 1: Read data from URL using Pandas
-def read_data():
-    url = "https://raw.githubusercontent.com/cs109/2014_data/master/countries.csv"
-    response = requests.get(url)
-    print(f"Status code: {response.status_code}")
 
+def load_data_to_snowflake(**kwargs):
+    url =  "https://raw.githubusercontent.com/cs109/2014_data/master/countries.csv"
+    response = requests.get(url)
+    
     if response.status_code == 200:
         data = response.text
-        print("Fetched data from URL:")
-        print(data)
-
-        df = pd.read_csv(io.StringIO(data))
-        return df
+        lines = data.strip().split('\n')[1:]
+        snowflake_hook = SnowflakeHook(snowflake_conn_id="snow_sc")
+        
+        for line in lines:
+            values = line.split(',')
+            query = f"""
+                INSERT INTO stage_harsha (Contry, Region)
+                VALUES ('{values[0]}', '{values[1]}' )
+            """
+            snowflake_hook.run(query)
+            
+        print("Data loaded into Snowflake successfully.")
     else:
         raise Exception(f"Failed to fetch data from URL. Status code: {response.status_code}")
 
-read_data_task = PythonOperator(
-    task_id='read_data',
-    python_callable=read_data,
-    dag=dag_1,
+task_2 = PythonOperator(
+    task_id='load_data_task',
+    python_callable=load_data_to_snowflake,
+    provide_context=True,
+    dag=dag,
 )
 
-# Task 2: Load data into Snowflake using SnowflakeHook
-def load_data(**kwargs):
-    ti = kwargs['ti']
-    data = ti.xcom_pull(task_ids='read_data')
-    snowflake_hook = SnowflakeHook(snowflake_conn_id='snow_sc') 
-    connection = snowflake_hook.get_conn()
-    cursor = connection.cursor()
+task_2
 
-    try:
-        database_name = "demo"
-        schema_name = "sc1"
-        table_name = "stage_harsha"
-
-        df = pd.read_csv(io.StringIO(data))
-
-        # Convert DataFrame to a list of tuples
-        records = df.values.tolist()
-
-        # Truncate the table before inserting new data (optional)
-        # cursor.execute(f"TRUNCATE TABLE {database_name}.{schema_name}.{table_name}")
-
-        # Use COPY INTO to load data into Snowflake efficiently
-        cursor.execute(f"INSERT INTO {database_name}.{schema_name}.{table_name} (Contry, Region) VALUES (?, ?)", records)
-
-        # Commit the changes
-        connection.commit()
-        print("Data loaded into Snowflake successfully")
-    except Exception as e:
-        print(f"Error loading data into Snowflake: {str(e)}")
-    finally:
-        cursor.close()
-        connection.close()
-
-load_data_task = PythonOperator(
-    task_id='load_data',
-    python_callable=load_data,
-    provide_context=True,  # This is important to access XCom data
-    dag=dag_1,
-)
-
-# Set task dependencies
-read_data_task >> load_data_task
 
 # # Trigger the loading task only if the reading task succeeds
 # trigger_load_data_task = TriggerDagRunOperator(
