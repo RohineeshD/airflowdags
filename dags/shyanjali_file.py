@@ -1,68 +1,71 @@
 from airflow import DAG
-from airflow.operators.dummy import DummyOperator
-from airflow.operators.python import PythonOperator
-from airflow.operators.email_operator import EmailOperator
+from airflow.hooks.base_hook import BaseHook
+from airflow.operators.python_operator import PythonOperator
 from datetime import datetime
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
-# Define your default arguments for the DAG
+# Specify the connection ID you want to retrieve details for
+connection_id = 'EMAIL_LI'
+
+# Function to send an email using SMTP connection details
+def send_email():
+    # Use BaseHook to get the connection
+    connection = BaseHook.get_connection(connection_id)
+
+    # Access connection details
+    smtp_server = connection.host
+    smtp_port = connection.port
+    smtp_username = connection.login
+    smtp_password = connection.password
+    sender_email = 'shyanjali.kantumuchu@exusia.com'
+    recipient_email = 'shyanjali.kantumuchu@exusia.com'
+
+    # Email details
+    email_subject = "Airflow Email Notification"
+    email_body = "This is a test email from Airflow using a connection."
+
+    # Create the email message
+    message = MIMEMultipart()
+    message['From'] = sender_email
+    message['To'] = recipient_email
+    message['Subject'] = email_subject
+    message.attach(MIMEText(email_body, 'plain'))
+
+    # Send the email
+    try:
+        server = smtplib.SMTP(smtp_server, smtp_port)
+        server.starttls()
+        server.login(smtp_username, smtp_password)
+        server.sendmail(sender_email, recipient_email, message.as_string())
+        server.quit()
+        print("Email sent successfully!")
+    except Exception as e:
+        print(f"Failed to send email: {str(e)}")
+
+# Define your DAG
 default_args = {
     'owner': 'airflow',
+    'depends_on_past': False,
     'start_date': datetime(2023, 9, 1),
     'retries': 1,
+    'retry_delay': timedelta(minutes=5),
 }
 
-# Create a DAG instance
 dag = DAG(
-    'shyanjali_email_dag',
+    'shyanjali_send_email',
     default_args=default_args,
-    schedule_interval='@once',  # You can set the schedule interval as needed
+    schedule_interval='@once',  # Set your desired schedule interval
     catchup=False,
 )
 
-# Define your tasks
-start_task = DummyOperator(task_id='start_task', dag=dag)
-
-# Define a PythonOperator task that simulates success
-def success_task():
-    print("Success task executed successfully")
-
-success_task = PythonOperator(
-    task_id='success_task',
-    python_callable=success_task,
+# Task to send the email using the defined function
+send_email_task = PythonOperator(
+    task_id='send_email_task',
+    python_callable=send_email,
     dag=dag,
 )
 
-# Define a PythonOperator task that simulates failure
-# def failure_task():
-#     raise Exception("Failure task failed intentionally")
-
-# failure_task = PythonOperator(
-#     task_id='failure_task',
-#     python_callable=failure_task,
-#     dag=dag,
-# )
-
-# Define the email notification task
-send_email_task = EmailOperator(
-    task_id='send_email',
-    to=['shyanjali47@gmail.com'],  # List of email recipients
-    subject='Airflow DAG Status Email',
-    html_content='The Airflow DAG has completed successfully.',
-    mime_charset='utf-8',  # Set the character encoding
-    files=None,  # Attach files if needed
-    cc=None,  # Add CC recipients if needed
-    bcc=None,  # Add BCC recipients if needed
-    mime_subtype='mixed',  # Use 'mixed' to include both text and HTML content
-    conn_id='EMAIL_LI',  # Specify the SMTP connection ID
-    dag=dag,
-)
-
-# Set task dependencies
-start_task >> success_task
-# start_task >> failure_task
-
-# Send the email on success
-success_task >> send_email_task
-
-# Send the email on failure
-# failure_task >> send_email_task
+if __name__ == "__main__":
+    dag.cli()
