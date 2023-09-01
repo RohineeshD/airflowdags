@@ -59,7 +59,7 @@ def load_data(**kwargs):
         records = df.values.tolist()
 
         # Truncate the table before inserting new data (optional)
-        cursor.execute(f"TRUNCATE TABLE {database_name}.{schema_name}.{table_name}")
+        # cursor.execute(f"TRUNCATE TABLE {database_name}.{schema_name}.{table_name}")
 
         # Use COPY INTO to load data into Snowflake efficiently
         cursor.executemany(f"INSERT INTO {database_name}.{schema_name}.{table_name} (column1, column2) VALUES (?, ?)", records)
@@ -72,6 +72,16 @@ def load_data(**kwargs):
     finally:
         cursor.close()
         connection.close()
+        
+load_data_task = PythonOperator(
+    task_id='load_data',
+    python_callable=load_data,
+    dag=dag_1,
+)
+
+# Set task dependencies
+read_data_task >> load_data_task
+
 
 
 
@@ -109,14 +119,14 @@ def load_data(**kwargs):
 #         cursor.close()
 #         connection.close()
 
-load_data_task = PythonOperator(
-    task_id='load_data',
-    python_callable=load_data,
-    dag=dag_1,
-)
+# load_data_task = PythonOperator(
+#     task_id='load_data',
+#     python_callable=load_data,
+#     dag=dag_1,
+# )
 
-# Set task dependencies
-read_data_task >> load_data_task
+# # Set task dependencies
+# read_data_task >> load_data_task
 
 
 
