@@ -569,7 +569,7 @@ task_1 = ShortCircuitOperator(
 
 
 
-the fucntion is loding the data from url to snowflake
+# the fucntion is loding the data from url to snowflake
 def load_data_to_snowflake(**kwargs):
     url = "https://raw.githubusercontent.com/fivethirtyeight/data/master/airline-safety/airline-safety.csv"
     response = requests.get(url)
