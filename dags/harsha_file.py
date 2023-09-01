@@ -16,7 +16,7 @@ dag_1 = DAG(
     catchup=False,
 )
 
-# The function is loading the data from URL to Snowflake
+# Create a function to load data into Snowflake
 def load_data_to_snowflake():
     url = "https://raw.githubusercontent.com/cs109/2014_data/master/countries.csv"
     response = requests.get(url)
@@ -36,7 +36,7 @@ def load_data_to_snowflake():
             autocommit=True,  # Set to True if autocommit is enabled in Snowflake
             dag=dag_1,
         )
-        return snowflake_task
+        snowflake_task.execute(context={})  # Execute the Snowflake task
     else:
         raise Exception(f"Failed to fetch data from URL. Status code: {response.status_code}")
 
@@ -44,11 +44,11 @@ def load_data_to_snowflake():
 load_data_task = PythonOperator(
     task_id='fetch_and_load_data',
     python_callable=load_data_to_snowflake,
-    dag=dag_1,  
+    dag=dag_1,
 )
 
+load_data_task
 
-load_data_task 
 
 
 
