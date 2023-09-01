@@ -23,6 +23,9 @@ def load_data_to_snowflake():
     
     if response.status_code == 200:
         data = response.text
+        print("Fetched data from URL:")
+        print(data)  # Add this line to print the fetched data
+        
         lines = data.strip().split('\n')[1:]
         
         if not lines:
@@ -57,6 +60,7 @@ load_data_task = PythonOperator(
 )
 
 load_data_task
+
 
 
 
