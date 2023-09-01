@@ -20,6 +20,8 @@ dag_1 = DAG(
 def load_data_to_snowflake():
     url = "https://raw.githubusercontent.com/cs109/2014_data/master/countries.csv"
     response = requests.get(url)
+    print(f"Status code: {response.status_code}")
+    print(f"Response content: {response.text}")
     
     if response.status_code == 200:
         data = response.text
