@@ -33,14 +33,13 @@ def fetch_csv_and_upload(**kwargs):
         snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake_li')
         # Replace with your Snowflake schema and table name
         schema = 'PUBLIC'
-        table_name = 'STAGING_TABL'
+        table_name = 'STAGING_TABLE'
         connection = snowflake_hook.get_conn()
         snowflake_hook.insert_rows(table_name, df.values.tolist())
         connection.close()
         status =" DATA ADDED IN SNOWFLAKE STAGING TABLE "
     except Exception as e:
         status = f"Error loading CSV into Snowflake: {str(e)}"
-        print(f"Error loading CSV into Snowflake: {str(e)}")
     return status
 
 
@@ -52,7 +51,6 @@ def send_email(**kwargs):
 
     ti = kwargs['ti']  # Get the TaskInstance
     status = ti.xcom_pull(task_ids='fetch_and_upload')  # Retrieve the status from Task 1 XCom
-    print("SSSSSSS",status)
     if status and status.startswith("Error"):
         subject = 'CSV Load Failed'
     else:
