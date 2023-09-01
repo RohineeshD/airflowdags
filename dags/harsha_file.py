@@ -68,7 +68,7 @@ def check_data(**kwargs):
 
 # DAG configuration
 with DAG(
-    "Shyanjali_dag1",
+    "harsha_dag_1",
     start_date=days_ago(1),  # Use days_ago function to specify the start date
     schedule_interval=None,
     catchup=False,
