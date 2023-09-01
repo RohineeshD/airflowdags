@@ -1,10 +1,10 @@
-from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
 from airflow.operators.python_operator import PythonOperator
 from airflow import DAG
 from datetime import datetime
 import requests
 import pandas as pd
 import io
+from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
 
 default_args = {
     'start_date': datetime(2023, 8, 31),
@@ -18,8 +18,8 @@ dag_1 = DAG(
     catchup=False,
 )
 
-# Task 1: Read data from URL using Pandas
-def read_data():
+# Task: Read data from URL using Pandas and Load into Snowflake
+def read_and_load_data_into_snowflake(**kwargs):
     url = "https://raw.githubusercontent.com/cs109/2014_data/master/countries.csv"
     response = requests.get(url)
     print(f"Status code: {response.status_code}")
@@ -30,57 +30,130 @@ def read_data():
         print(data)
 
         df = pd.read_csv(io.StringIO(data))
-        return df
+
+        snowflake_hook = SnowflakeHook(snowflake_conn_id='snow_sc') 
+        connection = snowflake_hook.get_conn()
+        cursor = connection.cursor()
+
+        try:
+            database_name = "demo"
+            schema_name = "sc1"
+            table_name = "stage_harsha"
+
+            # Convert DataFrame to a list of tuples
+            records = df.values.tolist()
+
+            # Truncate the table before inserting new data (optional)
+            # cursor.execute(f"TRUNCATE TABLE {database_name}.{schema_name}.{table_name}")
+
+            # Use COPY INTO to load data into Snowflake efficiently
+            cursor.executemany(f"INSERT INTO {database_name}.{schema_name}.{table_name} (column1, column2) VALUES (?, ?)", records)
+
+            # Commit the changes
+            connection.commit()
+            print("Data loaded into Snowflake successfully")
+        except Exception as e:
+            print(f"Error loading data into Snowflake: {str(e)}")
+        finally:
+            cursor.close()
+            connection.close()
     else:
         raise Exception(f"Failed to fetch data from URL. Status code: {response.status_code}")
 
-read_data_task = PythonOperator(
-    task_id='read_data',
-    python_callable=read_data,
-    dag=dag_1,
-)
-
-# Task 2: Load data into Snowflake using SnowflakeHook
-def load_data(**kwargs):
-    ti = kwargs['ti']
-    data = ti.xcom_pull(task_ids='read_data')
-    snowflake_hook = SnowflakeHook(snowflake_conn_id='snow_sc') 
-    connection = snowflake_hook.get_conn()
-    cursor = connection.cursor()
-
-    try:
-        database_name = "demo"
-        schema_name = "sc1"
-        table_name = "stage_harsha"
-
-        df = pd.read_csv(io.StringIO(data))
-
-        # Convert DataFrame to a list of tuples
-        records = df.values.tolist()
-
-        # Truncate the table before inserting new data (optional)
-        # cursor.execute(f"TRUNCATE TABLE {database_name}.{schema_name}.{table_name}")
-
-        # Use COPY INTO to load data into Snowflake efficiently
-        cursor.executemany(f"INSERT INTO {database_name}.{schema_name}.{table_name} (column1, column2) VALUES (?, ?)", records)
-
-        # Commit the changes
-        connection.commit()
-        print("Data loaded into Snowflake successfully")
-    except Exception as e:
-        print(f"Error loading data into Snowflake: {str(e)}")
-    finally:
-        cursor.close()
-        connection.close()
-        
-load_data_task = PythonOperator(
-    task_id='load_data',
-    python_callable=load_data,
+read_and_load_task = PythonOperator(
+    task_id='read_and_load_data_into_snowflake',
+    python_callable=read_and_load_data_into_snowflake,
     dag=dag_1,
 )
 
 # Set task dependencies
-read_data_task >> load_data_task
+read_and_load_task
+
+
+
+# from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
+# from airflow.operators.python_operator import PythonOperator
+# from airflow import DAG
+# from datetime import datetime
+# import requests
+# import pandas as pd
+# import io
+
+# default_args = {
+#     'start_date': datetime(2023, 8, 31),
+#     'catchup': False,
+# }
+
+# dag_1 = DAG(
+#     'dag_1_hars',
+#     default_args=default_args,
+#     schedule_interval=None,
+#     catchup=False,
+# )
+
+# # Task 1: Read data from URL using Pandas
+# def read_data():
+#     url = "https://raw.githubusercontent.com/cs109/2014_data/master/countries.csv"
+#     response = requests.get(url)
+#     print(f"Status code: {response.status_code}")
+
+#     if response.status_code == 200:
+#         data = response.text
+#         print("Fetched data from URL:")
+#         print(data)
+
+#         df = pd.read_csv(io.StringIO(data))
+#         return df
+#     else:
+#         raise Exception(f"Failed to fetch data from URL. Status code: {response.status_code}")
+
+# read_data_task = PythonOperator(
+#     task_id='read_data',
+#     python_callable=read_data,
+#     dag=dag_1,
+# )
+
+# # Task 2: Load data into Snowflake using SnowflakeHook
+# def load_data(**kwargs):
+#     ti = kwargs['ti']
+#     data = ti.xcom_pull(task_ids='read_data')
+#     snowflake_hook = SnowflakeHook(snowflake_conn_id='snow_sc') 
+#     connection = snowflake_hook.get_conn()
+#     cursor = connection.cursor()
+
+#     try:
+#         database_name = "demo"
+#         schema_name = "sc1"
+#         table_name = "stage_harsha"
+
+#         df = pd.read_csv(io.StringIO(data))
+
+#         # Convert DataFrame to a list of tuples
+#         records = df.values.tolist()
+
+#         # Truncate the table before inserting new data (optional)
+#         # cursor.execute(f"TRUNCATE TABLE {database_name}.{schema_name}.{table_name}")
+
+#         # Use COPY INTO to load data into Snowflake efficiently
+#         cursor.executemany(f"INSERT INTO {database_name}.{schema_name}.{table_name} (column1, column2) VALUES (?, ?)", records)
+
+#         # Commit the changes
+#         connection.commit()
+#         print("Data loaded into Snowflake successfully")
+#     except Exception as e:
+#         print(f"Error loading data into Snowflake: {str(e)}")
+#     finally:
+#         cursor.close()
+#         connection.close()
+        
+# load_data_task = PythonOperator(
+#     task_id='load_data',
+#     python_callable=load_data,
+#     dag=dag_1,
+# )
+
+# # Set task dependencies
+# read_data_task >> load_data_task
 
 
 
