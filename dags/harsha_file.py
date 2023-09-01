@@ -1,13 +1,7 @@
-
 from airflow import DAG
-from airflow.operators.python_operator import PythonOperator
+from airflow.providers.http.operators.http_download import HttpDownloadOperator
 from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
-from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
-from airflow.operators.python import ShortCircuitOperator
 from airflow.utils.dates import days_ago
-from airflow.models import Variable
-import os
-import requests
 
 default_args = {
     'owner': 'airflow',
@@ -22,93 +16,146 @@ dag = DAG(
     schedule_interval=None,
 )
 
+# Define the HttpDownloadOperator to fetch data from the URL
+download_data_task = HttpDownloadOperator(
+    task_id='download_data',
+    method='GET',
+    endpoint='https://raw.githubusercontent.com/cs109/2014_data/master/countries.csv',
+    save_to='/tmp/countries.csv',  # Local file path to save the downloaded data
+    headers={},  # Optional headers
+    dag=dag,
+)
 
-# def check_environment_variable():
-#     # variable_value = 'harsha_air_env'
-#     # variable_value = Variable.get('harsha_air_env')
-#     # return variable_value == "True"
-#     Variable.set("my_boolean_variable", False)
-#     bool = Variable.get('my_boolean_variable')
-#     if bool :
-#         print( bool )
-#         return True
-#     # if Variable.get('harsha_air_env').lower() == 'true':
-#     #     return 'load_data_to_snowflake'
-#     else:
-#         #stop dag
-#         return False
+# Define the SnowflakeOperator to load data from the local file into Snowflake
+load_data_task = SnowflakeOperator(
+    task_id='load_data_to_snowflake',
+    sql="""
+    COPY INTO stage_harsha
+    FROM 'file:///tmp/countries.csv'
+    FILE_FORMAT = (TYPE = CSV SKIP_HEADER = 1);
+    """,
+    snowflake_conn_id='snowflake_conn',  # Replace with your Snowflake connection ID
+    warehouse='COMPUTE_WH',  # Replace with your Snowflake warehouse
+    database='exusia_db',  # Replace with your Snowflake database
+    schema='exusia_schema',  # Replace with your Snowflake schema
+    role='accountadmin',  # Replace with your Snowflake role
+    autocommit=True,  # Automatically commit the transaction
+    dag=dag,
+)
+
+# Set the task dependencies
+download_data_task >> load_data_task
+
+# from airflow import DAG
+# from airflow.operators.python_operator import PythonOperator
+# from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
+# from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
+# from airflow.operators.python import ShortCircuitOperator
+# from airflow.utils.dates import days_ago
+# from airflow.models import Variable
+# import os
+# import requests
+
+# default_args = {
+#     'owner': 'airflow',
+#     'start_date': days_ago(1),
+#     'catchup': False,
+#     'provide_context': True,
+# }
+
+# dag = DAG(
+#     'harsha_dag_1',
+#     default_args=default_args,
+#     schedule_interval=None,
+# )
+
+
+# # def check_environment_variable():
+# #     # variable_value = 'harsha_air_env'
+# #     # variable_value = Variable.get('harsha_air_env')
+# #     # return variable_value == "True"
+# #     Variable.set("my_boolean_variable", False)
+# #     bool = Variable.get('my_boolean_variable')
+# #     if bool :
+# #         print( bool )
+# #         return True
+# #     # if Variable.get('harsha_air_env').lower() == 'true':
+# #     #     return 'load_data_to_snowflake'
+# #     else:
+# #         #stop dag
+# #         return False
         
      
-# task_1 = ShortCircuitOperator(
-#     task_id='check_env_variable',
-#     python_callable=check_environment_variable,
-#     provide_context=True,
-#     dag=dag,
-# )
+# # task_1 = ShortCircuitOperator(
+# #     task_id='check_env_variable',
+# #     python_callable=check_environment_variable,
+# #     provide_context=True,
+# #     dag=dag,
+# # )
 
-# def check_environment_variable():
-#     variable_value = Variable.get('harsha_air_env', default_var=None)
-#     if variable_value is not None:
-#         return variable_value.lower() == True
-#     else:
-#         # Stop dag
-#         return False
+# # def check_environment_variable():
+# #     variable_value = Variable.get('harsha_air_env', default_var=None)
+# #     if variable_value is not None:
+# #         return variable_value.lower() == True
+# #     else:
+# #         # Stop dag
+# #         return False
 
-# task_1 = ShortCircuitOperator(
-#     task_id='check_env_variable',
-#     python_callable=check_environment_variable,
-#     provide_context=True,
-#     dag=dag,
-# )
+# # task_1 = ShortCircuitOperator(
+# #     task_id='check_env_variable',
+# #     python_callable=check_environment_variable,
+# #     provide_context=True,
+# #     dag=dag,
+# # )
 
 
-def load_data_to_snowflake(**kwargs):
-    url = "https://raw.githubusercontent.com/cs109/2014_data/master/countries.csv"
-    response = requests.get(url)
+# def load_data_to_snowflake(**kwargs):
+#     url = "https://raw.githubusercontent.com/cs109/2014_data/master/countries.csv"
+#     response = requests.get(url)
     
-    if response.status_code == 200:
-        data = response.text
-        lines = data.strip().split('\n')[1:]
-        snowflake_hook = SnowflakeHook(snowflake_conn_id="snowflake_conn")
+#     if response.status_code == 200:
+#         data = response.text
+#         lines = data.strip().split('\n')[1:]
+#         snowflake_hook = SnowflakeHook(snowflake_conn_id="snowflake_conn")
         
-        for line in lines:
-            values = line.split(',')
-            query = f"""
-                INSERT INTO airflow_tasks (country,region)
-                VALUES ('{values[0]}', '{values[1]}')
-            """
-            snowflake_hook.run(query)
+#         for line in lines:
+#             values = line.split(',')
+#             query = f"""
+#                 INSERT INTO airflow_tasks (country,region)
+#                 VALUES ('{values[0]}', '{values[1]}')
+#             """
+#             snowflake_hook.run(query)
             
-        print("Data loaded into Snowflake successfully.")
-    else:
-        raise Exception(f"Failed to fetch data from URL. Status code: {response.status_code}")
+#         print("Data loaded into Snowflake successfully.")
+#     else:
+#         raise Exception(f"Failed to fetch data from URL. Status code: {response.status_code}")
 
-load_data_task = PythonOperator(
-    task_id='load_data_task',
-    python_callable=load_data_to_snowflake,
-    provide_context=True,
-    dag=dag,
-)
+# load_data_task = PythonOperator(
+#     task_id='load_data_task',
+#     python_callable=load_data_to_snowflake,
+#     provide_context=True,
+#     dag=dag,
+# )
 
-# the function is getting records from table graterthan 698012498
+# # the function is getting records from table graterthan 698012498
 
-def print_records_all(**kwargs):
-    snowflake_hook = SnowflakeHook(snowflake_conn_id="snowflake_conn")
-    query = """ SELECT * FROM stage_harsha  
-     """
-    records = snowflake_hook.get_records(query)
-    print("Printing records:")
-    for record in records:
-        print(record)
+# def print_records_all(**kwargs):
+#     snowflake_hook = SnowflakeHook(snowflake_conn_id="snowflake_conn")
+#     query = """ SELECT * FROM stage_harsha  
+#      """
+#     records = snowflake_hook.get_records(query)
+#     print("Printing records:")
+#     for record in records:
+#         print(record)
 
-check_data = PythonOperator(
-    task_id='print_all_records_task',
-    python_callable=print_records_all,
-    provide_context=True,
-    dag=dag,
-)
+# check_data = PythonOperator(
+#     task_id='print_all_records_task',
+#     python_callable=print_records_all,
+#     provide_context=True,
+#     dag=dag,
+# )
 
-load_data_task >> check_data
+# load_data_task >> check_data
 # # function working on condition 
 # def print_records_limit(**kwargs):
 #     snowflake_hook = SnowflakeHook(snowflake_conn_id="snowflake_conn")
