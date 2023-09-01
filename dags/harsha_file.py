@@ -26,7 +26,7 @@ def load_data_to_snowflake(**kwargs):
     if response.status_code == 200:
         data = response.text
         lines = data.strip().split('\n')[1:]
-        snowflake_hook = SnowflakeHook(snowflake_conn_id="snow_harsha")
+        snowflake_hook = SnowflakeHook(snowflake_conn_id="snow_sc")
         
         for line in lines:
             values = line.split(',')
