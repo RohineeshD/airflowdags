@@ -7,6 +7,7 @@ from airflow.operators.python_operator import PythonOperator
 from io import StringIO
 import pandas as pd
 from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
+from airflow.operators.email_operator import EmailOperator
 
 
 # Define default arguments for the DAG
@@ -62,6 +63,15 @@ with DAG('dag2_vik', default_args=default_args, schedule_interval=None) as dag:
     dag=dag,
     )
 
+    email_task = EmailOperator(
+    task_id='email_task',
+    to='vikasdeep.singh@exusia.com',
+    subject='Airflow Task Email',
+    html_content='<p>This is the HTML body of the email.</p>',
+    mime_charset='utf-8',
+    dag=dag,
+    )
+
 
 # Setting up task dependencies 
-stag_to_main  >>  check_data_loading
+stag_to_main  >>  check_data_loading  >>  email_task
