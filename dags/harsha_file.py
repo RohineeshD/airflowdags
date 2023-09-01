@@ -3,6 +3,7 @@ from airflow.providers.http.operators.http_download import HttpDownloadOperator
 from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
 from airflow.utils.dates import days_ago
 
+# Define your Airflow DAG
 default_args = {
     'owner': 'airflow',
     'start_date': days_ago(1),
@@ -30,7 +31,7 @@ download_data_task = HttpDownloadOperator(
 load_data_task = SnowflakeOperator(
     task_id='load_data_to_snowflake',
     sql="""
-    COPY INTO stage_harsha
+    COPY INTO your_table
     FROM 'file:///tmp/countries.csv'
     FILE_FORMAT = (TYPE = CSV SKIP_HEADER = 1);
     """,
@@ -45,6 +46,7 @@ load_data_task = SnowflakeOperator(
 
 # Set the task dependencies
 download_data_task >> load_data_task
+
 
 # from airflow import DAG
 # from airflow.operators.python_operator import PythonOperator
