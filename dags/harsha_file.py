@@ -24,8 +24,9 @@ def download_data():
 
 # Define a Python function to load data into Snowflake
 def load_data_to_snowflake():
+    creds_json_path = 'desktop/creds.json'
     # Load Snowflake credentials from creds.json
-    with open('creds.json', 'r') as file:
+    with open(creds_json_path, 'r') as file:
         snowflake_config = json.load(file)
 
     # Connect to Snowflake
