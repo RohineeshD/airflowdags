@@ -37,10 +37,12 @@ def fetch_csv_and_upload(**kwargs):
         connection = snowflake_hook.get_conn()
         snowflake_hook.insert_rows(table_name, df.values.tolist())
         connection.close()
-        return True
+        status =" DATA ADDED IN SNOWFLAKE STAGING TABLE "
+        return status
     except Exception as e:
         print(f"An error occurred: {str(e)}")
-        return False
+        status =" DATA NOT ADDED IN SNOWFLAKE STAGING TABLE "+str(e)
+        return status
 
 
 # Specify the connection ID you want to retrieve details for
@@ -66,7 +68,7 @@ def send_email(**kwargs):
 
     # Email details
     email_subject = "Airflow Email Notification"
-    email_body = "This is a test  email from Airflow using a connection." + email_content
+    email_body = "This is a test  email from Airflow using a connection. " + email_content
 
     # Create the email message
     message = MIMEMultipart()
