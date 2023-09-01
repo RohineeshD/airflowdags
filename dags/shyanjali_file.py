@@ -4,7 +4,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.application import MIMEApplication
 from airflow.operators.python_operator import PythonOperator
 from datetime import datetime
-
+from airflow import DAG
 
 default_args = dict(
     start_date= datetime(2021, 1, 1),
