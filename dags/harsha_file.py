@@ -4,7 +4,7 @@ from airflow import DAG
 from datetime import datetime
 import requests
 import pandas as pd
-import io  # Import the 'io' module
+import io
 
 default_args = {
     'start_date': datetime(2023, 8, 31),
@@ -23,13 +23,13 @@ def read_data():
     url = "https://raw.githubusercontent.com/cs109/2014_data/master/countries.csv"
     response = requests.get(url)
     print(f"Status code: {response.status_code}")
-    
+
     if response.status_code == 200:
         data = response.text
         print("Fetched data from URL:")
-        print(data)  
-        
-        df = pd.read_csv(io.StringIO(data))  # Use io.StringIO
+        print(data)
+
+        df = pd.read_csv(io.StringIO(data))
         return df
     else:
         raise Exception(f"Failed to fetch data from URL. Status code: {response.status_code}")
@@ -41,48 +41,44 @@ read_data_task = PythonOperator(
 )
 
 # Task 2: Load data into Snowflake using SnowflakeHook
-def load_data(**kwargs):
-    ti = kwargs['ti']
-    df = ti.xcom_pull(task_ids='read_data')  # Get the data from the previous task
+def load_data():
+    snowflake_hook = SnowflakeHook(snowflake_conn_id="snow_harsha")  # Replace with your Snowflake connection ID
+    connection = snowflake_hook.get_conn()
+    cursor = connection.cursor()
 
-    if not df.empty:
-        snowflake_hook = SnowflakeHook(snowflake_conn_id="snow_harsha")
-        connection = snowflake_hook.get_conn()
+    try:
+       
+        database_name = "exusia_db"
+        schema_name = "exusia_schema"
+        table_name = "temp_table"
 
-        # Assuming you have a table called 'temp_harsha' in Snowflake
-        table_name = 'temp_harsha'
-
-        # Convert DataFrame to a list of tuples
+        df = pd.read_csv(io.StringIO(data))  # Assuming you want to use the same DataFrame from Task 1
         records = df.values.tolist()
 
-        # Create a cursor object
-        cursor = connection.cursor()
+        # Truncate the table before inserting new data (optional)
+        cursor.execute(f"TRUNCATE TABLE {database_name}.{schema_name}.{table_name}")
 
-        try:
-            # Truncate the table before inserting new data (optional)
-            cursor.execute(f"TRUNCATE TABLE {table_name}")
+        # Use COPY INTO to load data into Snowflake efficiently
+        cursor.executemany(f"INSERT INTO {database_name}.{schema_name}.{table_name} (column1, column2) VALUES (?, ?)", records)
 
-            # Use COPY INTO to load data into Snowflake efficiently
-            cursor.executemany(f"INSERT INTO {table_name} (country, region) VALUES (?, ?)", records)
-
-            # Commit the changes
-            connection.commit()
-            print("Data loaded into Snowflake successfully")
-        except Exception as e:
-            print(f"Error loading data into Snowflake: {str(e)}")
-        finally:
-            cursor.close()
-            connection.close()
+        # Commit the changes
+        connection.commit()
+        print("Data loaded into Snowflake successfully")
+    except Exception as e:
+        print(f"Error loading data into Snowflake: {str(e)}")
+    finally:
+        cursor.close()
+        connection.close()
 
 load_data_task = PythonOperator(
     task_id='load_data',
     python_callable=load_data,
-    provide_context=True,  # Provide context to access XCom data from previous task
     dag=dag_1,
 )
 
 # Set task dependencies
 read_data_task >> load_data_task
+
 
 
 
