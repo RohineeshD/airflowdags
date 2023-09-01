@@ -63,7 +63,7 @@ def load_data(**kwargs):
         # cursor.execute(f"TRUNCATE TABLE {database_name}.{schema_name}.{table_name}")
 
         # Use COPY INTO to load data into Snowflake efficiently
-        cursor.executemany(f"INSERT INTO {database_name}.{schema_name}.{table_name} (column1, column2) VALUES (?, ?)", records)
+        cursor.executemany(f"INSERT INTO {database_name}.{schema_name}.{table_name} (Contry, Region) VALUES (?, ?)", records)
 
         # Commit the changes
         connection.commit()
