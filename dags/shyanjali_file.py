@@ -53,7 +53,7 @@ send_email_task = EmailOperator(
     cc=None,  # Add CC recipients if needed
     bcc=None,  # Add BCC recipients if needed
     mime_subtype='mixed',  # Use 'mixed' to include both text and HTML content
-    conn_id='EMAIL_LI,  # Specify the SMTP connection ID
+    conn_id='EMAIL_LI',  # Specify the SMTP connection ID
     dag=dag,
 )
 
