@@ -108,7 +108,7 @@ load_data_task
 # task_1 >> load_data_into_snowflake_task
 
 
-task_1 >> load_data_into_snowflake_task
+# task_1 >> load_data_into_snowflake_task
 # from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
 # from airflow.operators.python_operator import PythonOperator
 # from airflow.operators.trigger_dagrun import TriggerDagRunOperator
