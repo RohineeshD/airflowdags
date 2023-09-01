@@ -51,7 +51,7 @@ def send_email(**kwargs):
 
     ti = kwargs['ti']  # Get the TaskInstance
     status = ti.xcom_pull(task_ids='load_csv_into_snowflake')  # Retrieve the status from Task 1 XCom
-    
+    print("SSSSSSS",status)
     if status and status.startswith("Error"):
         subject = 'CSV Load Failed'
     else:
@@ -70,7 +70,7 @@ def send_email(**kwargs):
     recipient_email = 'shyanjali.kantumuchu@exusia.com'
 
     # Email details
-    email_subject = "Airflow Email Notification"
+    email_subject = subject
     email_body =  email_content
 
     # Create the email message
