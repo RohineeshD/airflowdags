@@ -78,7 +78,7 @@ def check_data(**kwargs):
             cursor.close()
             connection.close()
 
-            if result[0] > 0:
+            if result:
                 logging.info("Data check passed. Rows found in the Snowflake table.")
             else:
                 logging.warning("Data check failed. No rows found in the Snowflake table.")
