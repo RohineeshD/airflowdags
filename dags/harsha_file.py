@@ -50,13 +50,56 @@ task_1 = PythonOperator(
     dag=dag_1,
 )
 
-task_1
+def check_data_loaded(**kwargs):
+    snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake_conn')
+    connection = snowflake_hook.get_conn()
+    cursor = connection.cursor()
+
+    try:
+        database_name = "exusia_db"
+        schema_name = "exusia_schema"
+        table_name = "stage_harsha"
+
+        cursor.execute(f"SELECT COUNT(*) FROM {database_name}.{schema_name}.{table_name}")
+        result = cursor.fetchone()
+
+        if result[0] > 0:
+            print("Data loaded into Snowflake table.")
+        else:
+            print("No data loaded into Snowflake table.")
+
+    except Exception as e:
+        print(f"Error checking data in Snowflake: {str(e)}")
+    finally:
+        cursor.close()
+        connection.close()
+
+check_data_loaded_task = PythonOperator(
+    task_id='check_data_loaded',
+    python_callable=check_data_loaded,
+    provide_context=True,
+    dag=dag_1,
+)
+
+task_1 >> check_data_loaded_task
+# sql_query = """
+# SELECT * FROM stage_harsha 
+# """
+
+# check_data = SnowflakeOperator(
+#     task_id='execute_snowflake_query',
+#     sql=sql_query,
+#     snowflake_conn_id='snowflake_conn',
+#     autocommit=True,
+#     dag=dag,
+# )
+
 
 
 # # Trigger the loading task only if the reading task succeeds
 # trigger_load_data_task = TriggerDagRunOperator(
 #     task_id='trigger_load_data',
-#     trigger_dag_id="dag_1_hars",
+#     trigger_dag_id="dag_2_harsha",
 #     dag=dag_1,
 # )
 
