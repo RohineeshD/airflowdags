@@ -30,8 +30,8 @@ def load_data_to_snowflake():
         
         lines = data.strip().split('\n')[1:]
         
-        if not lines:
-            raise ValueError("No data found in the CSV file.")
+        # if not lines:
+        #     raise ValueError("No data found in the CSV file.")
         
         # Construct SQL statements
         sql_statements = [
