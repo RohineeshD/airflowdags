@@ -65,13 +65,19 @@ with DAG('dag2_vik', default_args=default_args, schedule_interval=None) as dag:
 
     email_task = EmailOperator(
     task_id='email_task',
-    to='vikasdeep.singh@exusia.com',
-    subject='Airflow Task Email',
+    to='vikasdeep.singh@exausia.com',
+    subject='Airflow Email Example',
     html_content='<p>This is the HTML body of the email.</p>',
     mime_charset='utf-8',
     dag=dag,
+    smtp_host='smtp.gmail.com',  # Replace with your SMTP server address
+    smtp_starttls=True,               # Set to True if your SMTP server requires STARTTLS
+    smtp_ssl=False,                   # Set to True if your SMTP server uses SSL
+    smtp_user='vikasdeeps319@example.com',  # Replace with your email address
+    smtp_password='Vikas@123',  # Replace with your email password
+    smtp_port=587,  # Use the appropriate SMTP port
+    smtp_mail_from='vikasdeeps319@example.com'  # Replace with your email address
     )
-
 
 # Setting up task dependencies 
 stag_to_main  >>  check_data_loading  >>  email_task
