@@ -74,7 +74,7 @@ def check_data(**kwargs):
 with DAG(
     "harsha_dag_1",
     start_date=days_ago(1),  # Use days_ago function to specify the start date
-    schedule_interval=None,
+    schedule_interval='@once',
     catchup=False,
 ) as dag:
     # Task 1: Read data from the URL
