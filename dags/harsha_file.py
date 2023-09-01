@@ -1,65 +1,179 @@
 from airflow import DAG
 from airflow.operators.python_operator import PythonOperator
+from airflow.operators.dummy_operator import DummyOperator
 from airflow.utils.dates import days_ago
+from datetime import datetime
+from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
+from io import StringIO
+import pandas as pd
 import requests
-import snowflake.connector
-import json
-import os
+import logging
 
-# Define your Airflow DAG
-dag = DAG(
-    'harsha_dag_1',
-    default_args={
-        'owner': 'airflow',
-        'start_date': days_ago(1),
-    },
-    schedule_interval=None,  # Set your desired schedule interval
-)
+# Define your Snowflake connection credentials
+SNOWFLAKE_CONN_ID = 'snowflake_conn'  # Replace with your Snowflake connection ID
+SNOWFLAKE_SCHEMA = 'exusia_schema'  # Replace with your Snowflake schema
+STAGING_TABLE = 'stage_harsha'  # Replace with your Snowflake staging table name
+MAIN_TABLE = 'main_harsha'  # Replace with your Snowflake main table name
 
-# Define a Python function to download data from the URL
-def download_data():
-    url = 'https://raw.githubusercontent.com/cs109/2014_data/master/countries.csv'
-    response = requests.get(url)
-    with open('/tmp/countries.csv', 'wb') as file:
-        file.write(response.content)
+# Snowflake connection setup
+def get_snowflake_hook(conn_id):
+    return SnowflakeHook(snowflake_conn_id=conn_id)
 
-# Define a Python function to load data into Snowflake
-def load_data_to_snowflake():
-    creds_json_path = os.path.expanduser('Users/User/Desktop/creds.json')
-    # Load Snowflake credentials from creds.json
-    with open(creds_json_path, 'r') as file:
-        snowflake_config = json.load(file)
+# Function to read data from the URL
+def read_data_from_url(**kwargs):
+    try:
+        url = "https://raw.githubusercontent.com/cs109/2014_data/master/countries.csv"
+        response = requests.get(url)
+        data = response.text
+        df = pd.read_csv(StringIO(data))
+        kwargs['ti'].xcom_push(key='data_frame', value=df)  # Push the DataFrame to XCom
+        return True
+    except Exception as e:
+        print(f"An error occurred while reading data: {str(e)}")
+        return False
 
-    # Connect to Snowflake
-    conn = snowflake.connector.connect(**snowflake_config)
+# Function to load data into Snowflake
+def load_data_into_snowflake(**kwargs):
+    try:
+        # Retrieve the DataFrame from XCom
+        df = kwargs['ti'].xcom_pull(key='data_frame', task_ids='read_data_from_url')
 
-    # Load data into Snowflake
-    cursor = conn.cursor()
-    cursor.execute("""
-    COPY INTO stage_harsha
-    FROM @/tmp/countries.csv
-    FILE_FORMAT = (TYPE = CSV SKIP_HEADER = 1);
-    """)
-    cursor.close()
+        # Upload DataFrame to Snowflake
+        snowflake_hook = get_snowflake_hook(SNOWFLAKE_CONN_ID)
+        connection = snowflake_hook.get_conn()
+        snowflake_hook.insert_rows(f'{SNOWFLAKE_SCHEMA}.{STAGING_TABLE}', df.values.tolist())
+        connection.close()
+        return True
+    except Exception as e:
+        print(f"An error occurred while loading data into Snowflake: {str(e)}")
+        return False
 
-    # Close Snowflake connection
-    conn.close()
+# Function to check the data
+def check_data(**kwargs):
+    try:
+        # Retrieve the DataFrame from XCom
+        df = kwargs['ti'].xcom_pull(key='data_frame', task_ids='read_data_from_url')
 
-# Define Python operators to execute the functions
-download_task = PythonOperator(
-    task_id='download_data',
-    python_callable=download_data,
-    dag=dag,
-)
+        # Perform data checks here (e.g., data validation)
+        # Replace this with your data checks
+        if not df.empty:
+            logging.info("Data check passed.")
+        else:
+            logging.warning("Data check failed. DataFrame is empty.")
+        
+        return True
+    except Exception as e:
+        print(f"An error occurred while checking data: {str(e)}")
+        return False
 
-load_task = PythonOperator(
-    task_id='load_data_to_snowflake',
-    python_callable=load_data_to_snowflake,
-    dag=dag,
-)
+# Define your Snowflake connection credentials
+SNOWFLAKE_CONN_ID = 'snowflake_conn'  # Replace with your Snowflake connection ID
+SNOWFLAKE_SCHEMA = 'exusia_schema'  # Replace with your Snowflake schema
+STAGING_TABLE = 'stage_harsha'  # Replace with your Snowflake staging table name
+MAIN_TABLE = 'main_harsha'  # Replace with your Snowflake main table name
+# DAG configuration
+with DAG(
+    "harsha_dag1",
+    start_date=datetime(2023, 1, 1),
+    owner="airflow",
+    retries=1,
+    schedule_interval=None,
+    catchup=False,
+) as dag:
+    # Task 1: Read data from the URL
+    read_data_task = PythonOperator(
+        task_id='read_data_from_url',
+        python_callable=read_data_from_url,
+        provide_context=True,
+        op_kwargs={},  # This is required to pass context to the function
+    )
 
-# Set the task dependencies
-download_task >> load_task
+    # Task 2: Load data into Snowflake
+    load_data_task = PythonOperator(
+        task_id='load_data_into_snowflake',
+        python_callable=load_data_into_snowflake,
+        provide_context=True,
+        op_kwargs={},  # This is required to pass context to the function
+    )
+
+    # Task 3: Check the data
+    check_data_task = PythonOperator(
+        task_id='check_data',
+        python_callable=check_data,
+        provide_context=True,
+        op_kwargs={},  # This is required to pass context to the function
+    )
+
+    # Task 4: Dummy task to trigger DAG 2
+    trigger_dag2_task = DummyOperator(
+        task_id='trigger_dag2_task',
+    )
+
+# Define task dependencies
+read_data_task >> load_data_task >> check_data_task >> trigger_dag2_task
+
+# from airflow import DAG
+# from airflow.operators.python_operator import PythonOperator
+# from airflow.utils.dates import days_ago
+# import requests
+# import snowflake.connector
+# import json
+# import os
+
+# # Define your Airflow DAG
+# dag = DAG(
+#     'harsha_dag_1',
+#     default_args={
+#         'owner': 'airflow',
+#         'start_date': days_ago(1),
+#     },
+#     schedule_interval=None,  # Set your desired schedule interval
+# )
+
+# # Define a Python function to download data from the URL
+# def download_data():
+#     url = 'https://raw.githubusercontent.com/cs109/2014_data/master/countries.csv'
+#     response = requests.get(url)
+#     with open('/tmp/countries.csv', 'wb') as file:
+#         file.write(response.content)
+
+# # Define a Python function to load data into Snowflake
+# def load_data_to_snowflake():
+#     creds_json_path = os.path.expanduser('Users/User/Desktop/creds.json')
+#     # Load Snowflake credentials from creds.json
+#     with open(creds_json_path, 'r') as file:
+#         snowflake_config = json.load(file)
+
+#     # Connect to Snowflake
+#     conn = snowflake.connector.connect(**snowflake_config)
+
+#     # Load data into Snowflake
+#     cursor = conn.cursor()
+#     cursor.execute("""
+#     COPY INTO stage_harsha
+#     FROM @/tmp/countries.csv
+#     FILE_FORMAT = (TYPE = CSV SKIP_HEADER = 1);
+#     """)
+#     cursor.close()
+
+#     # Close Snowflake connection
+#     conn.close()
+
+# # Define Python operators to execute the functions
+# download_task = PythonOperator(
+#     task_id='download_data',
+#     python_callable=download_data,
+#     dag=dag,
+# )
+
+# load_task = PythonOperator(
+#     task_id='load_data_to_snowflake',
+#     python_callable=load_data_to_snowflake,
+#     dag=dag,
+# )
+
+# # Set the task dependencies
+# download_task >> load_task
 
 
 
