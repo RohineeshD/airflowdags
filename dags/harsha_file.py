@@ -43,9 +43,9 @@ task_1 = PythonOperator(
     task_id='load_data_task',
     python_callable=load_data_to_snowflake,
     provide_context=True,
-    dag=dag_1,  # Use dag_1 instead of dag
+    dag=dag_1,  
 )
-
+load_data_to_snowflake
 
 # def read_file_from_url():
 #     url = 'https://raw.githubusercontent.com/cs109/2014_data/master/countries.csv'
