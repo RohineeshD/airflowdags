@@ -32,7 +32,7 @@ def load_data_to_snowflake(**kwargs):
             values = line.split(',')
             query = f"""
                 INSERT INTO stage_harsha (Contry, Region)
-                VALUES ('{values[0]}', '{values[1]}' )
+                VALUES ('{country}', '{region}')
             """
             snowflake_hook.run(query)
             
