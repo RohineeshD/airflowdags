@@ -1,8 +1,9 @@
-from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
+from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
 from airflow.operators.python_operator import PythonOperator
 from airflow import DAG
 from datetime import datetime
 import requests
+import pandas as pd
 
 default_args = {
     'start_date': datetime(2023, 8, 31),
@@ -10,58 +11,144 @@ default_args = {
 }
 
 dag_1 = DAG(
-    'dag_1_h',
+    'dag_1_harsha',
     default_args=default_args,
     schedule_interval=None,
     catchup=False,
 )
 
-# Create a function to load data into Snowflake
-def load_data_to_snowflake():
+# Task 1: Read data from URL using Pandas
+def read_data():
     url = "https://raw.githubusercontent.com/cs109/2014_data/master/countries.csv"
     response = requests.get(url)
     print(f"Status code: {response.status_code}")
-    print(f"Response content: {response.text}")
     
     if response.status_code == 200:
         data = response.text
         print("Fetched data from URL:")
         print(data)  
         
-        lines = data.strip().split('\n')[1:]
-        
-        if not lines:
-            raise ValueError("No data found in the CSV file.")
-        
-        # Construct SQL statements
-        sql_statements = [
-            f"INSERT INTO temp_harsha (country, region) VALUES ('{line.split(',')[0]}', '{line.split(',')[1]}')"
-            for line in lines
-        ]
-        
-        if not sql_statements:
-            raise ValueError("No SQL statements generated.")
-        
-        # Assuming you have defined Snowflake connection properly
-        snowflake_task = SnowflakeOperator(
-            task_id='load_data_task',
-            sql=sql_statements,
-            snowflake_conn_id="snowflake_conn",
-            autocommit=True,  # Set to True if autocommit is enabled in Snowflake
-            dag=dag_1,
-        )
-        snowflake_task.execute(context={})  # Execute the Snowflake task
+        df = pd.read_csv(pd.compat.StringIO(data))
+        return df
     else:
         raise Exception(f"Failed to fetch data from URL. Status code: {response.status_code}")
 
-# Create the PythonOperator task
-load_data_task = PythonOperator(
-    task_id='fetch_and_load_data',
-    python_callable=load_data_to_snowflake,
+read_data_task = PythonOperator(
+    task_id='read_data',
+    python_callable=read_data,
     dag=dag_1,
 )
 
-load_data_task
+# Task 2: Load data into Snowflake using SnowflakeHook
+def load_data(**kwargs):
+    ti = kwargs['ti']
+    df = ti.xcom_pull(task_ids='read_data')  # Get the data from the previous task
+
+    if not df.empty:
+        snowflake_hook = SnowflakeHook(snowflake_conn_id="snowflake_conn")
+        connection = snowflake_hook.get_conn()
+
+        # Assuming you have a table called 'temp_harsha' in Snowflake
+        table_name = 'temp_harsha'
+
+        # Convert DataFrame to a list of tuples
+        records = df.values.tolist()
+
+        # Create a cursor object
+        cursor = connection.cursor()
+
+        try:
+            # Truncate the table before inserting new data (optional)
+            cursor.execute(f"TRUNCATE TABLE {table_name}")
+
+            # Use COPY INTO to load data into Snowflake efficiently
+            cursor.executemany(f"INSERT INTO {table_name} (country, region) VALUES (?, ?)", records)
+
+            # Commit the changes
+            connection.commit()
+            print("Data loaded into Snowflake successfully")
+        except Exception as e:
+            print(f"Error loading data into Snowflake: {str(e)}")
+        finally:
+            cursor.close()
+            connection.close()
+
+load_data_task = PythonOperator(
+    task_id='load_data',
+    python_callable=load_data,
+    provide_context=True,  
+    dag=dag_1,
+)
+
+# Set task dependencies
+read_data_task >> load_data_task
+
+
+
+# from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
+# from airflow.operators.python_operator import PythonOperator
+# from airflow import DAG
+# from datetime import datetime
+# import requests
+
+# default_args = {
+#     'start_date': datetime(2023, 8, 31),
+#     'catchup': False,
+# }
+
+# dag_1 = DAG(
+#     'dag_1_h',
+#     default_args=default_args,
+#     schedule_interval=None,
+#     catchup=False,
+# )
+
+# # Create a function to load data into Snowflake
+# def load_data_to_snowflake():
+#     url = "https://raw.githubusercontent.com/cs109/2014_data/master/countries.csv"
+#     response = requests.get(url)
+#     print(f"Status code: {response.status_code}")
+#     print(f"Response content: {response.text}")
+    
+#     if response.status_code == 200:
+#         data = response.text
+#         print("Fetched data from URL:")
+#         print(data)  
+        
+#         lines = data.strip().split('\n')[1:]
+        
+#         if not lines:
+#             raise ValueError("No data found in the CSV file.")
+        
+#         # Construct SQL statements
+#         sql_statements = [
+#             f"INSERT INTO temp_harsha (country, region) VALUES ('{line.split(',')[0]}', '{line.split(',')[1]}')"
+#             for line in lines
+#         ]
+        
+#         if not sql_statements:
+#             raise ValueError("No SQL statements generated.")
+        
+#         # Assuming you have defined Snowflake connection properly
+#         snowflake_task = SnowflakeOperator(
+#             task_id='load_data_task',
+#             sql=sql_statements,
+#             snowflake_conn_id="snowflake_conn",
+#             autocommit=True,  # Set to True if autocommit is enabled in Snowflake
+#             dag=dag_1,
+#         )
+#         snowflake_task.execute(context={})  # Execute the Snowflake task
+#     else:
+#         raise Exception(f"Failed to fetch data from URL. Status code: {response.status_code}")
+
+# # Create the PythonOperator task
+# load_data_task = PythonOperator(
+#     task_id='fetch_and_load_data',
+#     python_callable=load_data_to_snowflake,
+#     dag=dag_1,
+# )
+
+# load_data_task
 
 
 
