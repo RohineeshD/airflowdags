@@ -74,7 +74,7 @@ def check_data(**kwargs):
             connection = snowflake_hook.get_conn()
             cursor = connection.cursor()
             cursor.execute(f"SELECT * FROM {SNOWFLAKE_SCHEMA}.{STAGING_TABLE}")
-            result = cursor.fetchone()
+            result = cursor.fetchall()
             cursor.close()
             connection.close()
 
