@@ -1,4 +1,5 @@
 from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
+from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
 from airflow.operators.python_operator import PythonOperator
 from airflow import DAG
 # from retry import retry
@@ -44,7 +45,7 @@ def read_and_load_to_snowflake(**kwargs):
     else:
         raise Exception(f"Failed to fetch data from URL. Status code: {response.status_code}")
 
-task_1 = PythonOperator(
+task_1 = SnowflakeOperator(
     task_id='read_load_data_task',
     python_callable=read_and_load_to_snowflake,
     provide_context=True,
@@ -75,7 +76,7 @@ def check_data_loaded(**kwargs):
         cursor.close()
         connection.close()
 
-check_data_loaded_task = PythonOperator(
+check_data_loaded_task = SnowflakeOperator(
     task_id='check_data_loaded',
     python_callable=check_data_loaded,
     provide_context=True,
