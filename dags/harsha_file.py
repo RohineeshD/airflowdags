@@ -44,7 +44,7 @@ task_2 = PythonOperator(
     task_id='load_data_task',
     python_callable=load_data_to_snowflake,
     provide_context=True,
-    dag=dag,
+    dag=dag_1,
 )
 
 task_2
