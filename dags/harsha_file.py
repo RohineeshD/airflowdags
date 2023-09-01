@@ -25,13 +25,22 @@ def load_data_to_snowflake():
         data = response.text
         lines = data.strip().split('\n')[1:]
         
+        if not lines:
+            raise ValueError("No data found in the CSV file.")
+        
+        # Construct SQL statements
+        sql_statements = [
+            f"INSERT INTO temp_harsha (country, region) VALUES ('{line.split(',')[0]}', '{line.split(',')[1]}')"
+            for line in lines
+        ]
+        
+        if not sql_statements:
+            raise ValueError("No SQL statements generated.")
+        
         # Assuming you have defined Snowflake connection properly
         snowflake_task = SnowflakeOperator(
             task_id='load_data_task',
-            sql=[
-                f"INSERT INTO temp_harsha (country, region) VALUES ('{line.split(',')[0]}', '{line.split(',')[1]}')"
-                for line in lines
-            ],
+            sql=sql_statements,
             snowflake_conn_id="snowflake_conn",
             autocommit=True,  # Set to True if autocommit is enabled in Snowflake
             dag=dag_1,
@@ -48,6 +57,7 @@ load_data_task = PythonOperator(
 )
 
 load_data_task
+
 
 
 
