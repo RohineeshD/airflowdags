@@ -17,7 +17,7 @@ MAIN_TABLE = 'main_harsha'  # Replace with your Snowflake main table name
 
 # Snowflake connection setup
 def get_snowflake_hook(conn_id):
-    return SnowflakeHook(snowflake_conn_id=conn_id)
+    return SnowflakeHook(snowflake_conn_id=snowflake_conn)
 
 # Function to read data from the URL
 def read_data_from_url(**kwargs):
@@ -66,17 +66,10 @@ def check_data(**kwargs):
         print(f"An error occurred while checking data: {str(e)}")
         return False
 
-# Define your Snowflake connection credentials
-SNOWFLAKE_CONN_ID = 'snowflake_conn'  # Replace with your Snowflake connection ID
-SNOWFLAKE_SCHEMA = 'exusia_schema'  # Replace with your Snowflake schema
-STAGING_TABLE = 'stage_harsha'  # Replace with your Snowflake staging table name
-MAIN_TABLE = 'main_harsha'  # Replace with your Snowflake main table name
 # DAG configuration
 with DAG(
-    "harsha_dag1",
-    start_date=datetime(2023, 1, 1),
-    # owner="airflow",
-    retries=1,
+    "Shyanjali_dag1",
+    start_date=days_ago(1),  # Use days_ago function to specify the start date
     schedule_interval=None,
     catchup=False,
 ) as dag:
@@ -111,6 +104,7 @@ with DAG(
 
 # Define task dependencies
 read_data_task >> load_data_task >> check_data_task >> trigger_dag2_task
+
 
 # from airflow import DAG
 # from airflow.operators.python_operator import PythonOperator
