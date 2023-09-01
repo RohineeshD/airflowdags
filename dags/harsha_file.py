@@ -4,7 +4,7 @@ from airflow import DAG
 from datetime import datetime
 import requests
 import pandas as pd
-import io
+import io  # Import the 'io' module
 
 default_args = {
     'start_date': datetime(2023, 8, 31),
@@ -12,7 +12,7 @@ default_args = {
 }
 
 dag_1 = DAG(
-    'dag_1_harsha',
+    'dag_1_h',
     default_args=default_args,
     schedule_interval=None,
     catchup=False,
@@ -29,7 +29,7 @@ def read_data():
         print("Fetched data from URL:")
         print(data)  
         
-        df = pd.read_csv(pd.compat.StringIO(data))
+        df = pd.read_csv(io.StringIO(data))  # Use io.StringIO
         return df
     else:
         raise Exception(f"Failed to fetch data from URL. Status code: {response.status_code}")
@@ -77,12 +77,13 @@ def load_data(**kwargs):
 load_data_task = PythonOperator(
     task_id='load_data',
     python_callable=load_data,
-    provide_context=True,  
+    provide_context=True,  # Provide context to access XCom data from previous task
     dag=dag_1,
 )
 
 # Set task dependencies
 read_data_task >> load_data_task
+
 
 
 
