@@ -75,7 +75,7 @@ MAIN_TABLE = 'main_harsha'  # Replace with your Snowflake main table name
 with DAG(
     "harsha_dag1",
     start_date=datetime(2023, 1, 1),
-    owner="airflow",
+    # owner="airflow",
     retries=1,
     schedule_interval=None,
     catchup=False,
