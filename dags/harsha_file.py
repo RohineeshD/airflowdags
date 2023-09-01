@@ -42,7 +42,7 @@ read_data_task = PythonOperator(
 
 # Task 2: Load data into Snowflake using SnowflakeHook
 def load_data():
-    snowflake_hook = SnowflakeHook(snowflake_conn_id="snow_harsha") 
+    snowflake_hook = SnowflakeHook(snowflake_conn_id='snow_harsha') 
     connection = snowflake_hook.get_conn()
     cursor = connection.cursor()
 
