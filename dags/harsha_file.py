@@ -56,6 +56,7 @@ def load_data_into_snowflake(**kwargs):
         return False
 
 # Function to check the data
+
 def check_data(**kwargs):
     try:
         # Retrieve the CSV data from XCom
@@ -64,10 +65,23 @@ def check_data(**kwargs):
         # Convert the CSV data to a DataFrame
         df = pd.read_csv(StringIO(csv_data))
 
-        # Perform data checks here (e.g., data validation)
-        # Replace this with your data checks
+        # Check if there are any rows in the DataFrame
         if not df.empty:
-            logging.info("Data check passed.")
+            logging.info("Data check passed. Rows found in the DataFrame.")
+
+            # You can also execute a SQL query to check the table in Snowflake
+            snowflake_hook = get_snowflake_hook(SNOWFLAKE_CONN_ID)
+            connection = snowflake_hook.get_conn()
+            cursor = connection.cursor()
+            cursor.execute(f"SELECT COUNT(*) FROM {SNOWFLAKE_SCHEMA}.{STAGING_TABLE}")
+            result = cursor.fetchone()
+            cursor.close()
+            connection.close()
+
+            if result[0] > 0:
+                logging.info("Data check passed. Rows found in the Snowflake table.")
+            else:
+                logging.warning("Data check failed. No rows found in the Snowflake table.")
         else:
             logging.warning("Data check failed. DataFrame is empty.")
         
@@ -75,6 +89,26 @@ def check_data(**kwargs):
     except Exception as e:
         print(f"An error occurred while checking data: {str(e)}")
         return False
+
+# def check_data(**kwargs):
+#     try:
+#         # Retrieve the CSV data from XCom
+#         csv_data = kwargs['ti'].xcom_pull(key='data_frame_csv', task_ids='read_data_from_url')
+        
+#         # Convert the CSV data to a DataFrame
+#         df = pd.read_csv(StringIO(csv_data))
+
+#         # Perform data checks here (e.g., data validation)
+#         # Replace this with your data checks
+#         if not df.empty:
+#             logging.info("Data check passed.")
+#         else:
+#             logging.warning("Data check failed. DataFrame is empty.")
+        
+#         return True
+#     except Exception as e:
+#         print(f"An error occurred while checking data: {str(e)}")
+#         return False
 
 
 # DAG configuration
