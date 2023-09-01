@@ -42,6 +42,8 @@ read_data_task = PythonOperator(
 
 # Task 2: Load data into Snowflake using SnowflakeHook
 def load_data():
+    ti = kwargs['ti']
+    data = ti.xcom_pull(task_ids='read_data')
     snowflake_hook = SnowflakeHook(snowflake_conn_id='snow_sc') 
     connection = snowflake_hook.get_conn()
     cursor = connection.cursor()
@@ -51,7 +53,7 @@ def load_data():
         database_name = "demo"
         schema_name = "sc1"
         table_name = "stage_harsha"
-        data = response.text
+        
 
         df = pd.read_csv(io.StringIO(data))  
         records = df.values.tolist()
