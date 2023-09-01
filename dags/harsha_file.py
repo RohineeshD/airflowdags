@@ -17,9 +17,9 @@ dag_1 = DAG(
     catchup=False,
 )
 
-# the fucntion is loding the data from url to snowflake
+# the function is loading the data from URL to Snowflake
 def load_data_to_snowflake(**kwargs):
-    url = " https://raw.githubusercontent.com/cs109/2014_data/master/countries.csv"
+    url = "https://raw.githubusercontent.com/cs109/2014_data/master/countries.csv"
     response = requests.get(url)
     
     if response.status_code == 200:
@@ -43,8 +43,9 @@ task_1 = PythonOperator(
     task_id='load_data_task',
     python_callable=load_data_to_snowflake,
     provide_context=True,
-    dag=dag_1,
+    dag=dag_1,  # Use dag_1 instead of dag
 )
+
 
 # def read_file_from_url():
 #     url = 'https://raw.githubusercontent.com/cs109/2014_data/master/countries.csv'
