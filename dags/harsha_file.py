@@ -43,7 +43,7 @@ task_1 = PythonOperator(
     task_id='load_data_task',
     python_callable=load_data_to_snowflake,
     provide_context=True,
-    dag=dag,
+    dag=dag_1,
 )
 
 # def read_file_from_url():
