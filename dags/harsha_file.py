@@ -58,8 +58,11 @@ def load_data_into_snowflake(**kwargs):
 # Function to check the data
 def check_data(**kwargs):
     try:
-        # Retrieve the DataFrame from XCom
-        df = kwargs['ti'].xcom_pull(key='data_frame', task_ids='read_data_from_url')
+        # Retrieve the CSV data from XCom
+        csv_data = kwargs['ti'].xcom_pull(key='data_frame_csv', task_ids='read_data_from_url')
+        
+        # Convert the CSV data to a DataFrame
+        df = pd.read_csv(StringIO(csv_data))
 
         # Perform data checks here (e.g., data validation)
         # Replace this with your data checks
@@ -72,6 +75,7 @@ def check_data(**kwargs):
     except Exception as e:
         print(f"An error occurred while checking data: {str(e)}")
         return False
+
 
 # DAG configuration
 with DAG(
