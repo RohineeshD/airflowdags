@@ -4,6 +4,7 @@ from airflow import DAG
 from datetime import datetime
 import requests
 import pandas as pd
+import io
 
 default_args = {
     'start_date': datetime(2023, 8, 31),
