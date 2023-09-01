@@ -51,7 +51,7 @@ connection_id = 'EMAIL_LI'
 def send_email(**kwargs):
 
     ti = kwargs['ti']  # Get the TaskInstance
-    status = ti.xcom_pull(task_ids='load_csv_into_snowflake')  # Retrieve the status from Task 1 XCom
+    status = ti.xcom_pull(task_ids='fetch_and_upload')  # Retrieve the status from Task 1 XCom
     print("SSSSSSS",status)
     if status and status.startswith("Error"):
         subject = 'CSV Load Failed'
