@@ -73,7 +73,7 @@ def check_data(**kwargs):
             snowflake_hook = get_snowflake_hook(SNOWFLAKE_CONN_ID)
             connection = snowflake_hook.get_conn()
             cursor = connection.cursor()
-            cursor.execute(f"SELECT COUNT(*) FROM {SNOWFLAKE_SCHEMA}.{STAGING_TABLE}")
+            cursor.execute(f"SELECT * FROM {SNOWFLAKE_SCHEMA}.{STAGING_TABLE}")
             result = cursor.fetchone()
             cursor.close()
             connection.close()
