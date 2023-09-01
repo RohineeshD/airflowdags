@@ -40,6 +40,7 @@ def fetch_csv_and_upload(**kwargs):
         status =" DATA ADDED IN SNOWFLAKE STAGING TABLE "
     except Exception as e:
         status = f"Error loading CSV into Snowflake: {str(e)}"
+        print(f"Error loading CSV into Snowflake: {str(e)}")
     return status
 
 
