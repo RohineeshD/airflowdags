@@ -6,7 +6,7 @@ from datetime import datetime
 
 # Define your default arguments for the DAG
 default_args = {
-    'owner': 'your_name',
+    'owner': 'airflow',
     'start_date': datetime(2023, 9, 1),
     'retries': 1,
 }
@@ -15,7 +15,7 @@ default_args = {
 dag = DAG(
     'shyanjali_email_dag',
     default_args=default_args,
-    schedule_interval=None,  # You can set the schedule interval as needed
+    schedule_interval='@once',  # You can set the schedule interval as needed
     catchup=False,
 )
 
