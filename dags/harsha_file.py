@@ -59,7 +59,7 @@ def load_data_into_snowflake(**kwargs):
         print(f"Error loading data into Snowflake: {str(e)}")
         raise
 
-load_data_into_snowflake_task = SnowflakeOperator(
+load_data_into_snowflake_task = PythonOperator(
     task_id="load_data_into_snowflake",
     python_callable=load_data_into_snowflake,
     provide_context=True,
