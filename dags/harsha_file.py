@@ -74,7 +74,7 @@ def load_data_to_snowflake(**kwargs):
         for line in lines:
             values = line.split(',')
             query = f"""
-                INSERT INTO airflow_tasks (Country, Region )
+                INSERT INTO airflow_tasks (Country,Region)
                 VALUES ('{values[0]}', '{values[1]}')
             """
             snowflake_hook.run(query)
