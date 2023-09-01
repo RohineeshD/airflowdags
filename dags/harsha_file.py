@@ -31,7 +31,7 @@ def load_data_to_snowflake(**kwargs):
         for line in lines:
             values = line.split(',')
             query = f"""
-                INSERT INTO temp_harsha (contry, region)
+                INSERT INTO stage_harsha (Contry, Region)
                 VALUES ('{values[0]}', '{values[1]}' )
             """
             snowflake_hook.run(query)
