@@ -17,7 +17,7 @@ MAIN_TABLE = 'main_harsha'  # Replace with your Snowflake main table name
 
 # Snowflake connection setup
 def get_snowflake_hook(conn_id):
-    return SnowflakeHook(snowflake_conn_id=snowflake_conn)
+    return SnowflakeHook(snowflake_conn_id=conn_id)
 
 # Function to read data from the URL
 def read_data_from_url(**kwargs):
