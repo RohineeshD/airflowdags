@@ -1,8 +1,8 @@
+from datetime import datetime
 from airflow import DAG
 from airflow.operators.python_operator import PythonOperator
 from airflow.operators.dummy_operator import DummyOperator
 from airflow.utils.dates import days_ago
-from datetime import datetime
 from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
 from airflow.operators.trigger_dagrun import TriggerDagRunOperator
 from io import StringIO
@@ -22,6 +22,7 @@ dag = DAG(
     default_args=default_args,
     schedule_interval=None,
 )
+
 # Define your Snowflake connection credentials
 SNOWFLAKE_CONN_ID = 'snowflake_conn'  
 SNOWFLAKE_SCHEMA = 'exusia_schema'  
@@ -69,7 +70,6 @@ def load_data_into_snowflake(**kwargs):
         return False
 
 # Function to check the data
-
 def check_data(**kwargs):
     try:
         # Retrieve the CSV data from XCom
@@ -103,59 +103,38 @@ def check_data(**kwargs):
         print(f"An error occurred while checking data: {str(e)}")
         return False
 
-# def check_data(**kwargs):
-#     try:
-#         # Retrieve the CSV data from XCom
-#         csv_data = kwargs['ti'].xcom_pull(key='data_frame_csv', task_ids='read_data_from_url')
-        
-#         # Convert the CSV data to a DataFrame
-#         df = pd.read_csv(StringIO(csv_data))
+# Task 1: Read data from the URL
+read_data_task = PythonOperator(
+    task_id='read_data_from_url',
+    python_callable=read_data_from_url,
+    provide_context=True,
+    dag=dag,
+)
 
-#         # Perform data checks here (e.g., data validation)
-#         # Replace this with your data checks
-#         if not df.empty:
-#             logging.info("Data check passed.")
-#         else:
-#             logging.warning("Data check failed. DataFrame is empty.")
-        
-#         return True
-#     except Exception as e:
-#         print(f"An error occurred while checking data: {str(e)}")
-#         return False
+# Task 2: Load data into Snowflake
+load_data_task = PythonOperator(
+    task_id='load_data_into_snowflake',
+    python_callable=load_data_into_snowflake,
+    provide_context=True,
+    dag=dag,
+)
 
+# Task 3: Check the data
+check_data_task = PythonOperator(
+    task_id='check_data',
+    python_callable=check_data,
+    provide_context=True,
+    dag=dag,
+)
 
-    # Task 1: Read data from the URL
-    read_data_task = PythonOperator(
-        task_id='read_data_from_url',
-        python_callable=read_data_from_url,
-        provide_context=True,
-        op_kwargs={},  
-    )
-
-    # Task 2: Load data into Snowflake
-    load_data_task = PythonOperator(
-        task_id='load_data_into_snowflake',
-        python_callable=load_data_into_snowflake,
-        provide_context=True,
-        op_kwargs={},  # This is required to pass context to the function
-    )
-
-    # Task 3: Check the data
-    check_data_task = PythonOperator(
-        task_id='check_data',
-        python_callable=check_data,
-        provide_context=True,
-        op_kwargs={},  
-    )
-
-    trigger_dag_2 = TriggerDagRunOperator(
+trigger_dag_2 = TriggerDagRunOperator(
     task_id='trigger_dag_2',
     trigger_dag_id="dag_2_harsha",
     dag=dag,
 )
 
 # Define task dependencies
-read_data_task >> load_data_task >> check_data_task >> trigger_dag2_task
+read_data_task >> load_data_task >> check_data_task >> trigger_dag_2  # Corrected the task name
 
 
 
