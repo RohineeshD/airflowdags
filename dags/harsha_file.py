@@ -83,13 +83,13 @@ def check_data(**kwargs):
         #     logging.info("Data check passed. Rows found in the DataFrame.")
 
             # You can also execute a SQL query to check the table in Snowflake
-            snowflake_hook = get_snowflake_hook(SNOWFLAKE_CONN_ID)
-            connection = snowflake_hook.get_conn()
-            cursor = connection.cursor()
-            cursor.execute(f"SELECT * FROM {SNOWFLAKE_SCHEMA}.{STAGING_TABLE}")
-            result = cursor.fetchall()
-            cursor.close()
-            connection.close()
+        snowflake_hook = get_snowflake_hook(SNOWFLAKE_CONN_ID)
+        connection = snowflake_hook.get_conn()
+        cursor = connection.cursor()
+        cursor.execute(f"SELECT * FROM {SNOWFLAKE_SCHEMA}.{STAGING_TABLE}")
+        result = cursor.fetchall()
+        cursor.close()
+        connection.close()
 
             # if result:
             #     logging.info("Data check passed. Rows found in the Snowflake table.")
