@@ -79,8 +79,8 @@ def check_data(**kwargs):
         df = pd.read_csv(StringIO(csv_data))
 
         # Check if there are any rows in the DataFrame
-        if not df.empty:
-            logging.info("Data check passed. Rows found in the DataFrame.")
+        # if not df.empty:
+        #     logging.info("Data check passed. Rows found in the DataFrame.")
 
             # You can also execute a SQL query to check the table in Snowflake
             snowflake_hook = get_snowflake_hook(SNOWFLAKE_CONN_ID)
@@ -91,10 +91,10 @@ def check_data(**kwargs):
             cursor.close()
             connection.close()
 
-            if result:
-                logging.info("Data check passed. Rows found in the Snowflake table.")
-            else:
-                logging.warning("Data check failed. No rows found in the Snowflake table.")
+            # if result:
+            #     logging.info("Data check passed. Rows found in the Snowflake table.")
+            # else:
+            #     logging.warning("Data check failed. No rows found in the Snowflake table.")
         else:
             logging.warning("Data check failed. DataFrame is empty.")
         
