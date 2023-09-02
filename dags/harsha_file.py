@@ -95,10 +95,10 @@ def check_data(**kwargs):
             #     logging.info("Data check passed. Rows found in the Snowflake table.")
             # else:
             #     logging.warning("Data check failed. No rows found in the Snowflake table.")
-        else:
-            logging.warning("Data check failed. DataFrame is empty.")
+        # else:
+        #     logging.warning("Data check failed. DataFrame is empty.")
         
-        return True
+        # return True
     except Exception as e:
         print(f"An error occurred while checking data: {str(e)}")
         return False
