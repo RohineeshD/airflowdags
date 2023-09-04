@@ -53,12 +53,11 @@ fetch_data_task = PythonOperator(
 )
 
 # Create a SnowflakeOperator task to load data into Snowflake
-
 snowflake_task = SnowflakeOperator(
     task_id='load_data',
     sql=f"COPY INTO sample_csv "
-    f"FROM 'https://github.com/jcharishma/my.repo/blob/master/sample_csv.csv'"
-    f" FILE_FORMAT = (TYPE = 'CSV' SKIP_HEADER = 1);", 
+    f"FROM 'https://raw.githubusercontent.com/jcharishma/my.repo/master/sample_csv.csv' "
+    f"FILE_FORMAT = (TYPE = 'CSV' SKIP_HEADER = 1);",
     snowflake_conn_id='snow_sc',
     autocommit=True,
     depends_on_past=False,
@@ -67,8 +66,21 @@ snowflake_task = SnowflakeOperator(
 
 
 
+
 # Set up task dependencies
 fetch_data_task >> snowflake_task
+
+# snowflake_task = SnowflakeOperator(
+#     task_id='load_data',
+#     sql=f"COPY INTO sample_csv "
+#     f"FROM 'https://github.com/jcharishma/my.repo/blob/master/sample_csv.csv'"
+#     f" FILE_FORMAT = (TYPE = 'CSV' SKIP_HEADER = 1);", 
+#     snowflake_conn_id='snow_sc',
+#     autocommit=True,
+#     depends_on_past=False,
+#     dag=dag,
+# )
+
 
 
 # from airflow import DAG
