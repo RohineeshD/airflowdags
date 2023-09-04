@@ -129,7 +129,7 @@ check_data_task = PythonOperator(
 
 trigger_dag_2 = TriggerDagRunOperator(
     task_id='trigger_dag_2',
-    trigger_dag_id="harsha_dag_2",
+    trigger_dag_id="harsha_dag2",
     dag=dag,
 )
 
