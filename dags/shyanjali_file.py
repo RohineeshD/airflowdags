@@ -70,7 +70,7 @@ def send_email(**kwargs):
 
     # Email details
     email_subject = subject
-    # email_body =  email_content
+    status =  email_content
 
     email_body = """
 <html>
@@ -93,8 +93,7 @@ def send_email(**kwargs):
     <h1>Airflow Status Notification</h1>
     <div class="status-box">
         <p>Hello,</p>
-        <p>This is an Airflow status notification email. Your DAG has completed successfully.</p>
-        <p>Regards,<br>Your Name</p>
+        <p>This is an Airflow status notification email.<strong>{status}</strong>.</p>
     </div>
 </body>
 </html>
