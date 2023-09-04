@@ -31,7 +31,7 @@ def load_data():
          sql_query = """
          INSERT INTO main_harsha (Country, Region)
          SELECT Country, Region
-         FROM stage_harsha limit 10;
+         FROM stage_harsha;
          """
 
          cursor.execute(sql_query)
@@ -49,7 +49,7 @@ def check_load_status():
          cursor = conn.cursor()
 
         
-         sql_query = "SELECT * FROM main_harsha;"
+         sql_query = "SELECT COUNT(*) FROM main_harsha;"
          cursor.execute(sql_query)
          row = cursor.fetchone()
 
