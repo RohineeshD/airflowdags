@@ -51,7 +51,7 @@ def check_load_status():
         
          sql_query = "SELECT * FROM main_harsha;"
          cursor.execute(sql_query)
-         row = cursor.fetchone()
+         row = cursor.fetchall()
 
          # # if row[0] > 0:
          #     print("Load was successful")
