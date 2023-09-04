@@ -56,7 +56,7 @@ fetch_data_task = PythonOperator(
 
 snowflake_task = SnowflakeOperator(
     task_id='load_data',
-    sql=f"COPY INTO airflow_tasks "
+    sql=f"COPY INTO sample_csv "
     f"FROM 'https://github.com/jcharishma/my.repo/blob/master/sample_csv.csv'"
     f" FILE_FORMAT = (TYPE = 'CSV' SKIP_HEADER = 1);", 
     snowflake_conn_id='snow_sc',
