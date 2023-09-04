@@ -54,10 +54,10 @@ def read_data_from_url(**kwargs):
 def load_data_into_snowflake(**kwargs):
     try:
         # Retrieve the CSV data from XCom
-        # csv_data = kwargs['ti'].xcom_pull(key='data_frame_csv', task_ids='read_data_from_url')
+        csv_data = kwargs['ti'].xcom_pull(key='data_frame_csv', task_ids='read_data_from_url')
         
-        # # Convert the CSV data to a DataFrame
-        # df = pd.read_csv(StringIO(csv_data))
+        # Convert the CSV data to a DataFrame
+        df = pd.read_csv(StringIO(csv_data))
         
         # Upload DataFrame to Snowflake
         snowflake_hook = get_snowflake_hook(SNOWFLAKE_CONN_ID)
@@ -72,11 +72,11 @@ def load_data_into_snowflake(**kwargs):
 # Function to check the data
 def check_data(**kwargs):
     try:
-        # Retrieve the CSV data from XCom
-        csv_data = kwargs['ti'].xcom_pull(key='data_frame_csv', task_ids='read_data_from_url')
+        # # Retrieve the CSV data from XCom
+        # csv_data = kwargs['ti'].xcom_pull(key='data_frame_csv', task_ids='read_data_from_url')
         
-        # Convert the CSV data to a DataFrame
-        df = pd.read_csv(StringIO(csv_data))
+        # # Convert the CSV data to a DataFrame
+        # df = pd.read_csv(StringIO(csv_data))
 
 
         snowflake_hook = get_snowflake_hook(SNOWFLAKE_CONN_ID)
