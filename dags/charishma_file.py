@@ -56,12 +56,13 @@ fetch_data_task = PythonOperator(
 snowflake_task = SnowflakeOperator(
     task_id='load_data',
     sql="INSERT INTO sample_csv (name, email, SSN) VALUES (?, ?, ?)",  # Use placeholders
-    parameters="{% set data = ti.xcom_pull(task_ids='fetch_data', key='data') %} {{ data | tojson }}",  # Retrieve 'data' from XCom
+    parameters="{{ ti.xcom_pull(task_ids='fetch_data', key='data') }}",  # Retrieve 'data' from XCom
     snowflake_conn_id=SNOWFLAKE_CONN_ID,
     autocommit=True,
     depends_on_past=False,
     dag=dag,
 )
+
 
 
 # Set up task dependencies
