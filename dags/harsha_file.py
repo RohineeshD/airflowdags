@@ -28,9 +28,9 @@ dag = DAG(
 #     # return variable_value == "True"
         Variable.set("my_boolean_variable", True)
         bool = Variable.get('my_boolean_variable')
-            if bool:
-                print(bool)
-                return True
+        if bool:
+            print(bool)
+            return True
 
 #     # if Variable.get('harsha_air_env') is True:
 #     #     return True
