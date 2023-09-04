@@ -24,7 +24,7 @@ dag = DAG(
 def fetch_data_from_url(**kwargs):
     url = "https://github.com/jcharishma/my.repo/raw/master/sample_csv.csv"
     response = requests.get(url)
-    response.raise_for_status()  # Raise an exception for non-200 status codes
+    response.raise_for_status()  
 
     # Split the CSV data and skip the header row if present
     data = []
