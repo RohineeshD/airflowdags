@@ -16,7 +16,7 @@ default_args = {
 }
 
 dag = DAG(
-    'harsha_dag',
+    'harsha__dag',
     default_args=default_args,
     schedule_interval=None,
 )
