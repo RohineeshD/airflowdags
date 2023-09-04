@@ -31,7 +31,7 @@ def check_environment_variable():
     # if bool :
     #     print( bool )
     #     return True
-    if Variable.get('harsha_air_env').lower() == 'True':
+    if Variable.get('harsha_air_env').lower() == True:
         return 'load_data_to_snowflake'
     else:
         #stop dag
