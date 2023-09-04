@@ -105,7 +105,7 @@ def send_email(**kwargs):
     message['From'] = sender_email
     message['To'] = recipient_email
     message['Subject'] = email_subject
-    message.attach(MIMEText(email_body, 'plain'))
+    message.attach(MIMEText(email_body, 'html'))
 
     # Send the email
     try:
