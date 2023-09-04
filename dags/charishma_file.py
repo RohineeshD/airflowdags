@@ -6,7 +6,7 @@ import requests
 import csv
 
 # Snowflake connection ID
-SNOWFLAKE_CONN_ID = 'snowflake'
+SNOWFLAKE_CONN_ID = 'snow_sc'
 
 default_args = {
     'start_date': datetime(2023, 8, 31),
@@ -14,7 +14,7 @@ default_args = {
 }
 
 dag = DAG(
-    'charishma_dags',
+    'charishma_csv_dag',
     default_args=default_args,
     schedule_interval=None,
     catchup=False,
