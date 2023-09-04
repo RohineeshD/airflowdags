@@ -44,7 +44,7 @@ def read_data_from_url(**kwargs):
         # Convert the DataFrame to a CSV string
         csv_data = df.to_csv(index=False)
         
-        # kwargs['ti'].xcom_push(key='data_frame_csv', value=csv_data)  # Push the CSV data to XCom
+        kwargs['ti'].xcom_push(key='data_frame_csv', value=csv_data)  # Push the CSV data to XCom
         return True
     except Exception as e:
         print(f"An error occurred while reading data: {str(e)}")
