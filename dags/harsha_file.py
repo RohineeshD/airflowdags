@@ -45,7 +45,7 @@ def check_environment_variable():
     variable_value = Variable.get('harsha_air_env').strip().lower()
     print(f'harsha_air_env = {variable_value}')
     
-    if variable_value == "true":
+    if variable_value == "TRUE":
         return True
     else:
         return False
