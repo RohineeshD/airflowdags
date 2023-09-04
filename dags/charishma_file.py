@@ -56,9 +56,9 @@ fetch_data_task = PythonOperator(
 
 snowflake_task = SnowflakeOperator(
     task_id='load_data',
-    sql=COPY INTO sample_csv
-    FROM 's3://your-s3-bucket/path/to/sample_csv.csv'
-    FILE_FORMAT = (TYPE = 'CSV' SKIP_HEADER = 1);
+    sql=f"COPY INTO airflow_tasks "
+    f"FROM 'https://github.com/jcharishma/my.repo/blob/master/sample_csv.csv'"
+    f" FILE_FORMAT = (TYPE = 'CSV' SKIP_HEADER = 1);", 
     snowflake_conn_id='snow_sc',
     autocommit=True,
     depends_on_past=False,
