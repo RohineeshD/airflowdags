@@ -59,7 +59,7 @@ def check_load_status():
          # else:
              # print("Load failed - Main table is empty")
          print("Load was successful")
-         return False
+         return True
              # return False
      except Exception as e:
          print("Load failed -", str(e))
