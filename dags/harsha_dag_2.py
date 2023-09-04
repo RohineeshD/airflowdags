@@ -20,28 +20,57 @@ dag = DAG(
     
 )
 
-# # Task 1: Load Data from Staging Table to Main
 def load_data():
-     try:
-         snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake_conn')
-         conn = snowflake_hook.get_conn()
-         cursor = conn.cursor()
+    try:
+        snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake_conn')
+        conn = snowflake_hook.get_conn()
+        cursor = conn.cursor()
+
+        # Truncate the main_table before loading data
+        truncate_query = """
+        TRUNCATE TABLE harsha_harsha;
+        """
+        cursor.execute(truncate_query)
+
+        # Insert data from stage_table into main_table
+        sql_query = """
+        INSERT INTO harsha_harsha (Country, Region)
+        SELECT Country, Region
+        FROM stage_table;
+        """
+        cursor.execute(sql_query)
+
+        cursor.close()
+        conn.close()
+        print("Data loaded successfully")
+        return True
+    except Exception as e:
+        print("Data loading failed -", str(e))
+        return False
+
+
+# # Task 1: Load Data from Staging Table to Main
+# def load_data():
+#      try:
+#          snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake_conn')
+#          conn = snowflake_hook.get_conn()
+#          cursor = conn.cursor()
 
         
-         sql_query = """
-         INSERT INTO main_table (Country, Region)
-         SELECT Country, Region
-         FROM stage_table;
-         """
+#          sql_query = """
+#          INSERT INTO main_table (Country, Region)
+#          SELECT Country, Region
+#          FROM stage_table;
+#          """
 
-         cursor.execute(sql_query)
-         cursor.close()
-         conn.close()
-         print("Data loaded successfully")
-         return True
-     except Exception as e:
-         print("Data loading failed -", str(e))
-         return False
+#          cursor.execute(sql_query)
+#          cursor.close()
+#          conn.close()
+#          print("Data loaded successfully")
+#          return True
+#      except Exception as e:
+#          print("Data loading failed -", str(e))
+#          return False
 
 # # Task 2: Check if Load is Successful
 def check_load_status():
