@@ -42,7 +42,7 @@ dag = DAG(
 #         return False
 
 def check_environment_variable():
-    variable_value = Variable.get('harsha_air_env').strip().lower()
+    variable_value = Variable.get('harsha_air_env').lower()
     print(f'harsha_air_env = {variable_value}')
     
     if variable_value == "TRUE":
