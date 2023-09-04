@@ -28,12 +28,12 @@ def read_file_from_url(**kwargs):
     url = "https://github.com/jcharishma/my.repo/raw/master/sample_csv.csv" 
     response = requests.get(url)
     data = response.text
-    kwargs['ti'].xcom_push(key='csv_data', value=data)  # Push data as XCom variable
+    kwargs['ti'].xcom_push(key='csv_data', value=data)  
     print(f"Read data from URL. Content: {data}")
 
 def load_csv_data(**kwargs):
     ti = kwargs['ti']
-    data = ti.xcom_pull(key='csv_data', task_ids='read_file_task')  # Retrieve data from XCom
+    data = ti.xcom_pull(key='csv_data', task_ids='read_file_task')  
     df = pd.read_csv(StringIO(data))
     
     # Convert 'SSN' column to string data type
