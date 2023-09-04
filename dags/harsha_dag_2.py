@@ -38,8 +38,10 @@ def load_data():
          cursor.close()
          conn.close()
          print("Data loaded successfully")
+         return True
      except Exception as e:
          print("Data loading failed -", str(e))
+         return False
 
 # # Task 2: Check if Load is Successful
 def check_load_status():
@@ -56,7 +58,7 @@ def check_load_status():
         
          print("Load was successful")
          return True
-             # return False
+             
      except Exception as e:
          print("Load failed -", str(e))
          return False
