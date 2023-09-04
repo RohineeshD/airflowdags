@@ -1,4 +1,3 @@
-
 from airflow import DAG
 from airflow.operators.python import PythonOperator
 from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
@@ -18,7 +17,7 @@ default_args = {
 }
 
 dag_args = {
-    'dag_id': 'charishma_dag_csv',
+    'dag_id': 'charishma_csv_dag',
     'schedule_interval': None,
     'default_args': default_args,
     'catchup': False,
@@ -37,14 +36,21 @@ def load_csv_data(**kwargs):
     data = ti.xcom_pull(key='csv_data', task_ids='read_file_task')  # Retrieve data from XCom
     df = pd.read_csv(StringIO(data))
     
-    # Check if SSN values are exactly 4 digits
-    if 'SSN' in df.columns and all(df['SSN'].astype(str).str.len() == 4):
-        snowflake_hook = SnowflakeHook(snowflake_conn_id=SNOWFLAKE_CONN_ID)
-        table_name = 'demo.sc1.sample_csv' 
-        snowflake_hook.insert_rows(table_name, df.values.tolist(), df.columns.tolist())
-        print("Data load to Snowflake staging completed successfully.")
-    else:
-        print("Error: Invalid SSN detected in the CSV. SSN must be exactly 4 digits.")
+    valid_rows = df[df['SSN'].astype(str).str.len() == 4]
+    invalid_rows = df[df['SSN'].astype(str).str.len() != 4]
+
+    snowflake_hook = SnowflakeHook(snowflake_conn_id=SNOWFLAKE_CONN_ID)
+    table_name = 'demo.sc1.sample_csv' 
+    
+    if not valid_rows.empty:
+        snowflake_hook.insert_rows(table_name, valid_rows.values.tolist(), valid_rows.columns.tolist())
+        print(f"Data load completed successfully for {len(valid_rows)} rows.")
+    
+    if not invalid_rows.empty:
+        print(f"Error: {len(invalid_rows)} rows have invalid SSN and were not loaded to Snowflake.")
+        # You can also print the invalid rows if needed
+        print("Invalid Rows:")
+        print(invalid_rows)
 
 with dag:
     read_file_task = PythonOperator(
@@ -53,13 +59,77 @@ with dag:
         provide_context=True,
     )
 
-    load_csv_data = PythonOperator(
+    load_csv_data_task = PythonOperator(
         task_id='load_csv_data',
-        python_callable=load_data_to_staging,
+        python_callable=load_csv_data,
         provide_context=True,
     )
 
-read_file_task >> load_csv_data
+read_file_task >> load_csv_data_task
+
+
+
+# from airflow import DAG
+# from airflow.operators.python import PythonOperator
+# from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
+# from datetime import datetime
+# import requests
+# from io import StringIO
+# import pandas as pd
+# import logging
+
+# # Snowflake connection ID
+# SNOWFLAKE_CONN_ID = 'snow_sc'
+
+# default_args = {
+#     'start_date': datetime(2023, 8, 25),
+#     'retries': 1,
+#     'catchup': True,
+# }
+
+# dag_args = {
+#     'dag_id': 'charishma_dag_csv',
+#     'schedule_interval': None,
+#     'default_args': default_args,
+#     'catchup': False,
+# }
+# dag = DAG(**dag_args)
+
+# def read_file_from_url(**kwargs):
+#     url = "https://github.com/jcharishma/my.repo/raw/master/sample_csv.csv" 
+#     response = requests.get(url)
+#     data = response.text
+#     kwargs['ti'].xcom_push(key='csv_data', value=data)  # Push data as XCom variable
+#     print(f"Read data from URL. Content: {data}")
+
+# def load_csv_data(**kwargs):
+#     ti = kwargs['ti']
+#     data = ti.xcom_pull(key='csv_data', task_ids='read_file_task')  # Retrieve data from XCom
+#     df = pd.read_csv(StringIO(data))
+    
+#     # Check if SSN values are exactly 4 digits
+#     if 'SSN' in df.columns and all(df['SSN'].astype(str).str.len() == 4):
+#         snowflake_hook = SnowflakeHook(snowflake_conn_id=SNOWFLAKE_CONN_ID)
+#         table_name = 'demo.sc1.sample_csv' 
+#         snowflake_hook.insert_rows(table_name, df.values.tolist(), df.columns.tolist())
+#         print("Data load to Snowflake staging completed successfully.")
+#     else:
+#         print("Error: Invalid SSN detected in the CSV. SSN must be exactly 4 digits.")
+
+# with dag:
+#     read_file_task = PythonOperator(
+#         task_id='read_file_task',
+#         python_callable=read_file_from_url,
+#         provide_context=True,
+#     )
+
+#     load_csv_data = PythonOperator(
+#         task_id='load_csv_data',
+#         python_callable=load_data_to_staging,
+#         provide_context=True,
+#     )
+
+# read_file_task >> load_csv_data
 
 
 
