@@ -22,7 +22,7 @@ dag = DAG(
 
 # Create a function to fetch data from the URL
 def fetch_data_from_url(**kwargs):
-    url = "https://github.com/jcharishma/my.repo/raw/master/sample_csv.csv"
+    url = "https://github.com/jcharishma/my.repo/blob/master/sample_csv.csv"
     response = requests.get(url)
     response.raise_for_status()  
 
@@ -56,8 +56,8 @@ fetch_data_task = PythonOperator(
 
 snowflake_task = SnowflakeOperator(
     task_id='load_data',
-    sql=f"COPY INTO airflow_tasks "
-    f"FROM 'https://raw.githubusercontent.com/fivethirtyeight/data/master/airline-safety/airline-safety.csv'"
+    sql=f"COPY INTO sample_csv "
+    f"FROM 'https://github.com/jcharishma/my.repo/blob/master/sample_csv.csv'"
     f" FILE_FORMAT = (TYPE = 'CSV' SKIP_HEADER = 1);", 
     snowflake_conn_id='snow_sc',
     autocommit=True,
