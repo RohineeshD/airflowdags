@@ -53,12 +53,14 @@ def check_load_status():
          cursor.execute(sql_query)
          row = cursor.fetchone()
 
-         if row[0] > 0:
-             print("Load was successful")
-             return True
-         else:
-             print("Load failed - Main table is empty")
-             return False
+         # # if row[0] > 0:
+         #     print("Load was successful")
+         #     return True
+         # else:
+             # print("Load failed - Main table is empty")
+         print("Load was successful")
+         return False
+             # return False
      except Exception as e:
          print("Load failed -", str(e))
          return False
