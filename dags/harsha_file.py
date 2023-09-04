@@ -23,7 +23,7 @@ dag = DAG(
     schedule_interval=None,
 )
 
-# Define your Snowflake connection credentials
+# Define  Snowflake connection credentials
 SNOWFLAKE_CONN_ID = 'snowflake_conn'  
 SNOWFLAKE_SCHEMA = 'exusia_schema'  
 STAGING_TABLE = 'harsha_harsha'  
@@ -133,9 +133,8 @@ trigger_dag_2 = TriggerDagRunOperator(
     dag=dag,
 )
 
-# Define task dependencies
-read_data_task >> load_data_task >> check_data_task >> trigger_dag_2  # Corrected the task name
 
+read_data_task >> load_data_task >> check_data_task >> trigger_dag_2 
 
 
 # from datetime import datetime
