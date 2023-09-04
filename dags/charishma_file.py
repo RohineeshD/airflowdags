@@ -30,29 +30,58 @@ def read_file_from_url(**kwargs):
     data = response.text
     kwargs['ti'].xcom_push(key='csv_data', value=data)  
     print(f"Read data from URL. Content: {data}")
-
 def load_csv_data(**kwargs):
     ti = kwargs['ti']
-    data = ti.xcom_pull(key='csv_data', task_ids='read_file_task')  
+    data = ti.xcom_pull(key='csv_data', task_ids='read_file_task')
     df = pd.read_csv(StringIO(data))
-    
+
     # Convert 'SSN' column to string data type
     df['SSN'] = df['SSN'].astype(str)
-    
-    valid_rows = df[df['SSN'].str.len() == 4]
-    invalid_rows = df[df['SSN'].str.len() != 4]
+
+    # Create a new column 'Invalid_SSN' and set it to None for all rows
+    df['Invalid_SSN'] = None
+
+    # Check if SSN values are exactly 4 digits and update 'Invalid_SSN' column for invalid rows
+    invalid_rows = df['SSN'].str.len() != 4
+    df.loc[invalid_rows, 'Invalid_SSN'] = df.loc[invalid_rows, 'SSN']
+
+    valid_rows = df[~invalid_rows]
 
     snowflake_hook = SnowflakeHook(snowflake_conn_id=SNOWFLAKE_CONN_ID)
-    table_name = 'demo.sc1.sample_csv' 
-    
+    table_name = 'demo.sc1.sample_csv'
+
     if not valid_rows.empty:
         snowflake_hook.insert_rows(table_name, valid_rows.values.tolist(), valid_rows.columns.tolist())
         print(f"Data load completed successfully for {len(valid_rows)} rows.")
-    
-    if not invalid_rows.empty:
-        print(f"Error: {len(invalid_rows)} rows have invalid SSN and were not loaded to Snowflake.")
+
+    if not invalid_rows.all():
+        print(f"Error: {invalid_rows.sum()} rows have invalid SSN and were not loaded to Snowflake.")
         print("Invalid Rows:")
-        print(invalid_rows)
+        print(df.loc[invalid_rows])
+
+
+# def load_csv_data(**kwargs):
+#     ti = kwargs['ti']
+#     data = ti.xcom_pull(key='csv_data', task_ids='read_file_task')  
+#     df = pd.read_csv(StringIO(data))
+    
+#     # Convert 'SSN' column to string data type
+#     df['SSN'] = df['SSN'].astype(str)
+    
+#     valid_rows = df[df['SSN'].str.len() == 4]
+#     invalid_rows = df[df['SSN'].str.len() != 4]
+
+#     snowflake_hook = SnowflakeHook(snowflake_conn_id=SNOWFLAKE_CONN_ID)
+#     table_name = 'demo.sc1.sample_csv' 
+    
+#     if not valid_rows.empty:
+#         snowflake_hook.insert_rows(table_name, valid_rows.values.tolist(), valid_rows.columns.tolist())
+#         print(f"Data load completed successfully for {len(valid_rows)} rows.")
+    
+#     if not invalid_rows.empty:
+#         print(f"Error: {len(invalid_rows)} rows have invalid SSN and were not loaded to Snowflake.")
+#         print("Invalid Rows:")
+#         print(invalid_rows)
 
 with dag:
     read_file_task = PythonOperator(
