@@ -31,7 +31,7 @@ def load_data():
          sql_query = """
          INSERT INTO main_harsha (Country, Region)
          SELECT Country, Region
-         FROM stage_harsha;
+         FROM stage_harsha LIMIT 100;
          """
 
          cursor.execute(sql_query)
