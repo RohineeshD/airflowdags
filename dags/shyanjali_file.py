@@ -70,7 +70,35 @@ def send_email(**kwargs):
 
     # Email details
     email_subject = subject
-    email_body =  email_content
+    # email_body =  email_content
+
+    email_body = """
+<html>
+<head>
+    <style>
+        /* Define styles for the box */
+        .status-box {
+            border: 2px solid #007bff;
+            padding: 10px;
+            background-color: #f0faff;
+        }
+
+        /* Define styles for the heading */
+        h1 {
+            color: #007bff;
+        }
+    </style>
+</head>
+<body>
+    <h1>Airflow Status Notification</h1>
+    <div class="status-box">
+        <p>Hello,</p>
+        <p>This is an Airflow status notification email. Your DAG has completed successfully.</p>
+        <p>Regards,<br>Your Name</p>
+    </div>
+</body>
+</html>
+"""
 
     # Create the email message
     message = MIMEMultipart()
