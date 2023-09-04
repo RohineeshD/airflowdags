@@ -65,6 +65,7 @@ snowflake_task = SnowflakeOperator(
 )
 
 
+
 # Set up task dependencies
 fetch_data_task >> snowflake_task
 
