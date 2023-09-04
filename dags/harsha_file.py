@@ -22,7 +22,7 @@ dag = DAG(
 )
 
 
-# def check_environment_variable():
+def check_environment_variable():
 #     # variable_value = 'harsha_air_env'
 #     # variable_value = Variable.get('harsha_air_env')
 #     # return variable_value == "True"
