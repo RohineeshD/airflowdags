@@ -26,29 +26,29 @@ dag = DAG(
 #     # variable_value = 'harsha_air_env'
 #     # variable_value = Variable.get('harsha_air_env')
 #     # return variable_value == "True"
-#     # Variable.set("my_boolean_variable", True)
-#     # bool = Variable.get('my_boolean_variable')
-#     # if bool :
-#     #     print( bool )
-#     #     return True
+     Variable.set("my_boolean_variable", True)
+     bool = Variable.get('my_boolean_variable')
+     if bool :
+          print( bool )
+          return True
 #     # if Variable.get('harsha_air_env') is True:
 #     #     return True
     
 
 #     # if Variable.get('harsha_air_env').lower() == True:
 #     #     return 'load_data_to_snowflake'
-#     else:
-#         #stop dag
-#         return False
-
-def check_environment_variable():
-    variable_value = Variable.get('harsha_air_env').lower()
-    print(f'harsha_air_env = {variable_value}')
-    
-    if variable_value == "TRUE":
-        return True
     else:
+        #stop dag
         return False
+
+# def check_environment_variable():
+#     variable_value = Variable.get('harsha_air_env').lower()
+#     print(f'harsha_air_env = {variable_value}')
+    
+#     if variable_value == "TRUE":
+#         return True
+#     else:
+#         return False
 
      
 task_1 = ShortCircuitOperator(
