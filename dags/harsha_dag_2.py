@@ -51,7 +51,7 @@ def check_load_status():
          cursor = conn.cursor()
 
         
-         sql_query = "SELECT * FROM main_harsha;"
+         sql_query = "SELECT * FROM main_table;"
          cursor.execute(sql_query)
          row = cursor.fetchall()
 
