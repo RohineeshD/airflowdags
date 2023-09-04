@@ -6,7 +6,7 @@ import requests
 import csv
 
 # Snowflake connection ID
-SNOWFLAKE_CONN_ID = 'snow_sc'
+SNOWFLAKE_ID = 'snow_sc'
 
 default_args = {
     'start_date': datetime(2023, 8, 31),
@@ -55,14 +55,14 @@ fetch_data_task = PythonOperator(
 # Create a SnowflakeOperator task to load data into Snowflake
 snowflake_task = SnowflakeOperator(
     task_id='load_data',
-    sql="INSERT INTO sample_csv (name, email, SSN) VALUES (?, ?, ?)",  # Use placeholders
-    parameters="{{ ti.xcom_pull(task_ids='fetch_data', key='data') }}",  # Retrieve 'data' from XCom
-    snowflake_conn_id=SNOWFLAKE_CONN_ID,
+    sql=f"COPY INTO airflow_tasks "
+    f"FROM 'https://raw.githubusercontent.com/fivethirtyeight/data/master/airline-safety/airline-safety.csv'"
+    f" FILE_FORMAT = (TYPE = 'CSV' SKIP_HEADER = 1);", 
+    snowflake_conn_id='SNOWFLAKE_ID',
     autocommit=True,
     depends_on_past=False,
     dag=dag,
 )
-
 
 
 # Set up task dependencies
