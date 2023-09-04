@@ -32,7 +32,7 @@ def read_file_from_url(**kwargs):
     kwargs['ti'].xcom_push(key='csv_data', value=data)  # Push data as XCom variable
     print(f"Read data from URL. Content: {data}")
 
-def load_data_to_staging(**kwargs):
+def load_csv_data(**kwargs):
     ti = kwargs['ti']
     data = ti.xcom_pull(key='csv_data', task_ids='read_file_task')  # Retrieve data from XCom
     df = pd.read_csv(StringIO(data))
@@ -40,7 +40,7 @@ def load_data_to_staging(**kwargs):
     # Check if SSN values are exactly 4 digits
     if 'SSN' in df.columns and all(df['SSN'].astype(str).str.len() == 4):
         snowflake_hook = SnowflakeHook(snowflake_conn_id=SNOWFLAKE_CONN_ID)
-        table_name = 'demo.sc1.sample_csv'  # Updated table name
+        table_name = 'demo.sc1.sample_csv' 
         snowflake_hook.insert_rows(table_name, df.values.tolist(), df.columns.tolist())
         print("Data load to Snowflake staging completed successfully.")
     else:
@@ -53,13 +53,13 @@ with dag:
         provide_context=True,
     )
 
-    load_to_staging_task = PythonOperator(
-        task_id='load_to_staging_task',
+    load_csv_data = PythonOperator(
+        task_id='load_csv_data',
         python_callable=load_data_to_staging,
         provide_context=True,
     )
 
-read_file_task >> load_to_staging_task
+read_file_task >> load_csv_data
 
 
 
