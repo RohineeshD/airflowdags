@@ -5,9 +5,6 @@ from datetime import datetime
 import requests
 import csv
 
-# Snowflake connection ID
-# SNOWFLAKE_ID = 'snow_sc'
-
 default_args = {
     'start_date': datetime(2023, 8, 31),
     'catchup': False,
@@ -20,9 +17,9 @@ dag = DAG(
     catchup=False,
 )
 
-# Create a function to fetch data from the URL
-def fetch_data_from_url(**kwargs):
-    url = "https://github.com/jcharishma/my.repo/blob/master/sample_csv.csv"
+# Create a function to fetch data from the URL and save it locally
+def fetch_data_and_validate_ssn(**kwargs):
+    url = "https://raw.githubusercontent.com/jcharishma/my.repo/master/sample_csv.csv"
     response = requests.get(url)
     response.raise_for_status()  
 
@@ -44,30 +41,112 @@ def fetch_data_from_url(**kwargs):
     # Push the 'data' variable as an XCom value
     kwargs['ti'].xcom_push(key='data', value=data)
 
-# Create the PythonOperator task to fetch data
-fetch_data_task = PythonOperator(
-    task_id='fetch_data',
-    python_callable=fetch_data_from_url,
+    # If all SSNs are valid, proceed to load the data into Snowflake
+    if all(item['ssn'] for item in data):
+        sql = f"""
+        COPY INTO sample_csv 
+        FROM '{url}' 
+        FILE_FORMAT = (TYPE = 'CSV' SKIP_HEADER = 1);
+        """
+    
+        # Create a SnowflakeOperator task to execute the SQL statement
+        snowflake_task = SnowflakeOperator(
+            task_id='load_data',
+            sql=sql,
+            snowflake_conn_id='snow_sc',
+            autocommit=True,
+            depends_on_past=False,
+            dag=dag,
+        )
+
+        # Execute the SnowflakeOperator task
+        snowflake_task.execute(context=kwargs)
+
+# Create the PythonOperator task to fetch data and validate SSN before loading it into Snowflake
+fetch_and_validate_task = PythonOperator(
+    task_id='fetch_and_validate_data',
+    python_callable=fetch_data_and_validate_ssn,
     provide_context=True,
     dag=dag,
 )
 
-# Create a SnowflakeOperator task to load data into Snowflake
-snowflake_task = SnowflakeOperator(
-    task_id='load_data',
-    sql=f"COPY INTO sample_csv "
-    f"FROM 'https://raw.githubusercontent.com/jcharishma/my.repo/master/sample_csv.csv' "
-    f"FILE_FORMAT = (TYPE = 'CSV' SKIP_HEADER = 1);",
-    snowflake_conn_id='snow_sc',
-    autocommit=True,
-    depends_on_past=False,
-    dag=dag,
-)
-
-
-
 # Set up task dependencies
-fetch_data_task >> snowflake_task
+fetch_and_validate_task >> snowflake_task
+
+
+
+
+
+# from airflow import DAG
+# from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
+# from airflow.operators.python import PythonOperator
+# from datetime import datetime
+# import requests
+# import csv
+
+# # Snowflake connection ID
+# # SNOWFLAKE_ID = 'snow_sc'
+
+# default_args = {
+#     'start_date': datetime(2023, 8, 31),
+#     'catchup': False,
+# }
+
+# dag = DAG(
+#     'charishma_csv_dag',
+#     default_args=default_args,
+#     schedule_interval=None,
+#     catchup=False,
+# )
+
+# # Create a function to fetch data from the URL
+# def fetch_data_from_url(**kwargs):
+#     url = "https://github.com/jcharishma/my.repo/blob/master/sample_csv.csv"
+#     response = requests.get(url)
+#     response.raise_for_status()  
+
+#     # Split the CSV data and skip the header row if present
+#     data = []
+#     for row in response.text.splitlines():
+#         fields = row.split(',')
+#         if len(fields) == 3:
+#             name = fields[0]
+#             email = fields[1]
+#             ssn = fields[2]
+            
+#             # Check if SSN is exactly 4 digits
+#             if ssn.isdigit() and len(ssn) == 4:
+#                 data.append({'name': name, 'email': email, 'ssn': ssn})
+#             else:
+#                 print(f"Error: Invalid SSN detected in the CSV: {row}")
+
+#     # Push the 'data' variable as an XCom value
+#     kwargs['ti'].xcom_push(key='data', value=data)
+
+# # Create the PythonOperator task to fetch data
+# fetch_data_task = PythonOperator(
+#     task_id='fetch_data',
+#     python_callable=fetch_data_from_url,
+#     provide_context=True,
+#     dag=dag,
+# )
+
+# # Create a SnowflakeOperator task to load data into Snowflake
+# snowflake_task = SnowflakeOperator(
+#     task_id='load_data',
+#     sql=f"COPY INTO sample_csv "
+#     f"FROM 'https://raw.githubusercontent.com/jcharishma/my.repo/master/sample_csv.csv' "
+#     f"FILE_FORMAT = (TYPE = 'CSV' SKIP_HEADER = 1);",
+#     snowflake_conn_id='snow_sc',
+#     autocommit=True,
+#     depends_on_past=False,
+#     dag=dag,
+# )
+
+
+
+# # Set up task dependencies
+# fetch_data_task >> snowflake_task
 
 # snowflake_task = SnowflakeOperator(
 #     task_id='load_data',
