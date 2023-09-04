@@ -41,9 +41,10 @@ def read_data_from_url(**kwargs):
         data = response.text
         df = pd.read_csv(StringIO(data))
         
-        # Convert the DataFrame to a CSV string
+        # Convert the DataFrame to a CSV 
         csv_data = df.to_csv(index=False)
-        
+
+        # Push the CSV data to XCom
         kwargs['ti'].xcom_push(key='data_frame_csv', value=csv_data)  # Push the CSV data to XCom
         return True
     except Exception as e:
