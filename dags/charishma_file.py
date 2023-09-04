@@ -1,5 +1,4 @@
 
-
 from airflow import DAG
 from airflow.operators.python import PythonOperator
 from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
@@ -19,7 +18,7 @@ default_args = {
 }
 
 dag_args = {
-    'dag_id': 'charishma_dags',
+    'dag_id': 'charishma_csv_dag',
     'schedule_interval': None,
     'default_args': default_args,
     'catchup': False,
