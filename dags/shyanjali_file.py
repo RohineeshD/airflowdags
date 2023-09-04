@@ -70,7 +70,7 @@ def send_email(**kwargs):
 
     # Email details
     email_subject = subject
-    status =  email_content
+    # status =  email_content
 
     email_body = """
 <html>
@@ -93,7 +93,8 @@ def send_email(**kwargs):
     <h1>Airflow Status Notification</h1>
     <div class="status-box">
         <p>Hello,</p>
-        <p>This is an Airflow status notification email.<strong>{status}</strong>.</p>
+        <p>This is an Airflow status notification email.</p>
+        <p>Status: <strong>{email_content}</strong></p>
     </div>
 </body>
 </html>
@@ -116,21 +117,6 @@ def send_email(**kwargs):
         print("Email sent successfully!")
     except Exception as e:
         print(f"Failed to send email: {str(e)}")
-
-# Define your DAG
-# default_args = {
-#     'owner': 'airflow',
-#     'depends_on_past': False,
-#     'start_date': datetime(2023, 9, 1),
-#     'retries': 1,
-# }
-
-# dag = DAG(
-#     'shyanjali_send_email',
-#     default_args=default_args,
-#     schedule_interval='@once',  # Set your desired schedule interval
-#     catchup=False,
-# )
 
 # Task to send the email using the defined function
 with DAG(**dag_args) as dag:
