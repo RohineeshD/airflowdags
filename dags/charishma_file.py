@@ -43,30 +43,30 @@ def fetch_data_and_validate_ssn(**kwargs):
 
     # If all SSNs are valid, proceed to load the data into Snowflake
     if all(item['ssn'] for item in data):
-        sql = f"""
-        COPY INTO sample_csv 
-        FROM '{url}' 
-        FILE_FORMAT = (TYPE = 'CSV' SKIP_HEADER = 1);
-        """
-    
-        # Create a SnowflakeOperator task to execute the SQL statement
-        snowflake_task = SnowflakeOperator(
-            task_id='load_data',
-            sql=sql,
-            snowflake_conn_id='snow_sc',
-            autocommit=True,
-            depends_on_past=False,
-            dag=dag,
-        )
-
-        # Execute the SnowflakeOperator task
-        snowflake_task.execute(context=kwargs)
+        return True
+    else:
+        return False
 
 # Create the PythonOperator task to fetch data and validate SSN before loading it into Snowflake
 fetch_and_validate_task = PythonOperator(
     task_id='fetch_and_validate_data',
     python_callable=fetch_data_and_validate_ssn,
     provide_context=True,
+    dag=dag,
+)
+
+# Create a SnowflakeOperator task to load data into Snowflake
+sql = f"""
+    COPY INTO sample_csv 
+    FROM 'https://raw.githubusercontent.com/jcharishma/my.repo/master/sample_csv.csv' 
+    FILE_FORMAT = (TYPE = 'CSV' SKIP_HEADER = 1);
+"""
+snowflake_task = SnowflakeOperator(
+    task_id='load_data',
+    sql=sql,
+    snowflake_conn_id='snow_sc',
+    autocommit=True,
+    depends_on_past=False,
     dag=dag,
 )
 
