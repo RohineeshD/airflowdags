@@ -26,8 +26,8 @@ dag = DAG(
 # Define  Snowflake connection credentials
 SNOWFLAKE_CONN_ID = 'snowflake_conn'  
 SNOWFLAKE_SCHEMA = 'exusia_schema'  
-STAGING_TABLE = 'harsha_harsha'  
-MAIN_TABLE = 'main_harsha'  
+STAGING_TABLE = 'stage_table'  
+MAIN_TABLE = 'main_table'  
 
 # Snowflake connection setup
 def get_snowflake_hook(conn_id):
