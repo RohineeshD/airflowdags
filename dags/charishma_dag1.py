@@ -36,7 +36,6 @@ def load_data_to_snowflake(**kwargs):
     df = pd.read_csv(StringIO(data))
     
     # Ensure 'SSN' column contains string values
-    # df['SSN'] = df['SSN'].astype(str)
     df['SSN'] = df['SSN'].astype(str)
 
     # Define Snowflake table names
@@ -59,15 +58,21 @@ def load_data_to_snowflake(**kwargs):
     # Load valid data to main table
     if not valid_data.empty:
         logging.info("Loading valid data to Snowflake main table...")
-        snowflake_hook.insert_rows(main_table, valid_data.values.tolist(), valid_data.columns.tolist())
+        try:
+            snowflake_hook.insert_rows(main_table, valid_data.values.tolist(), valid_data.columns.tolist())
+            logging.info(f"Data loaded successfully into {main_table} with {len(valid_data)} rows.")
+        except Exception as e:
+            logging.error(f"Error loading data into {main_table}: {str(e)}")
     
     # Load invalid data to error_log table
     if not invalid_data.empty:
         logging.info("Loading invalid data to Snowflake error table...")
-        invalid_data['Error_message'] = 'Invalid SSN length'
-        snowflake_hook.insert_rows(error_table, invalid_data.values.tolist(), invalid_data.columns.tolist())
-
-
+        try:
+            invalid_data['Error_message'] = 'Invalid SSN length should not be more than 4 digits'
+            snowflake_hook.insert_rows(error_table, invalid_data.values.tolist(), invalid_data.columns.tolist())
+            logging.info(f"Data loaded successfully into {error_table} with {len(invalid_data)} rows.")
+        except Exception as e:
+            logging.error(f"Error loading data into {error_table}: {str(e)}")
 
 with dag:
     read_file_task = PythonOperator(
@@ -83,7 +88,76 @@ with dag:
     read_file_task >> load_to_snowflake_task
 
 
+# def load_data_to_snowflake(**kwargs):
+#     data = kwargs['task_instance'].xcom_pull(task_ids='read_file_task')
+#     df = pd.read_csv(StringIO(data))
+    
+#     # Ensure 'SSN' column contains string values
+#     # df['SSN'] = df['SSN'].astype(str)
+#     df['SSN'] = df['SSN'].astype(str)
 
+#     # Define Snowflake table names
+#     main_table = 'sample_csv'
+#     error_table = 'error_log'
+    
+#     snowflake_hook = SnowflakeHook(snowflake_conn_id=SNOWFLAKE_CONN_ID)
+    
+#     # Log the number of rows in the DataFrame
+#     logging.info(f"Number of rows in DataFrame: {len(df)}")
+    
+#     # Split data based on SSN criteria
+#     valid_data = df[df['SSN'].str.len() == 4]
+#     invalid_data = df[df['SSN'].str.len() != 4]
+    
+#     # Log the number of valid and invalid rows
+#     logging.info(f"Number of valid rows: {len(valid_data)}")
+#     logging.info(f"Number of invalid rows: {len(invalid_data)}")
+    
+#     # Load valid data to main table
+#     if not valid_data.empty:
+#         logging.info("Loading valid data to Snowflake main table...")
+#         snowflake_hook.insert_rows(main_table, valid_data.values.tolist(), valid_data.columns.tolist())
+    
+#     # Load invalid data to error_log table
+#     if not invalid_data.empty:
+#         logging.info("Loading invalid data to Snowflake error table...")
+#         invalid_data['Error_message'] = 'Invalid SSN length should not be more than 4 digits'
+#         snowflake_hook.insert_rows(error_table, invalid_data.values.tolist(), invalid_data.columns.tolist())
+
+
+
+
+
+
+# def load_data_to_snowflake(**kwargs):
+#     data = kwargs['task_instance'].xcom_pull(task_ids='read_file_task')
+#     df = pd.read_csv(StringIO(data))
+    
+#     # Ensure 'SSN' column contains string values
+#     df['SSN'] = df['SSN'].astype(str)
+
+#     # Define Snowflake table names
+#     main_table = 'sample_csv'
+#     error_table = 'error_log'
+    
+#     snowflake_hook = SnowflakeHook(snowflake_conn_id=SNOWFLAKE_CONN_ID)
+    
+#     # Log the number of rows in the DataFrame
+#     logging.info(f"Number of rows in DataFrame: {len(df)}")
+    
+#     # Filter rows with SSN length not equal to 4
+#     invalid_data = df[df['SSN'].str.len() != 4]
+    
+#     # Log the number of invalid rows
+#     logging.info(f"Number of invalid rows: {len(invalid_data)}")
+    
+#     # Load invalid data to error_log table
+#     if not invalid_data.empty:
+#         logging.info("Loading invalid data to Snowflake error table...")
+#         invalid_data['Name'] = invalid_data['name']
+#         invalid_data['Invalid_ssn'] = invalid_data['SSN']
+#         invalid_data['Error_message'] = 'Invalid SSN length (should be 4)'
+#         snowflake_hook.insert_rows(error_table, invalid_data[['Name', 'Invalid_ssn', 'Error_message']].values.tolist(), ['Name', 'Invalid_ssn', 'Error_message'])
 
 
 
