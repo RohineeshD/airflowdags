@@ -17,7 +17,7 @@ default_args = {
 }
 
 dag_args = {
-    'dag_id': 'charishma_csv_dag',
+    'dag_id': 'charishma_csv',
     'schedule_interval': None,
     'default_args': default_args,
     'catchup': False,
