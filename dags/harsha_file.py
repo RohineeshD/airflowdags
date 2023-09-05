@@ -24,12 +24,21 @@ dag = DAG(
 
 def check_environment_variable():
 
-    env_value = Variable.get('harsha_air_env')
-    if env_value and env_value.lower() == 'true':
-        print("Environment variable is true. Performing the task.")
-        return True
+    # env_value = Variable.get('harsha_air_env')
+    # if env_value and env_value.lower() == 'true':
+    #     print("Environment variable is true. Performing the task.")
+    #     return True
+    # else:
+    #     print("Environment variable is not set to true. Skipping the task.")
+    #     return False
+
+ # Variable.set("my_boolean_variable", True)
+    bool = Variable.get('harsha_air_env')
+    if bool :
+        print( bool )
+        return 'load_data_to_snowflake'
     else:
-        print("Environment variable is not set to true. Skipping the task.")
+        print(bool)
         return False
 
 task_1 = PythonOperator(
@@ -39,16 +48,7 @@ task_1 = PythonOperator(
     dag=dag,
 )
 
-task_1
 
-    # Variable.set("my_boolean_variable", True)
-    # bool = Variable.get('harsha_air_env')
-    # if bool :
-    #     print( bool )
-    #     return 'load_data_to_snowflake'
-    # else:
-    #     print(bool)
-    #     return False
     
     # bool_value = Variable.get('harsha_air_env')
     # if bool_value.lower() == 'true':
@@ -76,12 +76,12 @@ task_1
 #         return False
 
      
-# task_1 = ShortCircuitOperator(
-#     task_id='check_env_variable',
-#     python_callable=check_environment_variable,
-#     provide_context=True,
-#     dag=dag,
-# )
+task_1 = ShortCircuitOperator(
+    task_id='check_env_variable',
+    python_callable=check_environment_variable,
+    provide_context=True,
+    dag=dag,
+)
 
 # task_1
 
