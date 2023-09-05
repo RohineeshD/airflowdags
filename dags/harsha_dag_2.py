@@ -1,7 +1,7 @@
 from airflow import DAG
 from airflow.providers.snowflake.transfers.s3_to_snowflake import S3ToSnowflakeOperator
 from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
-rom airflow.operators.python_operator import PythonOperator
+from airflow.operators.python_operator import PythonOperator
 from airflow.utils.dates import days_ago
 from datetime import datetime
 
