@@ -91,6 +91,19 @@ load_csv_task = PythonOperator(
 if __name__ == "__main__":
     dag.cli()
 
+# COPY INTO {snowflake_table}
+# FROM @{stage_name}
+# FILE_FORMAT = (
+#     TYPE = 'CSV'
+#     SKIP_HEADER = 1
+#     FIELD_OPTIONALLY_ENCLOSED_BY = ''
+#     FIELD_OPTIONALLY_ENCLOSED_BY = NONE
+#     ERROR_ON_COLUMN_COUNT_MISMATCH = TRUE
+#     SKIP_BYTE_ORDER_MARK = TRUE
+#     STRIP_NULL_VALUES = FALSE
+#     SKIP_UTF8_BOM = TRUE
+#     ON_ERROR = 'CONTINUE'
+# )
 
 
 # from airflow import DAG
