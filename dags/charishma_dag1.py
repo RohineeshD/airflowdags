@@ -24,7 +24,7 @@ dag_args = {
 dag = DAG(**dag_args)
 
 def read_file_from_url():
-    url = "url = "https://raw.githubusercontent.com/jcharishma/my.repo/master/sample_csv.csv"
+    url = "https://raw.githubusercontent.com/jcharishma/my.repo/master/sample_csv.csv"
     response = requests.get(url)
     data = response.text
     print(f"Read data from URL. Content: {data}")
