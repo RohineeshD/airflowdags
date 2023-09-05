@@ -25,6 +25,9 @@ dag = DAG(
 def check_environment_variable():
 
     env_value = Variable.get('harsha_air_env')
+    print (bool(env))
+    if (bool(env)) == True:
+        print ('TRUE')
     if env_value and env_value.lower() == 'true':
         print("Environment variable is true. Performing the task.")
         return True
@@ -127,7 +130,8 @@ task_5 = PythonOperator(
     dag=dag,
 )
 
-task_1 >> task_2 >> task_3 >> task_4 >> task_5
+task_1 
+# >> task_2 >> task_3 >> task_4 >> task_5
 
 
 
