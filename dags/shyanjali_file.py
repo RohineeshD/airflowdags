@@ -66,7 +66,7 @@ def send_email(**kwargs):
     smtp_username = connection.login
     smtp_password = connection.password
     sender_email = 'shyanjali.kantumuchu@exusia.com'
-    recipient_email = 'shyanjali.kantumuchu@exusia.com'
+    recipient_email = ['shyanjali.kantumuchu@exusia.com','harsha.vardhan@exusia.com']
 
     # Email details
     email_subject = subject
