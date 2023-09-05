@@ -66,7 +66,7 @@ task_1 = ShortCircuitOperator(
     dag=dag,
 )
 
-
+task_1
 # def check_environment_variable():
 #     variable_value = Variable.get('harsha_air_env', default_var=None)
 #     if variable_value is not None:
