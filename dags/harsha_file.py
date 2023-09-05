@@ -24,7 +24,7 @@ dag = DAG(
 
 def check_environment_variable():
 
-    # Variable.set("my_boolean_variable", True)
+    Variable.set("harsha_air_env", True)
     bool = Variable.get('harsha_air_env')
     if bool :
         print( bool )
@@ -67,6 +67,7 @@ task_1 = ShortCircuitOperator(
 )
 
 task_1
+
 # def check_environment_variable():
 #     variable_value = Variable.get('harsha_air_env', default_var=None)
 #     if variable_value is not None:
