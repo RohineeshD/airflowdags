@@ -100,24 +100,24 @@ def send_email(**kwargs):
     </html>
     """
 
-
-    # Create the email message
-    message = MIMEMultipart()
-    message['From'] = sender_email
-    message['To'] = recipient_email
-    message['Subject'] = email_subject
-    message.attach(MIMEText(email_body, 'html'))
-
-    # Send the email
-    try:
-        server = smtplib.SMTP(smtp_server, smtp_port)
-        server.starttls()
-        server.login(smtp_username, smtp_password)
-        server.sendmail(sender_email, recipient_email, message.as_string())
-        server.quit()
-        print("Email sent successfully!")
-    except Exception as e:
-        print(f"Failed to send email: {str(e)}")
+    for r_email in recipient_email:
+        # Create the email message
+        message = MIMEMultipart()
+        message['From'] = sender_email
+        message['To'] = r_email
+        message['Subject'] = email_subject
+        message.attach(MIMEText(email_body, 'html'))
+    
+        # Send the email
+        try:
+            server = smtplib.SMTP(smtp_server, smtp_port)
+            server.starttls()
+            server.login(smtp_username, smtp_password)
+            server.sendmail(sender_email, recipient_email, message.as_string())
+            server.quit()
+            print("Email sent successfully!")
+        except Exception as e:
+            print(f"Failed to send email: {str(e)}")
 
 # Task to send the email using the defined function
 with DAG(**dag_args) as dag:
