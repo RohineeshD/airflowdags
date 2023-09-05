@@ -43,18 +43,28 @@ def load_data_to_snowflake(**kwargs):
     
     snowflake_hook = SnowflakeHook(snowflake_conn_id=SNOWFLAKE_CONN_ID)
     
+    # Log the number of rows in the DataFrame
+    logging.info(f"Number of rows in DataFrame: {len(df)}")
+    
     # Split data based on SSN criteria
     valid_data = df[df['SSN'].str.len() == 4]
     invalid_data = df[df['SSN'].str.len() != 4]
     
+    # Log the number of valid and invalid rows
+    logging.info(f"Number of valid rows: {len(valid_data)}")
+    logging.info(f"Number of invalid rows: {len(invalid_data)}")
+    
     # Load valid data to main table
     if not valid_data.empty:
+        logging.info("Loading valid data to Snowflake main table...")
         snowflake_hook.insert_rows(main_table, valid_data.values.tolist(), valid_data.columns.tolist())
     
     # Load invalid data to error_log table
     if not invalid_data.empty:
+        logging.info("Loading invalid data to Snowflake error table...")
         invalid_data['Error_message'] = 'Invalid SSN length'
         snowflake_hook.insert_rows(error_table, invalid_data.values.tolist(), invalid_data.columns.tolist())
+
 
 
 with dag:
