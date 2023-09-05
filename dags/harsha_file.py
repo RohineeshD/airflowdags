@@ -32,7 +32,7 @@ def check_environment_variable():
         print("Environment variable is not set to true. Skipping the task.")
         return False
 
-task_1 = ShortCircuitOperator(
+task_1 = PythonOperator(
     task_id='check_env_variable',
     python_callable=check_environment_variable,
     provide_context=True,
