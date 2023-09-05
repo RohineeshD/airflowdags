@@ -1,13 +1,10 @@
 from airflow import DAG
-from airflow.operators.python import PythonOperator, BranchPythonOperator
-from airflow.operators.dummy import DummyOperator 
+from airflow.operators.python import PythonOperator
 from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
-from airflow.operators.trigger_dagrun import TriggerDagRunOperator
-from datetime import datetime, timedelta
+from datetime import datetime
 import requests
 from io import StringIO
 import pandas as pd
-import logging
 
 # Snowflake connection ID
 SNOWFLAKE_CONN_ID = 'snow_sc'
@@ -15,33 +12,46 @@ SNOWFLAKE_CONN_ID = 'snow_sc'
 default_args = {
     'start_date': datetime(2023, 8, 25),
     'retries': 1,
-    'catchup': True, 
+    'catchup': True,
 }
 
 dag_args = {
     'dag_id': 'charishma_dags',
     'schedule_interval': None,
     'default_args': default_args,
-    'catchup': False,  
+    'catchup': False,
 }
 dag = DAG(**dag_args)
 
 def read_file_from_url():
-    url = "https://raw.githubusercontent.com/cs109/2014_data/master/countries.csv"
+    url = "https://github.com/jcharishma/my.repo/raw/master/sample_csv.csv"
     response = requests.get(url)
     data = response.text
     print(f"Read data from URL. Content: {data}")
     return data
 
-def load_data_to_staging(data):
+def load_data_to_snowflake(**kwargs):
+    data = kwargs['task_instance'].xcom_pull(task_ids='read_file_task')
     df = pd.read_csv(StringIO(data))
+    
+    # Define Snowflake table names
+    main_table = 'sample_csv'
+    error_table = 'error_log'
+    
     snowflake_hook = SnowflakeHook(snowflake_conn_id=SNOWFLAKE_CONN_ID)
-    table_name = 'demo.sc1.stage_table'
-    snowflake_hook.insert_rows(table_name, df.values.tolist(), df.columns.tolist())
-
-def check_load_success(**kwargs):
-    print("Check Load Success Task: Data load successfully completed.")
-    return True  
+    
+    # Split data based on SSN criteria
+    valid_data = df[df['SSN'].str.len() == 4]
+    invalid_data = df[df['SSN'].str.len() != 4]
+    
+    # Load valid data to main table
+    if not valid_data.empty:
+        snowflake_hook.insert_rows(main_table, valid_data.values.tolist(), valid_data.columns.tolist())
+    
+    # Load invalid data to error_log table
+    if not invalid_data.empty:
+        invalid_data['Error_message'] = 'Invalid SSN length'
+        snowflake_hook.insert_rows(error_table, invalid_data.values.tolist(), invalid_data.columns.tolist())
 
 with dag:
     read_file_task = PythonOperator(
@@ -49,68 +59,13 @@ with dag:
         python_callable=read_file_from_url,
     )
 
-    load_to_staging_task = PythonOperator(
-        task_id='load_to_staging_task',
-        python_callable=load_data_to_staging,
-        op_args=[read_file_task.output],
+    load_to_snowflake_task = PythonOperator(
+        task_id='load_to_snowflake_task',
+        python_callable=load_data_to_snowflake,
     )
 
-    check_load_task = PythonOperator(
-        task_id='check_load_task',
-        python_callable=check_load_success,
-    )
+    read_file_task >> load_to_snowflake_task
 
-    trigger_dag2_task = TriggerDagRunOperator(
-        task_id='trigger_dag2_task',
-        trigger_dag_id='charishma_dag2',
-    )
-
-    read_file_task >> load_to_staging_task >> check_load_task >> trigger_dag2_task
-
-dag2 = DAG(dag_id='charishma_dag2', default_args=default_args, schedule_interval=None, catchup=False)
-
-def load_data_to_main(**kwargs):
-    snowflake_hook = SnowflakeHook(snowflake_conn_id=SNOWFLAKE_CONN_ID)
-    connection = snowflake_hook.get_conn()
-    
-    try:
-        insert_query = "INSERT INTO main_table SELECT * FROM stage_table;"
-        cursor = connection.cursor()
-        cursor.execute(insert_query)
-        connection.commit()
-        cursor.close()
-        connection.close()
-        print("Data loaded to main table successfully.")
-        return True
-    except Exception as e:
-        logging.error(f"Error loading data to main table: {str(e)}")
-        return False
-
-def check_load_main_success(**kwargs):
-    print("Data load to main table was successful.")
-    return True  
-
-def print_status(**kwargs):
-    print("Process Completed")
-    logging.info("Process Completed")
-
-with dag2:
-    load_main_task = PythonOperator(
-        task_id='load_main_task',
-        python_callable=load_data_to_main,
-    )
-
-    check_load_main_task = PythonOperator(
-        task_id='check_load_main_task',
-        python_callable=check_load_main_success,
-    )
-
-    print_status_task = PythonOperator(
-        task_id='print_status_task',
-        python_callable=print_status,
-    )
-
-    load_main_task >> check_load_main_task >> print_status_task
 
 
 
