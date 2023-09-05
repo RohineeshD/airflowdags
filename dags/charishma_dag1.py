@@ -5,6 +5,7 @@ from datetime import datetime
 import requests
 from io import StringIO
 import pandas as pd
+import logging 
 
 # Snowflake connection ID
 SNOWFLAKE_CONN_ID = 'snow_sc'
