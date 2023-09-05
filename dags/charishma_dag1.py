@@ -35,8 +35,9 @@ def load_data_to_snowflake(**kwargs):
     df = pd.read_csv(StringIO(data))
     
     # Ensure 'SSN' column contains string values
+    # df['SSN'] = df['SSN'].astype(str)
     df['SSN'] = df['SSN'].astype(str)
-    
+
     # Define Snowflake table names
     main_table = 'sample_csv'
     error_table = 'error_log'
