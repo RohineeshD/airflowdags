@@ -25,24 +25,11 @@ dag = DAG(
 def check_environment_variable():
 
     env_value = Variable.get('harsha_air_env')
-    print (bool(env_value))
+    # print (bool(env_value))
     if (bool(env_value)) == True:
-        print ('TRUE')
-    if env_value and env_value.lower() == 'true':
-        print("Environment variable is true. Performing the task.")
         return True
     else:
-        print("Environment variable is not set to true. Skipping the task.")
         return False
-
-    # bool_value = Variable.get('harsha_air_env')
-    # if bool_value:
-    #     print(bool_value)
-    #     return 'load_data_to_snowflake'
-    # else:
-    #     print(bool_value)
-    #     return False
-
 
 task_1 = PythonOperator(
     task_id='check_env_variable',
