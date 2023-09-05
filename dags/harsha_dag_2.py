@@ -1,10 +1,10 @@
 from airflow import DAG
 from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
-from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
 from airflow.operators.python_operator import PythonOperator
 from airflow.utils.dates import days_ago
 from datetime import datetime
 import pandas as pd
+import requests
 
 # Define your DAG
 dag = DAG(
@@ -23,22 +23,27 @@ snowflake_table = 'bulk_table'
 # Define the CSV URL
 csv_url = 'https://media.githubusercontent.com/media/datablist/sample-csv-files/main/files/customers/customers-100000.csv'
 
+# Define the local file path where the CSV will be downloaded
+local_file_path = '/tmp/customers-100000.csv'
+
 # Function to load CSV data into Snowflake
 def load_csv_to_snowflake():
     try:
         snowflake_hook = SnowflakeHook(snowflake_conn_id=snowflake_conn_id)
 
-        # Read the CSV file into a DataFrame
-        df = pd.read_csv(csv_url)
+        # Download the CSV file to a local directory
+        response = requests.get(csv_url)
+        with open(local_file_path, 'wb') as file:
+            file.write(response.content)
 
         # Establish a Snowflake connection
         conn = snowflake_hook.get_conn()
         cursor = conn.cursor()
 
-        # Snowflake COPY INTO command using Pandas DataFrame
+        # Snowflake COPY INTO command using the local file path
         copy_into_sql = f'''
         COPY INTO {snowflake_table}
-        FROM '{csv_url}'
+        FROM '{local_file_path}'
         FILE_FORMAT = (
             TYPE = 'CSV'
             SKIP_HEADER = 1
@@ -75,6 +80,7 @@ load_csv_task = PythonOperator(
 
 if __name__ == "__main__":
     dag.cli()
+
 
 
 # from airflow import DAG
