@@ -14,7 +14,7 @@ dag = DAG(
 )
 
 # Define Snowflake connection ID from Airflow's Connection UI
-snowflake_conn_id = 'snowflake_conn'
+# snowflake_conn_id = 'snowflake_conn'
 
 # Define Snowflake target table
 snowflake_table = 'bulk_table'
@@ -25,7 +25,7 @@ csv_url = 'https://media.githubusercontent.com/media/datablist/sample-csv-files/
 # Function to load CSV data into Snowflake
 def load_csv_to_snowflake():
     try:
-        snowflake_hook = SnowflakeHook(snowflake_conn_id=snowflake_conn_id)
+        snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake_conn')
 
         # Read the CSV file into a DataFrame
         df = pd.read_csv(csv_url)
