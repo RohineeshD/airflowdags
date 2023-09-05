@@ -39,13 +39,13 @@ def read_data_from_url(**kwargs):
         url = "https://raw.githubusercontent.com/cs109/2014_data/master/countries.csv"
         response = requests.get(url)
         data = response.text
-        # df = pd.read_csv(StringIO(data))
+        df = pd.read_csv(StringIO(data))
         
         # Convert the DataFrame to a CSV 
-        # csv_data = df.to_csv(index=False)
+        csv_data = df.to_csv(index=False)
 
         # Push the CSV data to XCom
-        # kwargs['ti'].xcom_push(key='data_frame_csv', value=csv_data)  # Push the CSV data to XCom
+        kwargs['ti'].xcom_push(key='data_frame_csv', value=csv_data)  # Push the CSV data to XCom
         return True
     except Exception as e:
         print(f"An error occurred while reading data: {str(e)}")
@@ -55,7 +55,7 @@ def read_data_from_url(**kwargs):
 def load_data_into_snowflake(**kwargs):
     try:
         # Retrieve the CSV data from XCom
-        # csv_data = kwargs['ti'].xcom_pull(key='data_frame_csv', task_ids='read_data_from_url')
+        csv_data = kwargs['ti'].xcom_pull(key='data_frame_csv', task_ids='read_data_from_url')
         
         # Convert the CSV data to a DataFrame
         df = pd.read_csv(StringIO(data))
