@@ -1,63 +1,63 @@
-from airflow import DAG
-from airflow.operators.python import PythonOperator
-from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
-from datetime import datetime
-import requests
-from io import StringIO
-import pandas as pd
-import logging
+# from airflow import DAG
+# from airflow.operators.python import PythonOperator
+# from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
+# from datetime import datetime
+# import requests
+# from io import StringIO
+# import pandas as pd
+# import logging
 
-# Snowflake connection ID
-SNOWFLAKE_CONN_ID = 'snow_sc'
+# # Snowflake connection ID
+# SNOWFLAKE_CONN_ID = 'snow_sc'
 
-default_args = {
-    'start_date': datetime(2023, 8, 25),
-    'retries': 1,
-    'catchup': True,
-}
+# default_args = {
+#     'start_date': datetime(2023, 8, 25),
+#     'retries': 1,
+#     'catchup': True,
+# }
 
-dag_args = {
-    'dag_id': 'charishma_csv_dag',
-    'schedule_interval': None,
-    'default_args': default_args,
-    'catchup': False,
-}
-dag = DAG(**dag_args)
+# dag_args = {
+#     'dag_id': 'charishma_csv_dag',
+#     'schedule_interval': None,
+#     'default_args': default_args,
+#     'catchup': False,
+# }
+# dag = DAG(**dag_args)
 
-def read_file_from_url(**kwargs):
-    url = "https://github.com/jcharishma/my.repo/raw/master/sample_csv.csv" 
-    response = requests.get(url)
-    data = response.text
-    kwargs['ti'].xcom_push(key='csv_data', value=data)  
-    print(f"Read data from URL. Content: {data}")
-def load_csv_data(**kwargs):
-    ti = kwargs['ti']
-    data = ti.xcom_pull(key='csv_data', task_ids='read_file_task')
-    df = pd.read_csv(StringIO(data))
+# def read_file_from_url(**kwargs):
+#     url = "https://github.com/jcharishma/my.repo/raw/master/sample_csv.csv" 
+#     response = requests.get(url)
+#     data = response.text
+#     kwargs['ti'].xcom_push(key='csv_data', value=data)  
+#     print(f"Read data from URL. Content: {data}")
+# def load_csv_data(**kwargs):
+#     ti = kwargs['ti']
+#     data = ti.xcom_pull(key='csv_data', task_ids='read_file_task')
+#     df = pd.read_csv(StringIO(data))
 
-    # Convert 'SSN' column to string data type
-    df['SSN'] = df['SSN'].astype(str)
+#     # Convert 'SSN' column to string data type
+#     df['SSN'] = df['SSN'].astype(str)
 
-    # Create a new column 'Invalid_SSN' and set it to None for all rows
-    df['Invalid_SSN'] = None
+#     # Create a new column 'Invalid_SSN' and set it to None for all rows
+#     df['Invalid_SSN'] = None
 
-    # Check if SSN values are exactly 4 digits and update 'Invalid_SSN' column for invalid rows
-    invalid_rows = df['SSN'].str.len() != 4
-    df.loc[invalid_rows, 'Invalid_SSN'] = df.loc[invalid_rows, 'SSN']
+#     # Check if SSN values are exactly 4 digits and update 'Invalid_SSN' column for invalid rows
+#     invalid_rows = df['SSN'].str.len() != 4
+#     df.loc[invalid_rows, 'Invalid_SSN'] = df.loc[invalid_rows, 'SSN']
 
-    valid_rows = df[~invalid_rows]
+#     valid_rows = df[~invalid_rows]
 
-    snowflake_hook = SnowflakeHook(snowflake_conn_id=SNOWFLAKE_CONN_ID)
-    table_name = 'demo.sc1.sample_csv'
+#     snowflake_hook = SnowflakeHook(snowflake_conn_id=SNOWFLAKE_CONN_ID)
+#     table_name = 'demo.sc1.sample_csv'
 
-    if not valid_rows.empty:
-        snowflake_hook.insert_rows(table_name, valid_rows.values.tolist(), valid_rows.columns.tolist())
-        print(f"Data load completed successfully for {len(valid_rows)} rows.")
+#     if not valid_rows.empty:
+#         snowflake_hook.insert_rows(table_name, valid_rows.values.tolist(), valid_rows.columns.tolist())
+#         print(f"Data load completed successfully for {len(valid_rows)} rows.")
 
-    if not invalid_rows.all():
-        print(f"Error: {invalid_rows.sum()} rows have invalid SSN and were not loaded to Snowflake.")
-        print("Invalid Rows:")
-        print(df.loc[invalid_rows])
+#     if not invalid_rows.all():
+#         print(f"Error: {invalid_rows.sum()} rows have invalid SSN and were not loaded to Snowflake.")
+#         print("Invalid Rows:")
+#         print(df.loc[invalid_rows])
 
 
 # def load_csv_data(**kwargs):
