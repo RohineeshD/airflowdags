@@ -26,7 +26,7 @@ def check_environment_variable():
 
     env_value = Variable.get('harsha_air_env')
     print (bool(env_value))
-    if (bool(env)) == True:
+    if (bool(env_value)) == True:
         print ('TRUE')
     if env_value and env_value.lower() == 'true':
         print("Environment variable is true. Performing the task.")
