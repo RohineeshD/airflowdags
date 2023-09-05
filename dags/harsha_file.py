@@ -76,12 +76,12 @@ task_1 = PythonOperator(
 #         return False
 
      
-task_1 = ShortCircuitOperator(
-    task_id='check_env_variable',
-    python_callable=check_environment_variable,
-    provide_context=True,
-    dag=dag,
-)
+# task_1 = ShortCircuitOperator(
+#     task_id='check_env_variable',
+#     python_callable=check_environment_variable,
+#     provide_context=True,
+#     dag=dag,
+# )
 
 # task_1
 
