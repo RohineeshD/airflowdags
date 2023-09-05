@@ -25,7 +25,10 @@ dag = DAG(
 def check_environment_variable():
 
     env_value = Variable.get('harsha_air_env')
-   if bool(env_value)
+   if (bool(env_value)):
+       print True
+   else:
+       print False
 
 task_1 = PythonOperator(
     task_id='check_env_variable',
