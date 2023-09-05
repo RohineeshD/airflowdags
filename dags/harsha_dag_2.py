@@ -4,6 +4,7 @@ from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
 from airflow.operators.python_operator import PythonOperator
 from airflow.utils.dates import days_ago
 from datetime import datetime
+import pandas as pd
 
 # Define your DAG
 dag = DAG(
