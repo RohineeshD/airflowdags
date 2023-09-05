@@ -39,10 +39,10 @@ def read_data_from_url(**kwargs):
         url = "https://raw.githubusercontent.com/cs109/2014_data/master/countries.csv"
         response = requests.get(url)
         data = response.text
-        df = pd.read_csv(StringIO(data))
+        # df = pd.read_csv(StringIO(data))
         
         # Convert the DataFrame to a CSV 
-        csv_data = df.to_csv(index=False)
+        # csv_data = df.to_csv(index=False)
 
         # Push the CSV data to XCom
         # kwargs['ti'].xcom_push(key='data_frame_csv', value=csv_data)  # Push the CSV data to XCom
@@ -58,7 +58,7 @@ def load_data_into_snowflake(**kwargs):
         # csv_data = kwargs['ti'].xcom_pull(key='data_frame_csv', task_ids='read_data_from_url')
         
         # Convert the CSV data to a DataFrame
-        df = pd.read_csv(StringIO(csv_data))
+        df = pd.read_csv(StringIO(data))
         
         # Upload DataFrame to Snowflake
         snowflake_hook = get_snowflake_hook(SNOWFLAKE_CONN_ID)
