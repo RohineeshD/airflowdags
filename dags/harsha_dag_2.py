@@ -1,6 +1,5 @@
 from airflow import DAG
-from airflow.providers.snowflake.transfers.s3_to_snowflake import S3ToSnowflakeOperator
-from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
+from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
 from airflow.operators.python_operator import PythonOperator
 from airflow.utils.dates import days_ago
 from datetime import datetime
@@ -20,7 +19,7 @@ snowflake_conn_id = 'snowflake_conn'
 # Define Snowflake target table
 snowflake_table = 'bulk_table'
 
-# Define the URL of the CSV file
+# Define the CSV URL
 csv_url = 'https://media.githubusercontent.com/media/datablist/sample-csv-files/main/files/customers/customers-100000.csv'
 
 # Function to load CSV data into Snowflake
@@ -28,39 +27,34 @@ def load_csv_to_snowflake():
     try:
         snowflake_hook = SnowflakeHook(snowflake_conn_id=snowflake_conn_id)
 
+        # Read the CSV file into a DataFrame
+        df = pd.read_csv(csv_url)
+
         # Establish a Snowflake connection
         conn = snowflake_hook.get_conn()
         cursor = conn.cursor()
 
-        # Create a stage in Snowflake for URL-based data loading
-        stage_name = 'csv_url_stage'
-        create_stage_sql = f"""
-        CREATE OR REPLACE STAGE {stage_name}
-        URL = '{csv_url}'
-        CREDENTIALS = (
-            TYPE = 'EXTERNAL'
-        );
-        """
-        cursor.execute(create_stage_sql)
-
-        # Snowflake COPY INTO command using the URL-based stage
-        copy_into_sql = f"""
+        # Snowflake COPY INTO command using Pandas DataFrame
+        copy_into_sql = f'''
         COPY INTO {snowflake_table}
-        FROM @{stage_name}
+        FROM '{csv_url}'
         FILE_FORMAT = (
             TYPE = 'CSV'
             SKIP_HEADER = 1
         );
-        """
+        '''
 
-        # Execute the COPY INTO command
-        cursor.execute(copy_into_sql)
-        
-        # Drop the URL-based stage after loading
-        drop_stage_sql = f"""
-        DROP STAGE IF EXISTS {stage_name};
-        """
-        cursor.execute(drop_stage_sql)
+        # Execute the COPY INTO command using SnowflakeOperator
+        copy_to_snowflake_task = SnowflakeOperator(
+            task_id='copy_to_snowflake_task',
+            sql=copy_into_sql,
+            snowflake_conn_id=snowflake_conn_id,
+            autocommit=True,
+            dag=dag
+        )
+
+        # Trigger the SnowflakeOperator task
+        copy_to_snowflake_task.execute(context=None)
 
         cursor.close()
         conn.close()
@@ -77,7 +71,10 @@ load_csv_task = PythonOperator(
     python_callable=load_csv_to_snowflake,
     dag=dag
 )
-load_csv_task
+
+if __name__ == "__main__":
+    dag.cli()
+
 
 # from airflow import DAG
 # from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
