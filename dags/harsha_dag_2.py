@@ -1,6 +1,5 @@
 from airflow import DAG
 from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
-from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
 from airflow.operators.python_operator import PythonOperator
 from airflow.utils.dates import days_ago
 from datetime import datetime
@@ -24,44 +23,50 @@ snowflake_table = 'bulk_table'
 # Define the CSV URL
 csv_url = 'https://media.githubusercontent.com/media/datablist/sample-csv-files/main/files/customers/customers-100000.csv'
 
-# Define the local file path where the CSV will be downloaded
-local_file_path = '/tmp/customers-100000.csv'
-
 # Function to load CSV data into Snowflake
 def load_csv_to_snowflake():
     try:
         snowflake_hook = SnowflakeHook(snowflake_conn_id=snowflake_conn_id)
 
-        # Download the CSV file to a local directory
-        response = requests.get(csv_url)
-        with open(local_file_path, 'wb') as file:
-            file.write(response.content)
-
         # Establish a Snowflake connection
         conn = snowflake_hook.get_conn()
         cursor = conn.cursor()
 
-        # Snowflake COPY INTO command using the local file path
-        copy_into_sql = f'''
-        COPY INTO {snowflake_table}
-        FROM '{local_file_path}'
+        # Create a Snowflake internal stage for the CSV file
+        stage_name = 'csv_stage'
+        create_stage_sql = f'''
+        CREATE OR REPLACE STAGE {stage_name}
         FILE_FORMAT = (
             TYPE = 'CSV'
             SKIP_HEADER = 1
         );
         '''
+        cursor.execute(create_stage_sql)
 
-        # Execute the COPY INTO command using SnowflakeOperator
-        copy_to_snowflake_task = SnowflakeOperator(
-            task_id='copy_to_snowflake_task',
-            sql=copy_into_sql,
-            snowflake_conn_id=snowflake_conn_id,
-            autocommit=True,
-            dag=dag
-        )
+        # Download the CSV file to a local directory
+        response = requests.get(csv_url)
+        local_file_path = '/tmp/customers-100000.csv'
+        with open(local_file_path, 'wb') as file:
+            file.write(response.content)
 
-        # Trigger the SnowflakeOperator task
-        copy_to_snowflake_task.execute(context=None)
+        # Upload the CSV file to the Snowflake internal stage
+        put_sql = f'''
+        PUT 'file://{local_file_path}' @{stage_name}
+        '''
+        cursor.execute(put_sql)
+
+        # Snowflake COPY INTO command using the internal stage
+        copy_into_sql = f'''
+        COPY INTO {snowflake_table}
+        FROM @{stage_name}
+        '''
+        cursor.execute(copy_into_sql)
+
+        # Drop the Snowflake internal stage after loading
+        drop_stage_sql = f'''
+        DROP STAGE IF EXISTS {stage_name}
+        '''
+        cursor.execute(drop_stage_sql)
 
         cursor.close()
         conn.close()
