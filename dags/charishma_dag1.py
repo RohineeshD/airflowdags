@@ -34,6 +34,9 @@ def load_data_to_snowflake(**kwargs):
     data = kwargs['task_instance'].xcom_pull(task_ids='read_file_task')
     df = pd.read_csv(StringIO(data))
     
+    # Ensure 'SSN' column contains string values
+    df['SSN'] = df['SSN'].astype(str)
+    
     # Define Snowflake table names
     main_table = 'sample_csv'
     error_table = 'error_log'
@@ -52,6 +55,7 @@ def load_data_to_snowflake(**kwargs):
     if not invalid_data.empty:
         invalid_data['Error_message'] = 'Invalid SSN length'
         snowflake_hook.insert_rows(error_table, invalid_data.values.tolist(), invalid_data.columns.tolist())
+
 
 with dag:
     read_file_task = PythonOperator(
