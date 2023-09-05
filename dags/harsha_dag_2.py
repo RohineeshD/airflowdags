@@ -35,12 +35,10 @@ def load_csv_to_snowflake():
         cursor = conn.cursor()
 
         # Snowflake COPY INTO command using Pandas DataFrame
-        snowflake_hook.pandas_to_snowflake(
-            dataframe=df,
-            table=snowflake_table,
-            if_exists='replace',  # Replace existing table data
-            cursor=cursor
-        )
+        with conn:
+            with conn.cursor() as cursor:
+                cursor.execute(f"TRUNCATE TABLE {snowflake_table}")  # Optionally truncate table
+                df.to_sql(snowflake_table, conn, if_exists='append', index=False)
 
         cursor.close()
         conn.close()
@@ -60,6 +58,7 @@ load_csv_task = PythonOperator(
 
 if __name__ == "__main__":
     dag.cli()
+
 
 
 # from airflow import DAG
