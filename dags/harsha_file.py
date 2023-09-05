@@ -24,29 +24,21 @@ dag = DAG(
 
 def check_environment_variable():
 
-    # env_value = Variable.get('harsha_air_env')
-    # if env_value and env_value.lower() == 'true':
-    #     print("Environment variable is true. Performing the task.")
-    #     return True
-    # else:
-    #     print("Environment variable is not set to true. Skipping the task.")
-    #     return False
-
-
-    # bool = Variable.get('harsha_air_env')
-    # if bool :
-    #     print( bool )
-    #     return 'load_data_to_snowflake'
-    #  else:
-    #     print(bool)
-    #     return False
-    bool_value = Variable.get('harsha_air_env')
-    if bool_value:
-        print(bool_value)
-        return 'load_data_to_snowflake'
+    env_value = Variable.get('harsha_air_env')
+    if env_value and env_value.lower() == 'true':
+        print("Environment variable is true. Performing the task.")
+        return True
     else:
-        print(bool_value)
+        print("Environment variable is not set to true. Skipping the task.")
         return False
+
+    # bool_value = Variable.get('harsha_air_env')
+    # if bool_value:
+    #     print(bool_value)
+    #     return 'load_data_to_snowflake'
+    # else:
+    #     print(bool_value)
+    #     return False
 
 
 task_1 = PythonOperator(
@@ -55,43 +47,6 @@ task_1 = PythonOperator(
     provide_context=True,
     dag=dag,
 )
-
-
-    
-    # bool_value = Variable.get('harsha_air_env')
-    # if bool_value.lower() == 'true':
-    #     print(bool_value)
-    #     return 'load_data_to_snowflake'
-    # else:
-    #     print(bool_value)
-    #     return False
-
-    # if Variable.get('harsha_air_env') is True:
-#     #     return True
-#     # if Variable.get('harsha_air_env').lower() == True:
-#     #     return 'load_data_to_snowflake'
-    # else:
-    #     #stop dag
-    #     return False
-
-# def check_environment_variable():
-#     variable_value = Variable.get('harsha_air_env').lower()
-#     print(f'harsha_air_env = {variable_value}')
-    
-#     if variable_value == "TRUE":
-#         return True
-#     else:
-#         return False
-
-     
-# task_1 = ShortCircuitOperator(
-#     task_id='check_env_variable',
-#     python_callable=check_environment_variable,
-#     provide_context=True,
-#     dag=dag,
-# )
-
-# task_1
 
 
 def load_data_to_snowflake(**kwargs):
