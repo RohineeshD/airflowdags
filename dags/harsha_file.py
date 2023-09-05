@@ -33,13 +33,13 @@ def check_environment_variable():
     #     return False
 
 
-        bool = Variable.get('harsha_air_env')
-        if bool :
-             print( bool )
-            return 'load_data_to_snowflake'
-        else:
-            print(bool)
-            return False
+    bool = Variable.get('harsha_air_env')
+    if bool :
+        print( bool )
+        return 'load_data_to_snowflake'
+     else:
+        print(bool)
+        return False
 
 task_1 = PythonOperator(
     task_id='check_env_variable',
