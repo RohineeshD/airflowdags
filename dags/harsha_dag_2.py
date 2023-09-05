@@ -1,42 +1,70 @@
 from airflow import DAG
-from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
+from airflow.providers.snowflake.transfers.s3_to_snowflake import S3ToSnowflakeOperator
+from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
+rom airflow.operators.python_operator import PythonOperator
+from airflow.utils.dates import days_ago
 from datetime import datetime
-
-# Define your Snowflake connection ID from Airflow's Connection UI
-snowflake_conn_id = "snowflake_conn"
 
 # Define your DAG
 dag = DAG(
-    'csv_to_snowflake_example',
-    start_date=datetime(2023, 9, 5),  # Adjust as needed
-    schedule_interval=None,  # Set your desired schedule interval
-    catchup=False  # Set to True if you want historical DAG runs to execute
+    'load_csv_to_snowflake',
+    start_date=days_ago(1),  
+    schedule_interval=None,  
+    catchup=False  
 )
 
-# Define the URL of the CSV file
+# Define Snowflake connection ID from Airflow's Connection UI
+snowflake_conn_id = 'snowflake_conn'
+
+# Define Snowflake target table
+snowflake_table = 'bulk_table'
+
+# Define the CSV URL
 csv_url = 'https://media.githubusercontent.com/media/datablist/sample-csv-files/main/files/customers/customers-100000.csv'
 
-# Snowflake COPY INTO command
-copy_into_sql = f'''
-COPY INTO bulk_table
-FROM '{csv_url}'
-FILE_FORMAT = (
-    TYPE = 'CSV'
-    SKIP_HEADER = 1
-);
-'''
+# Function to load CSV data into Snowflake
+def load_csv_to_snowflake():
+    try:
+        snowflake_hook = SnowflakeHook(snowflake_conn_id=snowflake_conn_id)
 
-# Task to execute the COPY INTO command using SnowflakeHook
-copy_to_snowflake_task = SnowflakeOperator(
-    task_id='copy_to_snowflake_task',
-    sql=copy_into_sql,
-    snowflake_conn_id=snowflake_conn_id,
-    autocommit=True,  # Set to True for the COPY INTO operation
+        # Read the CSV file into a DataFrame
+        df = pd.read_csv(csv_url)
+
+        # Use SnowflakeHook to insert data into Snowflake table
+        conn = snowflake_hook.get_conn()
+        cursor = conn.cursor()
+
+        # Snowflake COPY INTO command
+        copy_into_sql = f'''
+        COPY INTO {snowflake_table}
+        FROM '{csv_url}'
+        FILE_FORMAT = (
+            TYPE = 'CSV'
+            SKIP_HEADER = 1
+        );
+        '''
+
+        # Execute the COPY INTO command
+        cursor.execute(copy_into_sql)
+        cursor.close()
+        conn.close()
+
+        print("Data loaded successfully")
+        return True
+    except Exception as e:
+        print("Data loading failed -", str(e))
+        return False
+
+# Task to call the load_csv_to_snowflake function
+load_csv_task = PythonOperator(
+    task_id='load_csv_to_snowflake_task',
+    python_callable=load_csv_to_snowflake,
     dag=dag
 )
 
-if __name__ == "__main__":
-    dag.cli()
+# if __name__ == "__main__":
+#     dag.cli()
+
 
 
 
