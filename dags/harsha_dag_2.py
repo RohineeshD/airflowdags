@@ -98,9 +98,6 @@ load_csv_task = PythonOperator(
     dag=dag
 )
 
-# Set task dependencies if needed
-# load_csv_task.set_upstream(...)
-# load_csv_task.set_downstream(...)
 
 if __name__ == "__main__":
     dag.cli()
