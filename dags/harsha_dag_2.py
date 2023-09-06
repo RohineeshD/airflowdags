@@ -433,7 +433,7 @@ csv_url = 'https://media.githubusercontent.com/media/datablist/sample-csv-files/
 # Function to load CSV data into Snowflake
 def load_csv_to_snowflake():
     try:
-        snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake_creds')
+        snowflake_hook = SnowflakeHook(snowflake_conn_id='s_h_connection')
 
         # Establish a Snowflake connection
         conn = snowflake_hook.get_conn()
