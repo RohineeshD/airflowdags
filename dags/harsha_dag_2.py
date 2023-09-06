@@ -75,12 +75,9 @@ def load_csv_to_snowflake():
                 TYPE = 'CSV'
                 SKIP_HEADER = 1
 
-            );
-        EXCEPTION
-            WHEN OTHERS THEN
-                NULL; -- You can log the error or take other actions here if needed
-        END;
-        '''
+            )
+            ON_ERROR = 'CONTINUE';
+            '''
         cursor.execute(copy_into_sql)
 
         # Drop the Snowflake internal stage after loading
