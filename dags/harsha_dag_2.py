@@ -54,9 +54,14 @@ def load_csv_to_snowflake():
         
         # Read the CSV file into a Pandas DataFrame
         df = pd.read_csv(csv_url)
+
+        # Convert all columns to string data type
+        df = df.astype(str)
         
         # Clean the data by replacing empty values with 0 (or any appropriate default)
         df = df.fillna(0)
+
+        
 
         # Use the SQLAlchemy engine to write the DataFrame to Snowflake
         df.to_sql(snowflake_table, engine, if_exists='append', index=False)
