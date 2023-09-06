@@ -14,7 +14,8 @@ dag = DAG(
 )
 
 # Define Snowflake connection ID from Airflow's Connection UI
-snowflake_conn_id = 'air_conn'  
+# snowflake_conn_id = 'air_conn'  
+snowflake_conn_id = 'harsha_conn' 
 
 # Define Snowflake target table
 snowflake_table = 'bulk_table'
