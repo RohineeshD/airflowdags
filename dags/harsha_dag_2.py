@@ -106,13 +106,12 @@
 #     SKIP_UTF8_BOM = TRUE
 #     ON_ERROR = 'CONTINUE'
 # )
-
 from airflow import DAG
+from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
+from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
 from airflow.operators.python_operator import PythonOperator
 from airflow.utils.dates import days_ago
 import pandas as pd
-from datetime import datetime
-from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
 
 # Define your DAG
 dag = DAG(
@@ -123,7 +122,7 @@ dag = DAG(
 )
 
 # Define Snowflake connection ID from Airflow's Connection UI
-snowflake_conn_id = 'snowflake_conn'  # Replace with your Snowflake connection ID
+snowflake_conn_id = 'snowflake_conn'  
 
 # Define Snowflake target table
 snowflake_table = 'bulk_table'
@@ -134,25 +133,18 @@ csv_url = 'https://media.githubusercontent.com/media/datablist/sample-csv-files/
 # Function to load CSV data into Snowflake
 def load_csv_to_snowflake():
     try:
-        
-        print("Start data loading process")
-        # Read the CSV file into a DataFrame
-        df = pd.read_csv(csv_url)
-        print("CSV data loaded successfully")
-
-        # Establish a Snowflake connection
+        # Establish a Snowflake connection using SnowflakeHook
         snowflake_hook = SnowflakeHook(snowflake_conn_id=snowflake_conn_id)
         conn = snowflake_hook.get_conn()
-        cursor = conn.cursor()
+
+        # Read the CSV file into a Pandas DataFrame
+        df = pd.read_csv(csv_url)
 
         # Snowflake COPY INTO command using Pandas DataFrame
         with conn:
             with conn.cursor() as cursor:
                 cursor.execute(f"TRUNCATE TABLE {snowflake_table}")  # Optionally truncate table
                 df.to_sql(snowflake_table, conn, if_exists='append', index=False)
-
-        cursor.close()
-        conn.close()
 
         print("Data loaded successfully")
         return True
@@ -167,6 +159,7 @@ load_csv_task = PythonOperator(
     dag=dag
 )
 
+load_csv_task
 
 
 
