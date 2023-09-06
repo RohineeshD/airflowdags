@@ -134,8 +134,11 @@ csv_url = 'https://media.githubusercontent.com/media/datablist/sample-csv-files/
 # Function to load CSV data into Snowflake
 def load_csv_to_snowflake():
     try:
+        
+        print("Start data loading process")
         # Read the CSV file into a DataFrame
         df = pd.read_csv(csv_url)
+        print("CSV data loaded successfully")
 
         # Establish a Snowflake connection
         snowflake_hook = SnowflakeHook(snowflake_conn_id=snowflake_conn_id)
