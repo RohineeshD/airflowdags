@@ -55,13 +55,18 @@ def load_csv_to_snowflake():
         # Read the CSV file into a Pandas DataFrame
         df = pd.read_csv(csv_url)
 
-        df = df.replace('', '0')
-
-        # Convert all columns to string data type
-        df = df.astype(str)
+        # df = df.replace('', '0')
+    
+        for column in df.columns:
+            if df[column].dtype == int:
+                df[column].fillna(0, inplace=True)  # Replace with 0 for integer columns
+            elif df[column].dtype == float:
+                df[column].fillna(0.0, inplace=True)  # Replace with 0.0 for float columns
+            elif df[column].dtype == object:
+                df[column].fillna('', inplace=True)  # Replace with an empty string for string columns
         
         # Clean the data by replacing empty values with 0 (or any appropriate default)
-        df = df.fillna(0)
+        # df = df.fillna(0)
 
         
 
