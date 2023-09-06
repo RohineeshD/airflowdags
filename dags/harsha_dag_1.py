@@ -58,7 +58,7 @@ def load_data_into_snowflake(**kwargs):
         csv_data = kwargs['ti'].xcom_pull(key='data_frame_csv', task_ids='read_data_from_url')
         
         # Convert the CSV data to a DataFrame
-        df = pd.read_csv(StringIO(data))
+        df = pd.read_csv(StringIO(csv_data))
         
         # Upload DataFrame to Snowflake
         snowflake_hook = get_snowflake_hook(SNOWFLAKE_CONN_ID)
