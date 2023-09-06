@@ -73,7 +73,7 @@ def load_csv_to_snowflake():
             TYPE = 'CSV'
             SKIP_HEADER = 1
             FIELD_OPTIONALLY_ENCLOSED_BY = ''
-            FIELD_OPTIONALLY_ENCLOSED_BY = NONE
+            # FIELD_OPTIONALLY_ENCLOSED_BY = NONE
             ERROR_ON_COLUMN_COUNT_MISMATCH = TRUE
             SKIP_BYTE_ORDER_MARK = TRUE
             STRIP_NULL_VALUES = FALSE
