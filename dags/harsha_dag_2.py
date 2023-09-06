@@ -6,12 +6,20 @@ from airflow.utils.dates import days_ago
 from datetime import datetime
 import requests
 
-# Define your DAG
+# Define default_args for the DAG
+default_args = {
+    'owner': 'airflow',
+    'start_date': days_ago(1),
+    'schedule_interval': None,  
+    'catchup': False
+}
+
 dag = DAG(
-    'load_csv_to_snowflake',
-    start_date=days_ago(1),
-    schedule_interval=None,
-    catchup=False)
+    'load_snowflake',
+    default_args=default_args,
+    description='Load CSV data into Snowflake',
+    catchup=False
+)
 
 
 # Define Snowflake connection ID from Airflow's Connection UI
