@@ -1,3 +1,4 @@
+
 from airflow import DAG
 from airflow.operators.python_operator import PythonOperator
 from datetime import datetime
@@ -7,12 +8,12 @@ from sqlalchemy import create_engine
 import snowflake.connector
 
 # Define Snowflake connection parameters
-snowflake_username = 'harsha'
-snowflake_password = 'Rama@342'
-snowflake_account = 'smdjtrh.eu-west-1.snowflakecomputing.com'
-snowflake_database = 'exusia_db'
-snowflake_schema = 'exusia_schema'
-snowflake_warehouse = 'COMPUTE_WH'
+snowflake_username = 'devtest1'
+snowflake_password = '$Devtest123'
+snowflake_account = 'rsehyuo-ny51095'
+snowflake_database = 'DB1'
+snowflake_schema = 'SCHEMA1'
+snowflake_warehouse = 'WH1'
 
 # Define Snowflake target table
 snowflake_table = 'bulk_table'
@@ -66,7 +67,6 @@ default_args = {
 dag = DAG(
     'load_csv_to_snowflake',
     default_args=default_args,
-    description='DAG to load CSV data into Snowflake',
     schedule_interval=None,
     catchup=False,
 )
@@ -80,6 +80,94 @@ load_data_task = PythonOperator(
 
 # Set task dependencies
 load_data_task
+
+
+
+
+
+
+# from airflow import DAG
+# from airflow.operators.python_operator import PythonOperator
+# from datetime import datetime
+# import pandas as pd
+# import numpy as np
+# from sqlalchemy import create_engine
+# import snowflake.connector
+
+# # Define Snowflake connection parameters
+# snowflake_username = 'harsha'
+# snowflake_password = 'Rama@342'
+# snowflake_account = 'smdjtrh.eu-west-1.snowflakecomputing.com'
+# snowflake_database = 'exusia_db'
+# snowflake_schema = 'exusia_schema'
+# snowflake_warehouse = 'COMPUTE_WH'
+
+# # Define Snowflake target table
+# snowflake_table = 'bulk_table'
+
+# # Define the CSV URL
+# csv_url = "https://raw.githubusercontent.com/media/datablist/sample-csv-files/main/files/customers/customers-100000.csv"
+
+# # Function to load CSV data into Snowflake
+# def load_csv_to_snowflake():
+#     try:
+#         # Create a Snowflake connection
+#         conn = snowflake.connector.connect(
+#             user=snowflake_username,
+#             password=snowflake_password,
+#             account=snowflake_account,
+#             warehouse=snowflake_warehouse,
+#             database=snowflake_database,
+#             schema=snowflake_schema
+#         )
+
+#         # Read the CSV file into a Pandas DataFrame
+#         df = pd.read_csv(csv_url)
+
+#         # Handle empty strings by replacing them with None
+#         df = df.applymap(lambda x: None if x == '' else x)
+
+#         # Validate and format date column
+#         df['SubscriptionDate'] = pd.to_datetime(df['SubscriptionDate'], errors='coerce')
+#         df['SubscriptionDate'] = df['SubscriptionDate'].dt.strftime('%Y-%m-%d')
+
+#         # Create SQLAlchemy engine from Snowflake connection
+#         engine = create_engine(conn)
+
+#         # Snowflake COPY INTO command using Pandas DataFrame
+#         df.to_sql(snowflake_table, engine, if_exists='append', index=False)
+
+#         print("Data loaded successfully")
+#         return True
+#     except Exception as e:
+#         print("Data loading failed -", str(e))
+#         return False
+
+# # Define the default arguments for the DAG
+# default_args = {
+#     'owner': 'airflow',
+#     'start_date': datetime(2023, 9, 6),
+#     'retries': 1,
+# }
+
+# # Create the Airflow DAG
+# dag = DAG(
+#     'load_csv_to_snowflake',
+#     default_args=default_args,
+#     description='DAG to load CSV data into Snowflake',
+#     schedule_interval=None,
+#     catchup=False,
+# )
+
+# # Define the PythonOperator to execute the data loading function
+# load_data_task = PythonOperator(
+#     task_id='load_data_task',
+#     python_callable=load_csv_to_snowflake,
+#     dag=dag,
+# )
+
+# # Set task dependencies
+# load_data_task
 
 
 # from airflow import DAG
