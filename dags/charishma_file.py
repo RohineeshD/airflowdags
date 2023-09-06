@@ -83,20 +83,20 @@
 #         print("Invalid Rows:")
 #         print(invalid_rows)
 
-with dag:
-    read_file_task = PythonOperator(
-        task_id='read_file_task',
-        python_callable=read_file_from_url,
-        provide_context=True,
-    )
+# with dag:
+#     read_file_task = PythonOperator(
+#         task_id='read_file_task',
+#         python_callable=read_file_from_url,
+#         provide_context=True,
+#     )
 
-    load_csv_data_task = PythonOperator(
-        task_id='load_csv_data',
-        python_callable=load_csv_data,
-        provide_context=True,
-    )
+#     load_csv_data_task = PythonOperator(
+#         task_id='load_csv_data',
+#         python_callable=load_csv_data,
+#         provide_context=True,
+#     )
 
-read_file_task >> load_csv_data_task
+# read_file_task >> load_csv_data_task
 
 
 # from airflow import DAG
