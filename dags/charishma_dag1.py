@@ -29,7 +29,7 @@ dag = DAG(**dag_args)
 url_variable = Variable.get("csv_url")
 
 def read_file_from_url():
-    # Use the URL defined in the Variable
+    #  URL  Variable
     url = url_variable
     response = requests.get(url)
     data = response.text
@@ -43,7 +43,7 @@ def load_data_to_snowflake(**kwargs):
     # Ensure 'SSN' column contains string values
     df['SSN'] = df['SSN'].astype(str)
 
-    # Define Snowflake table names
+    # Define Snowflake tables
     main_table = 'sample_csv'
     error_table = 'error_log'
     
