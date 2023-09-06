@@ -5,47 +5,58 @@ from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
 from airflow.operators.python_operator import PythonOperator
 from airflow.utils.dates import days_ago
 import pandas as pd
-from airflow.models import Variable
-
-dag = DAG(
-    'load_snowflake',
-    start_date=days_ago(1),
-    schedule_interval=None,
-    catchup=False
-)
+from sqlalchemy import create_engine
 
 # Define Snowflake connection ID from Airflow's Connection UI
 snowflake_conn_id = 'air_conn'  
-# snowflake_conn_id = 'harsha_conn'
-
 # Define Snowflake target table
 snowflake_table = 'bulk_table'
-
-# Define a Variable for the URL
-url_variable = Variable.get("csv_file")
 # Define the CSV URL
-# csv_url = "https://media.githubusercontent.com/media/datablist/sample-csv-files/main/files/customers/customers-100000.csv"
+csv_url = "https://media.githubusercontent.com/media/datablist/sample-csv-files/main/files/customers/customers-100000.csv"
 
+# Define default_args for the DAG
+default_args = {
+    'owner': 'airflow',
+    'start_date': days_ago(1),
+    'schedule_interval': None,  # Set your desired schedule interval
+    'catchup': False
+}
 
-# # Function to load CSV data into Snowflake
+dag = DAG(
+    'load_snowflake',
+    default_args=default_args,
+    description='Load CSV data into Snowflake',
+    catchup=False
+)
+
+# Function to create a Snowflake SQLAlchemy engine
+def create_snowflake_engine():
+    # Define Snowflake connection parameters
+    snowflake_account = 'https://app.snowflake.com/smdjtrh/gc37630/w3xPDq9SaW27#query'
+    snowflake_username = 'harsha'
+    snowflake_password = 'Rama@342'
+    snowflake_database = 'exusia_db'
+    snowflake_schema = 'exusia_schema'
+    
+    # Construct the Snowflake SQLAlchemy URL
+    engine_url = f'snowflake://{snowflake_username}:{snowflake_password}@{snowflake_account}/{snowflake_database}/{snowflake_schema}'
+    
+    # Create the SQLAlchemy engine
+    engine = create_engine(engine_url)
+    
+    return engine
+
+# Function to load CSV data into Snowflake
 def load_csv_to_snowflake():
     try:
-        # Establish a Snowflake connection using SnowflakeHook
-        snowflake_hook = SnowflakeHook(snowflake_conn_id=snowflake_conn_id)
-        conn = snowflake_hook.get_conn()
-
+        # Create the Snowflake SQLAlchemy engine
+        engine = create_snowflake_engine()
+        
         # Read the CSV file into a Pandas DataFrame
-        df = pd.read_csv(url_variable)
+        df = pd.read_csv(csv_url)
 
-        # Create SQLAlchemy engine from Snowflake connection
-        engine = conn.cursor().connection
-        engine.connect()
-
-        # Snowflake COPY INTO command using Pandas DataFrame
-        # with conn:
-        #     with conn.cursor() as cursor:
-        #         cursor.execute(f"TRUNCATE TABLE {snowflake_table}")  # Optionally truncate table
-        df.to_sql(snowflake_table, conn, if_exists='append', index=False)
+        # Use the SQLAlchemy engine to write the DataFrame to Snowflake
+        df.to_sql(snowflake_table, engine, if_exists='append', index=False)
 
         print("Data loaded successfully")
         return True
@@ -53,13 +64,82 @@ def load_csv_to_snowflake():
         print("Data loading failed -", str(e))
         return False
 
+# Create a PythonOperator to execute the CSV loading function
 load_csv_task = PythonOperator(
     task_id='load_csv_to_snowflake_task',
     python_callable=load_csv_to_snowflake,
     dag=dag
 )
 
-load_csv_task
+# Define the task dependencies (if any)
+# For example, you can set load_csv_task to run after another task by using load_csv_task.set_upstream(other_task)
+
+if __name__ == "__main__":
+    dag.cli()
+
+
+# from datetime import datetime
+# from airflow import DAG
+# from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
+# from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
+# from airflow.operators.python_operator import PythonOperator
+# from airflow.utils.dates import days_ago
+# import pandas as pd
+# from airflow.models import Variable
+
+# dag = DAG(
+#     'load_snowflake',
+#     start_date=days_ago(1),
+#     schedule_interval=None,
+#     catchup=False
+# )
+
+# # Define Snowflake connection ID from Airflow's Connection UI
+# snowflake_conn_id = 'air_conn'  
+# # snowflake_conn_id = 'harsha_conn'
+
+# # Define Snowflake target table
+# snowflake_table = 'bulk_table'
+
+# # Define a Variable for the URL
+# url_variable = Variable.get("csv_file")
+# # Define the CSV URL
+# # csv_url = "https://media.githubusercontent.com/media/datablist/sample-csv-files/main/files/customers/customers-100000.csv"
+
+
+# # # Function to load CSV data into Snowflake
+# def load_csv_to_snowflake():
+#     try:
+#         # Establish a Snowflake connection using SnowflakeHook
+#         snowflake_hook = SnowflakeHook(snowflake_conn_id=snowflake_conn_id)
+#         conn = snowflake_hook.get_conn()
+
+#         # Read the CSV file into a Pandas DataFrame
+#         df = pd.read_csv(url_variable)
+
+#         # Create SQLAlchemy engine from Snowflake connection
+#         engine = conn.cursor().connection
+#         engine.connect()
+
+#         # Snowflake COPY INTO command using Pandas DataFrame
+#         # with conn:
+#         #     with conn.cursor() as cursor:
+#         #         cursor.execute(f"TRUNCATE TABLE {snowflake_table}")  # Optionally truncate table
+#         df.to_sql(snowflake_table, conn, if_exists='append', index=False)
+
+#         print("Data loaded successfully")
+#         return True
+#     except Exception as e:
+#         print("Data loading failed -", str(e))
+#         return False
+
+# load_csv_task = PythonOperator(
+#     task_id='load_csv_to_snowflake_task',
+#     python_callable=load_csv_to_snowflake,
+#     dag=dag
+# )
+
+# load_csv_task
 
 
 # from airflow import DAG
