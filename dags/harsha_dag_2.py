@@ -5,6 +5,7 @@ from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
 from airflow.operators.python_operator import PythonOperator
 from airflow.utils.dates import days_ago
 import pandas as pd
+from airflow.models import Variable
 
 dag = DAG(
     'load_snowflake',
