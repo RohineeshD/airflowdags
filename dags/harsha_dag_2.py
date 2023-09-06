@@ -40,6 +40,9 @@ def load_csv_to_snowflake():
         # Handle empty strings by replacing them with None
         df = df.applymap(lambda x: None if x == '' else x)
 
+        # Drop rows with NaN values in the SubscriptionDate column
+        df.dropna(subset=['SubscriptionDate'], inplace=True)
+
         # Validate and format date column
         df['SubscriptionDate'] = pd.to_datetime(df['SubscriptionDate'], errors='coerce')
         df['SubscriptionDate'] = df['SubscriptionDate'].dt.strftime('%Y-%m-%d')
