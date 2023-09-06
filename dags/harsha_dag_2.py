@@ -84,7 +84,7 @@ snowflake_conn_id = 'snowflake_conn'
 snowflake_table = 'bulk_table'
 
 # Define the CSV URL
-csv_url = 'https://raw.githubusercontent.com/media/datablist/sample-csv-files/main/files/customers/customers-100000.csv'
+csv_url = "https://raw.githubusercontent.com/media/datablist/sample-csv-files/main/files/customers/customers-100000.csv"
 # url = "https://raw.githubusercontent.com/fivethirtyeight/data/master/airline-safety/airline-safety.csv"
 
 # Function to load CSV data into Snowflake
