@@ -1270,7 +1270,7 @@ dag = DAG(
 
 def load_data():
     try:
-        snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake_conn')
+        snowflake_hook = SnowflakeHook(snowflake_conn_id='air_conn')
         conn = snowflake_hook.get_conn()
         cursor = conn.cursor()
 
@@ -1323,7 +1323,7 @@ def load_data():
 # # Task 2: Check if Load is Successful
 def check_load_status():
      try:
-         snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake_conn')
+         snowflake_hook = SnowflakeHook(snowflake_conn_id='air_conn')
          conn = snowflake_hook.get_conn()
          cursor = conn.cursor()
 
