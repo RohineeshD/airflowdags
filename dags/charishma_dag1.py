@@ -2,7 +2,7 @@ from airflow import DAG
 from airflow.operators.python import PythonOperator
 from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
 from datetime import datetime
-from airflow.models import Variable  # Import Variable
+from airflow.models import Variable  #Variables to store and retrieve the URL
 import requests
 from io import StringIO
 import pandas as pd
