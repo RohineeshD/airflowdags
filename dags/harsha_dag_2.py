@@ -20,8 +20,10 @@ snowflake_conn_id = 'air_conn'
 # Define Snowflake target table
 snowflake_table = 'bulk_table'
 
+# Define a Variable for the URL
+url_variable = Variable.get("csv_file")
 # Define the CSV URL
-csv_url = "https://media.githubusercontent.com/media/datablist/sample-csv-files/main/files/customers/customers-100000.csv"
+# csv_url = "https://media.githubusercontent.com/media/datablist/sample-csv-files/main/files/customers/customers-100000.csv"
 
 
 # # Function to load CSV data into Snowflake
@@ -32,7 +34,7 @@ def load_csv_to_snowflake():
         conn = snowflake_hook.get_conn()
 
         # Read the CSV file into a Pandas DataFrame
-        df = pd.read_csv(csv_url)
+        df = pd.read_csv(url_variable)
 
         # Create SQLAlchemy engine from Snowflake connection
         engine = conn.cursor().connection
