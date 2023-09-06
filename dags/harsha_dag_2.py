@@ -496,14 +496,14 @@ load_csv_task
 #      else:
 #          print("Failure")
 
-# Define Snowflake connection ID from Airflow's Connection UI
-snowflake_conn_id = 'snowflake_creds'  
+# # Define Snowflake connection ID from Airflow's Connection UI
+# snowflake_conn_id = 'snowflake_creds'  
 
-# Define Snowflake target table
-snowflake_table = 'bulk_table'
+# # Define Snowflake target table
+# snowflake_table = 'bulk_table'
 
-# Define the CSV URL
-csv_url = "https://media.githubusercontent.com/media/datablist/sample-csv-files/main/files/customers/customers-100000.csv"
+# # Define the CSV URL
+# csv_url = "https://media.githubusercontent.com/media/datablist/sample-csv-files/main/files/customers/customers-100000.csv"
 
 
 # # Function to load CSV data into Snowflake
