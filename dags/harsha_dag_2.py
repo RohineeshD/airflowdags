@@ -112,6 +112,13 @@ from airflow.operators.python_operator import PythonOperator
 from airflow.utils.dates import days_ago
 import pandas as pd
 
+dag = DAG(
+    'load_csv_to_snowflake',
+    start_date=days_ago(1),
+    schedule_interval=None,
+    catchup=False
+)
+
 # Define Snowflake connection ID from Airflow's Connection UI
 snowflake_conn_id = 'snowflake_creds'  
 
