@@ -55,6 +55,8 @@ def load_csv_to_snowflake():
         # Read the CSV file into a Pandas DataFrame
         df = pd.read_csv(csv_url)
 
+        df = df.replace('', '0')
+
         # Convert all columns to string data type
         df = df.astype(str)
         
