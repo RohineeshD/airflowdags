@@ -1,4 +1,3 @@
-
 from airflow import DAG
 from airflow.operators.python_operator import PythonOperator
 from datetime import datetime
@@ -19,7 +18,7 @@ snowflake_warehouse = 'WH1'
 snowflake_table = 'bulk_table'
 
 # Define the CSV URL
-csv_url = "https://media.githubusercontent.com/media/datablist/sample-csv-files/main/files/customers/customers-100000.csv"
+csv_url = "https://raw.githubusercontent.com/media/datablist/sample-csv-files/main/files/customers/customers-100000.csv"
 
 # Function to load CSV data into Snowflake
 def load_csv_to_snowflake():
@@ -46,9 +45,8 @@ def load_csv_to_snowflake():
         # Check for errors and replace with None (null) values
         df['SubscriptionDate'] = df['SubscriptionDate'].where(df['SubscriptionDate'].notnull(), None)
 
-        # Format 'SubscriptionDate' as a string in the desired format
+        # Format 'SubscriptionDate' as a string in the "YYYY-MM-DD" format
         df['SubscriptionDate'] = df['SubscriptionDate'].dt.strftime('%Y-%m-%d')
-
 
         # Create SQLAlchemy engine from Snowflake connection
         engine = create_engine(conn)
@@ -86,6 +84,7 @@ load_data_task = PythonOperator(
 
 # Set task dependencies
 load_data_task
+
 
 
 
