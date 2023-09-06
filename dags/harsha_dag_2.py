@@ -18,7 +18,7 @@ csv_url = "https://media.githubusercontent.com/media/datablist/sample-csv-files/
 default_args = {
     'owner': 'airflow',
     'start_date': days_ago(1),
-    'schedule_interval': None,  # Set your desired schedule interval
+    'schedule_interval': None,  
     'catchup': False
 }
 
@@ -81,8 +81,7 @@ load_csv_task = PythonOperator(
     dag=dag
 )
 
-# Define the task dependencies (if any)
-# For example, you can set load_csv_task to run after another task by using load_csv_task.set_upstream(other_task)
+load_csv_task
 
 if __name__ == "__main__":
     dag.cli()
