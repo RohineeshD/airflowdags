@@ -110,6 +110,7 @@ def get_snowflake_hook(conn_id):
 
 from airflow import DAG
 from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
+from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
 from airflow.operators.python_operator import PythonOperator
 from airflow.utils.dates import days_ago
 from datetime import datetime
