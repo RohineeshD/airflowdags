@@ -65,10 +65,12 @@ def load_csv_to_snowflake():
         PUT 'file://{local_file_path}' @{stage_name}
         '''
         cursor.execute(put_sql)
+        cursor.close()
+        conn.close()
 
         # Snowflake COPY INTO command using the internal stage with error handling
-        copy_into_sql = f'''
-        BEGIN;
+        snowflake_hook.run( 
+            f'''
             COPY INTO {snowflake_table}
             FROM @{stage_name}
             FILE_FORMAT = (
@@ -78,16 +80,10 @@ def load_csv_to_snowflake():
             )
             ON_ERROR = 'CONTINUE';
             '''
-        cursor.execute(copy_into_sql)
+        )
 
         # Drop the Snowflake internal stage after loading
-        drop_stage_sql = f'''
-        DROP STAGE IF EXISTS {stage_name}
-        '''
-        cursor.execute(drop_stage_sql)
-
-        cursor.close()
-        conn.close()
+        snowflake_hook.run( f'DROP STAGE IF EXISTS {stage_name}')
 
         print("Data loaded successfully")
         return True
