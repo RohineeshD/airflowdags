@@ -4,6 +4,7 @@ from datetime import datetime
 import numpy as np
 from sqlalchemy import create_engine
 import pandas as pd
+import your_module
 
 # Define Snowflake connection parameters
 snowflake_username = 'harsha'
@@ -63,7 +64,7 @@ dag = DAG(
 # Define the PythonOperator to execute the data loading function
 load_data_task = PythonOperator(
     task_id='load_data_task',
-    python_callable=load_csv_to_snowflake,
+    python_callable=your_module.load_csv_to_snowflake,
     dag=dag,
 )
 
