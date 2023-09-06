@@ -4,7 +4,7 @@ from datetime import datetime
 import numpy as np
 from sqlalchemy import create_engine
 import pandas as pd
-import your_module
+# import your_module
 from scripts.data_loading import load_csv_to_snowflake
 
 # Define Snowflake connection parameters
