@@ -7,7 +7,7 @@ from airflow.utils.dates import days_ago
 import pandas as pd
 
 dag = DAG(
-    'load_to_snowflake',
+    'load_snowflake',
     start_date=days_ago(1),
     schedule_interval=None,
     catchup=False
