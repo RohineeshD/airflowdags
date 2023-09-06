@@ -106,6 +106,7 @@
 #     SKIP_UTF8_BOM = TRUE
 #     ON_ERROR = 'CONTINUE'
 # )
+
 from airflow import DAG
 from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
 from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
@@ -140,11 +141,15 @@ def load_csv_to_snowflake():
         # Read the CSV file into a Pandas DataFrame
         df = pd.read_csv(csv_url)
 
+        # Create SQLAlchemy engine from Snowflake connection
+        engine = conn.cursor().connection
+        engine.connect()
+
         # Snowflake COPY INTO command using Pandas DataFrame
-        with conn:
-            with conn.cursor() as cursor:
-                cursor.execute(f"TRUNCATE TABLE {snowflake_table}")  # Optionally truncate table
-                df.to_sql(snowflake_table, conn, if_exists='append', index=False)
+        # with conn:
+        #     with conn.cursor() as cursor:
+        #         cursor.execute(f"TRUNCATE TABLE {snowflake_table}")  # Optionally truncate table
+        df.to_sql(snowflake_table, conn, if_exists='append', index=False)
 
         print("Data loaded successfully")
         return True
