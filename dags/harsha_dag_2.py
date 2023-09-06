@@ -40,12 +40,15 @@ def load_csv_to_snowflake():
         # Handle empty strings by replacing them with None
         df = df.applymap(lambda x: None if x == '' else x)
 
-        # Drop rows with NaN values in the SubscriptionDate column
-        df.dropna(subset=['SubscriptionDate'], inplace=True)
-
-        # Validate and format date column
+        # Convert 'SubscriptionDate' column to datetime
         df['SubscriptionDate'] = pd.to_datetime(df['SubscriptionDate'], errors='coerce')
+
+        # Check for errors and replace with None (null) values
+        df['SubscriptionDate'] = df['SubscriptionDate'].where(df['SubscriptionDate'].notnull(), None)
+
+        # Format 'SubscriptionDate' as a string in the desired format
         df['SubscriptionDate'] = df['SubscriptionDate'].dt.strftime('%Y-%m-%d')
+
 
         # Create SQLAlchemy engine from Snowflake connection
         engine = create_engine(conn)
