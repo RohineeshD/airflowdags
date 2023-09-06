@@ -1,7 +1,7 @@
 from airflow import DAG
 from airflow.operators.python_operator import PythonOperator
 from datetime import datetime
-
+import numpy as np
 from sqlalchemy import create_engine
 import pandas as pd
 
@@ -33,6 +33,7 @@ def load_csv_to_snowflake():
 
         # Read the CSV file into a Pandas DataFrame
         df = pd.read_csv(csv_url)
+        df = df.replace('', np.nan)
 
         # Load the DataFrame into Snowflake
         df.to_sql(snowflake_table, engine, if_exists='append', index=False)
