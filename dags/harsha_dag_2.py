@@ -17,6 +17,7 @@ default_args = {
 dag = DAG(
     'load_snowflake',
     default_args=default_args,
+    description='Load CSV data into Snowflake',
     catchup=False
 )
 
@@ -51,7 +52,6 @@ def load_csv_to_snowflake():
             ERROR_ON_COLUMN_COUNT_MISMATCH = FALSE
             SKIP_BYTE_ORDER_MARK = TRUE
             STRIP_NULL_VALUES = FALSE
-            ON_ERROR = 'CONTINUE'
         );
         '''
         cursor.execute(create_stage_sql)
@@ -68,14 +68,22 @@ def load_csv_to_snowflake():
         '''
         cursor.execute(put_sql)
 
-        # Snowflake COPY INTO command using the internal stage
+        # Snowflake COPY INTO command using the internal stage with error handling
         copy_into_sql = f'''
-        COPY INTO {snowflake_table}
-        FROM @{stage_name}
-        FILE_FORMAT = (
-            TYPE = 'CSV'
-            SKIP_HEADER = 1
-        );
+        BEGIN;
+            COPY INTO {snowflake_table}
+            FROM @{stage_name}
+            FILE_FORMAT = (
+                TYPE = 'CSV'
+                SKIP_HEADER = 1
+                ERROR_ON_COLUMN_COUNT_MISMATCH = FALSE
+                SKIP_BYTE_ORDER_MARK = TRUE
+                STRIP_NULL_VALUES = FALSE
+            );
+        EXCEPTION
+            WHEN OTHERS THEN
+                NULL; -- You can log the error or take other actions here if needed
+        END;
         '''
         cursor.execute(copy_into_sql)
 
@@ -101,6 +109,9 @@ load_csv_task = PythonOperator(
     dag=dag
 )
 
+# Set task dependencies if needed
+# load_csv_task.set_upstream(...)
+# load_csv_task.set_downstream(...)
 
 if __name__ == "__main__":
     dag.cli()
