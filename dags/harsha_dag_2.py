@@ -71,11 +71,6 @@ def load_csv_to_snowflake():
         FILE_FORMAT = (
             TYPE = 'CSV'
             SKIP_HEADER = 1
-            FIELD_OPTIONALLY_ENCLOSED_BY = '',
-            ERROR_ON_COLUMN_COUNT_MISMATCH = TRUE
-            SKIP_BYTE_ORDER_MARK = TRUE
-            STRIP_NULL_VALUES = FALSE
-            SKIP_UTF8_BOM = TRUE
             ON_ERROR = 'CONTINUE'
         );
         '''
