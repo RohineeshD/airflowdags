@@ -26,7 +26,7 @@ snowflake_table = 'bulk_table'
 # Define the CSV URL
 csv_url = 'https://media.githubusercontent.com/media/datablist/sample-csv-files/main/files/customers/customers-100000.csv'
 
-Function to load CSV data into Snowflake
+# Function to load CSV data into Snowflake
 def load_csv_to_snowflake():
     try:
         snowflake_hook = SnowflakeHook(snowflake_conn_id='s_h_connection')
