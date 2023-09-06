@@ -1,14 +1,15 @@
 from airflow import DAG
 from airflow.operators.python_operator import PythonOperator
 from datetime import datetime
+import pandas as pd
 import numpy as np
 from sqlalchemy import create_engine
-import pandas as pd
+import snowflake.connector
 
 # Define Snowflake connection parameters
 snowflake_username = 'harsha'
 snowflake_password = 'Rama@342'
-snowflake_account = 'https://app.snowflake.com/smdjtrh/gc37630/w3xPDq9SaW27#query'
+snowflake_account = 'smdjtrh.eu-west-1.snowflakecomputing.com'
 snowflake_database = 'exusia_db'
 snowflake_schema = 'exusia_schema'
 snowflake_warehouse = 'COMPUTE_WH'
@@ -22,20 +23,30 @@ csv_url = "https://raw.githubusercontent.com/media/datablist/sample-csv-files/ma
 # Function to load CSV data into Snowflake
 def load_csv_to_snowflake():
     try:
-        # Create a Snowflake connection string
-        snowflake_connection_string = (
-            f'snowflake://{snowflake_username}:{snowflake_password}@{snowflake_account}/'
-            f'?warehouse={snowflake_warehouse}&database={snowflake_database}&schema={snowflake_schema}'
+        # Create a Snowflake connection
+        conn = snowflake.connector.connect(
+            user=snowflake_username,
+            password=snowflake_password,
+            account=snowflake_account,
+            warehouse=snowflake_warehouse,
+            database=snowflake_database,
+            schema=snowflake_schema
         )
-
-        # Create a SQLAlchemy engine
-        engine = create_engine(snowflake_connection_string)
 
         # Read the CSV file into a Pandas DataFrame
         df = pd.read_csv(csv_url)
-        df = df.replace('', np.nan)
 
-        # Load the DataFrame into Snowflake
+        # Handle empty strings by replacing them with None
+        df = df.applymap(lambda x: None if x == '' else x)
+
+        # Validate and format date column
+        df['SubscriptionDate'] = pd.to_datetime(df['SubscriptionDate'], errors='coerce')
+        df['SubscriptionDate'] = df['SubscriptionDate'].dt.strftime('%Y-%m-%d')
+
+        # Create SQLAlchemy engine from Snowflake connection
+        engine = create_engine(conn)
+
+        # Snowflake COPY INTO command using Pandas DataFrame
         df.to_sql(snowflake_table, engine, if_exists='append', index=False)
 
         print("Data loaded successfully")
@@ -47,7 +58,7 @@ def load_csv_to_snowflake():
 # Define the default arguments for the DAG
 default_args = {
     'owner': 'airflow',
-    'start_date': datetime(2023, 9, 6),  
+    'start_date': datetime(2023, 9, 6),
     'retries': 1,
 }
 
@@ -56,23 +67,96 @@ dag = DAG(
     'load_csv_to_snowflake',
     default_args=default_args,
     description='DAG to load CSV data into Snowflake',
-    schedule_interval=None,  
-    catchup=False,  
+    schedule_interval=None,
+    catchup=False,
 )
 
 # Define the PythonOperator to execute the data loading function
 load_data_task = PythonOperator(
     task_id='load_data_task',
-    python_callable=load_csv_to_snowflake,  # Use the local function, not your_module
+    python_callable=load_csv_to_snowflake,
     dag=dag,
 )
 
 # Set task dependencies
-# In this example, we are setting no dependencies, but you can specify them here.
-# For example, you can use `set_upstream` or `set_downstream` methods to define dependencies.
+load_data_task
 
-if __name__ == "__main__":
-    dag.cli()
+
+# from airflow import DAG
+# from airflow.operators.python_operator import PythonOperator
+# from datetime import datetime
+# import numpy as np
+# from sqlalchemy import create_engine
+# import pandas as pd
+
+# # Define Snowflake connection parameters
+# snowflake_username = 'harsha'
+# snowflake_password = 'Rama@342'
+# snowflake_account = 'https://app.snowflake.com/smdjtrh/gc37630/w3xPDq9SaW27#query'
+# snowflake_database = 'exusia_db'
+# snowflake_schema = 'exusia_schema'
+# snowflake_warehouse = 'COMPUTE_WH'
+
+# # Define Snowflake target table
+# snowflake_table = 'bulk_table'
+
+# # Define the CSV URL
+# csv_url = "https://raw.githubusercontent.com/media/datablist/sample-csv-files/main/files/customers/customers-100000.csv"
+
+# # Function to load CSV data into Snowflake
+# def load_csv_to_snowflake():
+#     try:
+#         # Create a Snowflake connection string
+#         snowflake_connection_string = (
+#             f'snowflake://{snowflake_username}:{snowflake_password}@{snowflake_account}/'
+#             f'?warehouse={snowflake_warehouse}&database={snowflake_database}&schema={snowflake_schema}'
+#         )
+
+#         # Create a SQLAlchemy engine
+#         engine = create_engine(snowflake_connection_string)
+
+#         # Read the CSV file into a Pandas DataFrame
+#         df = pd.read_csv(csv_url)
+#         df = df.replace('', np.nan)
+
+#         # Load the DataFrame into Snowflake
+#         df.to_sql(snowflake_table, engine, if_exists='append', index=False)
+
+#         print("Data loaded successfully")
+#         return True
+#     except Exception as e:
+#         print("Data loading failed -", str(e))
+#         return False
+
+# # Define the default arguments for the DAG
+# default_args = {
+#     'owner': 'airflow',
+#     'start_date': datetime(2023, 9, 6),  
+#     'retries': 1,
+# }
+
+# # Create the Airflow DAG
+# dag = DAG(
+#     'load_csv_to_snowflake',
+#     default_args=default_args,
+#     description='DAG to load CSV data into Snowflake',
+#     schedule_interval=None,  
+#     catchup=False,  
+# )
+
+# # Define the PythonOperator to execute the data loading function
+# load_data_task = PythonOperator(
+#     task_id='load_data_task',
+#     python_callable=load_csv_to_snowflake,  # Use the local function, not your_module
+#     dag=dag,
+# )
+
+# # Set task dependencies
+# # In this example, we are setting no dependencies, but you can specify them here.
+# # For example, you can use `set_upstream` or `set_downstream` methods to define dependencies.
+
+# if __name__ == "__main__":
+#     dag.cli()
 
 
 
