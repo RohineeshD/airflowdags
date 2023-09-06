@@ -24,7 +24,7 @@ dag = DAG(
 
 def load_data():
     try:
-        snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake_conn')
+        snowflake_hook = SnowflakeHook(snowflake_conn_id='s_h_connection')
         conn = snowflake_hook.get_conn()
         cursor = conn.cursor()
 
@@ -53,7 +53,7 @@ def load_data():
 # # Task 2: Check if Load is Successful
 def check_load_status():
      try:
-         snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake_conn')
+         snowflake_hook = SnowflakeHook(snowflake_conn_id='s_h_connection')
          conn = snowflake_hook.get_conn()
          cursor = conn.cursor()
 
@@ -78,7 +78,7 @@ def print_status(load_success):
          print("Failure")
 
 # Define Snowflake connection ID from Airflow's Connection UI
-snowflake_conn_id = 'snowflake_conn'  
+snowflake_conn_id = 's_h_connection'  
 
 # Define Snowflake target table
 snowflake_table = 'bulk_table'
