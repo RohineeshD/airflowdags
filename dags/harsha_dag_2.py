@@ -29,32 +29,32 @@ dag = DAG(
 snowflake_conn_id = 'air_conn'
 
 def get_snowflake_hook(conn_id):
-    return SnowflakeHook(snowflake_conn_id=conn_id)
+#     return SnowflakeHook(snowflake_conn_id=conn_id)
 
-def insert_data_to_snowflake(**kwargs):
-    url = "https://raw.githubusercontent.com/fivethirtyeight/data/master/airline-safety/airline-safety.csv"
-    response = requests.get(url)
+# def insert_data_to_snowflake(**kwargs):
+#     url = "https://raw.githubusercontent.com/fivethirtyeight/data/master/airline-safety/airline-safety.csv"
+#     response = requests.get(url)
     
-    if response.status_code == 200:
-        data = response.text
-        lines = data.strip().split('\n')[1:]
-        snowflake_hook = SnowflakeHook(snowflake_conn_id=snowflake_conn_id)
+#     if response.status_code == 200:
+#         data = response.text
+#         lines = data.strip().split('\n')[1:]
+#         snowflake_hook = SnowflakeHook(snowflake_conn_id=snowflake_conn_id)
 
-        # Truncate the table before loading new data
-        truncate_query = "TRUNCATE TABLE airflow_tasks"
-        snowflake_hook.run(truncate_query)
+#         # Truncate the table before loading new data
+#         truncate_query = "TRUNCATE TABLE airflow_tasks"
+#         snowflake_hook.run(truncate_query)
         
-        for line in lines:
-            values = line.split(',')
-            query = f"""
-                INSERT INTO airflow_tasks (airline, avail_seat_km_per_week, incidents_85_99, fatal_accidents_85_99, fatalities_85_99, incidents_00_14, fatal_accidents_00_14, fatalities_00_14)
-                VALUES ('{values[0]}', '{values[1]}', '{values[2]}', '{values[3]}', '{values[4]}', '{values[5]}', '{values[6]}', '{values[7]}')
-            """
-            snowflake_hook.run(query)
+#         for line in lines:
+#             values = line.split(',')
+#             query = f"""
+#                 INSERT INTO airflow_tasks (airline, avail_seat_km_per_week, incidents_85_99, fatal_accidents_85_99, fatalities_85_99, incidents_00_14, fatal_accidents_00_14, fatalities_00_14)
+#                 VALUES ('{values[0]}', '{values[1]}', '{values[2]}', '{values[3]}', '{values[4]}', '{values[5]}', '{values[6]}', '{values[7]}')
+#             """
+#             snowflake_hook.run(query)
             
-        print("Data loaded into Snowflake successfully.")
-    else:
-        raise Exception(f"Failed to fetch data from URL. Status code: {response.status_code}")
+#         print("Data loaded into Snowflake successfully.")
+#     else:
+#         raise Exception(f"Failed to fetch data from URL. Status code: {response.status_code}")
 
 # Define Snowflake target table
 snowflake_table = 'bulk_table'
@@ -78,6 +78,7 @@ def copy_csv_to_snowflake():
         FILE_FORMAT = (
             TYPE = 'CSV'
             SKIP_HEADER = 1
+            FIELD_OPTIONALLY_ENCLOSED_BY = ''
             FIELD_DELIMITER = ','
             RECORD_DELIMITER = '\n'  
         );
@@ -106,6 +107,7 @@ def copy_csv_to_snowflake():
             FILE_FORMAT = (
                 TYPE = 'CSV'
                 SKIP_HEADER = 1
+                FIELD_OPTIONALLY_ENCLOSED_BY = ''
                 FIELD_DELIMITER = ','
                 RECORD_DELIMITER = '\n'
             )
@@ -123,12 +125,12 @@ def copy_csv_to_snowflake():
         return False
 
 
-insert_data_task = PythonOperator(
-    task_id='load_data_task',
-    python_callable=insert_data_to_snowflake,
-    provide_context=True,
-    dag=dag,
-)
+# insert_data_task = PythonOperator(
+#     task_id='load_data_task',
+#     python_callable=insert_data_to_snowflake,
+#     provide_context=True,
+#     dag=dag,
+# )
 
 
 # Task to truncate the Snowflake table before loading
@@ -147,7 +149,8 @@ copy_csv_task = PythonOperator(
 )
 
 # Set task dependencies
-insert_data_task >> truncate_table_task >> copy_csv_task
+# insert_data_task >> 
+truncate_table_task >> copy_csv_task
 
 
 # if __name__ == "__main__":
