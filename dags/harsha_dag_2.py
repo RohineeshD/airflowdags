@@ -47,10 +47,10 @@ def insert_data_to_snowflake(table_name, snowflake_conn_id, csv_url):
             snowflake_hook.run(truncate_query)
 
             # Create a Snowflake connection
-            conn = snowflake_hook.get_conn()
+            # conn = snowflake_hook.get_conn()
 
-            # Create a cursor
-            cursor = conn.cursor()
+            # # Create a cursor
+            # cursor = conn.cursor()
 
             for line in lines:
                 values = line.split(',')
