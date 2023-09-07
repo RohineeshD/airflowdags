@@ -79,7 +79,6 @@ def copy_csv_to_snowflake():
         FILE_FORMAT = (
             TYPE = 'CSV'
             SKIP_HEADER = 1
-            FIELD_OPTIONALLY_ENCLOSED_BY = 'NONE'
             FIELD_DELIMITER = ','
             RECORD_DELIMITER = '\n'
             FIELD_OPTIONALLY_ENCLOSED_BY = '"'
@@ -109,7 +108,6 @@ def copy_csv_to_snowflake():
             FILE_FORMAT = (
                 TYPE = 'CSV'
                 SKIP_HEADER = 1
-                FIELD_OPTIONALLY_ENCLOSED_BY = 'NONE'
                 FIELD_DELIMITER = ','
                 RECORD_DELIMITER = '\n'
                 FIELD_OPTIONALLY_ENCLOSED_BY = '"'
