@@ -2,8 +2,7 @@ from airflow import DAG
 from airflow.operators.python_operator import PythonOperator
 from datetime import datetime
 from airflow.hooks.base_hook import BaseHook
-from snowflake.sqlalchemy import create_engine
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine  
 import csv
 from pydantic import BaseModel, ValidationError
 
