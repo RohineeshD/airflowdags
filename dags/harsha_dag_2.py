@@ -5,6 +5,7 @@ from airflow.operators.python_operator import PythonOperator
 from airflow.utils.dates import days_ago
 from datetime import datetime
 import requests
+import pandas as pd
 
 # Define default_args for the DAG
 default_args = {
@@ -49,7 +50,6 @@ def load_csv_to_snowflake():
         FILE_FORMAT = (
             TYPE = 'CSV'
             SKIP_HEADER = 1
-
         );
         '''
         cursor.execute(create_stage_sql)
@@ -76,20 +76,34 @@ def load_csv_to_snowflake():
             FILE_FORMAT = (
                 TYPE = 'CSV'
                 SKIP_HEADER = 1
-
             )
             ON_ERROR = 'CONTINUE';
             '''
         )
 
         # Drop the Snowflake internal stage after loading
-        snowflake_hook.run( f'DROP STAGE IF EXISTS {stage_name}')
+        snowflake_hook.run(f'DROP STAGE IF EXISTS {stage_name}')
 
         print("Data loaded successfully")
         return True
     except Exception as e:
         print("Data loading failed -", str(e))
         return False
+
+# Function to print CSV data before loading
+def print_csv_data():
+    response = requests.get(csv_url)
+    data = response.text
+    df = pd.read_csv(pd.compat.StringIO(data))
+    print("CSV Data:")
+    print(df.head())
+
+# Task to print CSV data before loading
+print_csv_task = PythonOperator(
+    task_id='print_csv_data_task',
+    python_callable=print_csv_data,
+    dag=dag
+)
 
 # Task to call the load_csv_to_snowflake function
 load_csv_task = PythonOperator(
@@ -98,9 +112,123 @@ load_csv_task = PythonOperator(
     dag=dag
 )
 
+# Task to truncate the Snowflake table before loading
+truncate_table_task = SnowflakeOperator(
+    task_id='truncate_snowflake_table_task',
+    sql=f'TRUNCATE TABLE {snowflake_table}',
+    snowflake_conn_id=snowflake_conn_id,
+    dag=dag
+)
 
-if __name__ == "__main__":
-    dag.cli()
+# Set task dependencies
+print_csv_task >> truncate_table_task >> load_csv_task
+
+
+
+# =========================================================working=================================================
+# from airflow import DAG
+# from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
+# from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
+# from airflow.operators.python_operator import PythonOperator
+# from airflow.utils.dates import days_ago
+# from datetime import datetime
+# import requests
+
+# # Define default_args for the DAG
+# default_args = {
+#     'owner': 'airflow',
+#     'start_date': days_ago(1),
+#     'schedule_interval': None,  
+#     'catchup': False
+# }
+
+# dag = DAG(
+#     'load_snowflake',
+#     default_args=default_args,
+#     description='Load CSV data into Snowflake',
+#     catchup=False
+# )
+
+# # Define Snowflake connection ID from Airflow's Connection UI
+# snowflake_conn_id = 'air_conn'
+
+# def get_snowflake_hook(conn_id):
+#     return SnowflakeHook(snowflake_conn_id=conn_id)
+
+# # Define Snowflake target table
+# snowflake_table = 'bulk_table'
+
+# # Define the CSV URL
+# csv_url = 'https://media.githubusercontent.com/media/datablist/sample-csv-files/main/files/customers/customers-100000.csv'
+
+# # Function to load CSV data into Snowflake
+# def load_csv_to_snowflake():
+#     try:
+#         snowflake_hook = get_snowflake_hook(snowflake_conn_id)
+
+#         # Establish a Snowflake connection
+#         conn = snowflake_hook.get_conn()
+#         cursor = conn.cursor()
+
+#         # Create a Snowflake internal stage for the CSV file
+#         stage_name = 'csv_stage'
+#         create_stage_sql = f'''
+#         CREATE OR REPLACE STAGE {stage_name}
+#         FILE_FORMAT = (
+#             TYPE = 'CSV'
+#             SKIP_HEADER = 1
+
+#         );
+#         '''
+#         cursor.execute(create_stage_sql)
+
+#         # Download the CSV file to a local directory
+#         response = requests.get(csv_url)
+#         local_file_path = '/tmp/customers-100000.csv'
+#         with open(local_file_path, 'wb') as file:
+#             file.write(response.content)
+
+#         # Upload the CSV file to the Snowflake internal stage
+#         put_sql = f'''
+#         PUT 'file://{local_file_path}' @{stage_name}
+#         '''
+#         cursor.execute(put_sql)
+#         cursor.close()
+#         conn.close()
+
+#         # Snowflake COPY INTO command using the internal stage with error handling
+#         snowflake_hook.run( 
+#             f'''
+#             COPY INTO {snowflake_table}
+#             FROM @{stage_name}
+#             FILE_FORMAT = (
+#                 TYPE = 'CSV'
+#                 SKIP_HEADER = 1
+
+#             )
+#             ON_ERROR = 'CONTINUE';
+#             '''
+#         )
+
+#         # Drop the Snowflake internal stage after loading
+#         snowflake_hook.run( f'DROP STAGE IF EXISTS {stage_name}')
+
+#         print("Data loaded successfully")
+#         return True
+#     except Exception as e:
+#         print("Data loading failed -", str(e))
+#         return False
+
+# # Task to call the load_csv_to_snowflake function
+# load_csv_task = PythonOperator(
+#     task_id='load_csv_to_snowflake_task',
+#     python_callable=load_csv_to_snowflake,
+#     dag=dag
+# )
+
+
+# if __name__ == "__main__":
+#     dag.cli()
 
 
 # from airflow import DAG
