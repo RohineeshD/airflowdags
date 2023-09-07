@@ -71,6 +71,7 @@ def copy_csv_to_snowflake():
         conn = snowflake_hook.get_conn()
         cursor = conn.cursor()
 
+
         # Create a Snowflake internal stage for the CSV file
         stage_name = 'csv_stage'
         create_stage_sql = f'''
@@ -78,9 +79,9 @@ def copy_csv_to_snowflake():
         FILE_FORMAT = (
             TYPE = 'CSV'
             SKIP_HEADER = 1
-            FIELD_OPTIONALLY_ENCLOSED_BY = ''
+            FIELD_OPTIONALLY_ENCLOSED_BY = 'NONE'
             FIELD_DELIMITER = ','
-            RECORD_DELIMITER = '\n'  
+            RECORD_DELIMITER = '\r\n'  
         );
         '''
         cursor.execute(create_stage_sql)
@@ -107,9 +108,9 @@ def copy_csv_to_snowflake():
             FILE_FORMAT = (
                 TYPE = 'CSV'
                 SKIP_HEADER = 1
-                FIELD_OPTIONALLY_ENCLOSED_BY = ''
+                FIELD_OPTIONALLY_ENCLOSED_BY = 'NONE'
                 FIELD_DELIMITER = ','
-                RECORD_DELIMITER = '\n'
+                RECORD_DELIMITER = '\r\n'
             )
             ON_ERROR = 'CONTINUE';
             '''
