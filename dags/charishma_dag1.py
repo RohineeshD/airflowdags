@@ -34,7 +34,7 @@ dag_args = {
 dag = DAG(**dag_args)
 
 def read_file_from_url_and_display():
-    url = "csv_url"  # Replace with your CSV URL
+    url = "https://github.com/jcharishma/my.repo/blob/master/sample_csv.csv"  # Replace with your CSV URL
     response = requests.get(url)
     data = response.text
     print(f"Read data from URL. Content: {data}")
@@ -106,7 +106,7 @@ with dag:
     load_to_snowflake_task = PythonOperator(
         task_id='load_to_snowflake_task',
         python_callable=load_data_to_snowflake,
-        op_args=[read_file_task.output, CsvSettings(url="csv_url")],
+        op_args=[read_file_task.output, CsvSettings(url="https://github.com/jcharishma/my.repo/blob/master/sample_csv.csv")],
     )
 
     read_file_task >> load_to_snowflake_task
