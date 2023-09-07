@@ -17,6 +17,7 @@ class CsvSettings(BaseModel):
     main_table: str = 'sample_csv'
     error_table: str = 'error_log'
 
+# Define a Pydantic model to validate SSN
 class SSNModel(BaseModel):
     ssn: constr(min_length=4, max_length=4)
 
@@ -40,83 +41,42 @@ def read_file_from_url():
     data = response.text
     print(f"Read data from URL. Content: {data}")
     return data
+
 def load_data_to_snowflake(data: str, settings: CsvSettings):
     snowflake_hook = SnowflakeHook(snowflake_conn_id=SNOWFLAKE_CONN_ID)
 
     # Read CSV data into a DataFrame
     df = pd.read_csv(StringIO(data))
 
-    # Define a Pydantic model for the entire DataFrame
-    class DataFrameModel(BaseModel):
-        class Config:
-            arbitrary_types_allowed = True
-
-    try:
-        # Attempt to validate the entire DataFrame using Pydantic
-        df_model = DataFrameModel(**df.to_dict(orient='records'))
-    except ValidationError as e:
-        logging.error(f"Invalid data: {e}")
+    # Check if 'SSN' column exists in the DataFrame
+    if 'SSN' not in df.columns:
+        logging.error("The 'SSN' column does not exist in the CSV data.")
         return
 
-    # Split data into valid and invalid based on Pydantic validation
-    valid_data = df[df_model.dict(exclude_unset=True).keys()]
-    invalid_data = df.drop(valid_data.columns, axis=1)
+    # Create a list to store valid and invalid SSNs
+    valid_ssn_data = []
+    invalid_ssn_data = []
 
+    # Validate SSN column using Pydantic and split data accordingly
+    for _, row in df.iterrows():
+        try:
+            ssn_model = SSNModel(ssn=str(row['SSN']))
+            valid_ssn_data.append(row)
+        except ValidationError as e:
+            logging.error(f"Invalid SSN value: {e}")
+            invalid_ssn_data.append(row)
 
+    # Convert valid and invalid SSN data back to DataFrames
+    valid_data = pd.DataFrame(valid_ssn_data)
+    invalid_data = pd.DataFrame(invalid_ssn_data)
 
-
-# def load_data_to_snowflake(data: str, settings: CsvSettings):
-#     snowflake_hook = SnowflakeHook(snowflake_conn_id=SNOWFLAKE_CONN_ID)
-
-#     # Read CSV data into a DataFrame
-#     df = pd.read_csv(StringIO(data))
-    
-#     # Print the DataFrame and its columns for debugging
-#     print(df)
-#     print(df.columns)
-    
-#     # Validate SSN column using Pydantic
-#     try:
-#         ssn_model = SSNModel(ssn=df['SSN'].astype(str))
-#     except ValidationError as e:
-#         logging.error(f"Invalid SSN values: {e}")
-#         return
-# def load_data_to_snowflake(data: str, settings: CsvSettings):
-#     snowflake_hook = SnowflakeHook(snowflake_conn_id=SNOWFLAKE_CONN_ID)
-
-#     print(df.columns)
-    
-#     # Data validation using Pydantic
-#     try:
-#         CsvSettings(url=settings.url, main_table=settings.main_table, error_table=settings.error_table)
-#     except ValidationError as e:
-#         logging.error(f"Invalid settings: {e}")
-#         return
-    
-    # Read CSV data into a DataFrame
-    # df = pd.read_csv(pd.compat.StringIO(data))
-    # df = pd.read_csv(StringIO(data))
-    
-    # Validate SSN column using Pydantic
-    
-    # try:
-    #     ssn_model = SSNModel(ssn=df['SSN'].astype(str))
-    # except ValidationError as e:
-    #     logging.error(f"Invalid SSN values: {e}")
-    #     return
-
-    
-    # Split data into valid and invalid based on Pydantic validation
-    valid_data = df[ssn_model.index]
-    invalid_data = df.drop(ssn_model.index)
-    
     # Log the number of rows in the data
     logging.info(f"Number of rows in data: {len(df)}")
-    
+
     # Log the number of valid and invalid rows
     logging.info(f"Number of valid rows: {len(valid_data)}")
     logging.info(f"Number of invalid rows: {len(invalid_data)}")
-    
+
     # Load valid data to main table
     if not valid_data.empty:
         logging.info(f"Loading valid data into Snowflake table: {settings.main_table}...")
@@ -125,7 +85,7 @@ def load_data_to_snowflake(data: str, settings: CsvSettings):
             logging.info(f"Data loaded successfully into {settings.main_table} with {len(valid_data)} rows.")
         except Exception as e:
             logging.error(f"Error loading data into {settings.main_table}: {str(e)}")
-    
+
     # Load invalid data to error_log table
     if not invalid_data.empty:
         logging.info(f"Loading invalid data into Snowflake table: {settings.error_table}...")
@@ -148,6 +108,158 @@ with dag:
     )
 
     read_file_task >> load_to_snowflake_task
+
+
+# from airflow import DAG
+# from airflow.operators.python import PythonOperator
+# from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
+# from pydantic import BaseModel, ValidationError, constr
+# from airflow.models import Variable
+# from datetime import datetime
+# import requests
+# import logging
+# import pandas as pd
+# from io import StringIO
+
+# # Snowflake connection ID
+# SNOWFLAKE_CONN_ID = 'snow_sc'
+
+# class CsvSettings(BaseModel):
+#     url: str
+#     main_table: str = 'sample_csv'
+#     error_table: str = 'error_log'
+
+# class SSNModel(BaseModel):
+#     ssn: constr(min_length=4, max_length=4)
+
+# default_args = {
+#     'start_date': datetime(2023, 8, 25),
+#     'retries': 1,
+#     'catchup': True,
+# }
+
+# dag_args = {
+#     'dag_id': 'charishma_csv_dag',
+#     'schedule_interval': None,
+#     'default_args': default_args,
+#     'catchup': False,
+# }
+# dag = DAG(**dag_args)
+
+# def read_file_from_url():
+#     url = Variable.get("csv_url")
+#     response = requests.get(url)
+#     data = response.text
+#     print(f"Read data from URL. Content: {data}")
+#     return data
+# def load_data_to_snowflake(data: str, settings: CsvSettings):
+#     snowflake_hook = SnowflakeHook(snowflake_conn_id=SNOWFLAKE_CONN_ID)
+
+#     # Read CSV data into a DataFrame
+#     df = pd.read_csv(StringIO(data))
+
+#     # Define a Pydantic model for the entire DataFrame
+#     class DataFrameModel(BaseModel):
+#         class Config:
+#             arbitrary_types_allowed = True
+
+#     try:
+#         # Attempt to validate the entire DataFrame using Pydantic
+#         df_model = DataFrameModel(**df.to_dict(orient='records'))
+#     except ValidationError as e:
+#         logging.error(f"Invalid data: {e}")
+#         return
+
+#     # Split data into valid and invalid based on Pydantic validation
+#     valid_data = df[df_model.dict(exclude_unset=True).keys()]
+#     invalid_data = df.drop(valid_data.columns, axis=1)
+
+
+
+
+# # def load_data_to_snowflake(data: str, settings: CsvSettings):
+# #     snowflake_hook = SnowflakeHook(snowflake_conn_id=SNOWFLAKE_CONN_ID)
+
+# #     # Read CSV data into a DataFrame
+# #     df = pd.read_csv(StringIO(data))
+    
+# #     # Print the DataFrame and its columns for debugging
+# #     print(df)
+# #     print(df.columns)
+    
+# #     # Validate SSN column using Pydantic
+# #     try:
+# #         ssn_model = SSNModel(ssn=df['SSN'].astype(str))
+# #     except ValidationError as e:
+# #         logging.error(f"Invalid SSN values: {e}")
+# #         return
+# # def load_data_to_snowflake(data: str, settings: CsvSettings):
+# #     snowflake_hook = SnowflakeHook(snowflake_conn_id=SNOWFLAKE_CONN_ID)
+
+# #     print(df.columns)
+    
+# #     # Data validation using Pydantic
+# #     try:
+# #         CsvSettings(url=settings.url, main_table=settings.main_table, error_table=settings.error_table)
+# #     except ValidationError as e:
+# #         logging.error(f"Invalid settings: {e}")
+# #         return
+    
+#     # Read CSV data into a DataFrame
+#     # df = pd.read_csv(pd.compat.StringIO(data))
+#     # df = pd.read_csv(StringIO(data))
+    
+#     # Validate SSN column using Pydantic
+    
+#     # try:
+#     #     ssn_model = SSNModel(ssn=df['SSN'].astype(str))
+#     # except ValidationError as e:
+#     #     logging.error(f"Invalid SSN values: {e}")
+#     #     return
+
+    
+#     # Split data into valid and invalid based on Pydantic validation
+#     valid_data = df[ssn_model.index]
+#     invalid_data = df.drop(ssn_model.index)
+    
+#     # Log the number of rows in the data
+#     logging.info(f"Number of rows in data: {len(df)}")
+    
+#     # Log the number of valid and invalid rows
+#     logging.info(f"Number of valid rows: {len(valid_data)}")
+#     logging.info(f"Number of invalid rows: {len(invalid_data)}")
+    
+#     # Load valid data to main table
+#     if not valid_data.empty:
+#         logging.info(f"Loading valid data into Snowflake table: {settings.main_table}...")
+#         try:
+#             valid_data.to_sql(settings.main_table, con=snowflake_hook.get_sqlalchemy_engine(), if_exists='append', index=False)
+#             logging.info(f"Data loaded successfully into {settings.main_table} with {len(valid_data)} rows.")
+#         except Exception as e:
+#             logging.error(f"Error loading data into {settings.main_table}: {str(e)}")
+    
+#     # Load invalid data to error_log table
+#     if not invalid_data.empty:
+#         logging.info(f"Loading invalid data into Snowflake table: {settings.error_table}...")
+#         try:
+#             invalid_data.to_sql(settings.error_table, con=snowflake_hook.get_sqlalchemy_engine(), if_exists='append', index=False)
+#             logging.info(f"Data loaded successfully into {settings.error_table} with {len(invalid_data)} rows.")
+#         except Exception as e:
+#             logging.error(f"Error loading data into {settings.error_table}: {str(e)}")
+
+# with dag:
+#     read_file_task = PythonOperator(
+#         task_id='read_file_task',
+#         python_callable=read_file_from_url,
+#     )
+
+#     load_to_snowflake_task = PythonOperator(
+#         task_id='load_to_snowflake_task',
+#         python_callable=load_data_to_snowflake,
+#         op_args=[read_file_task.output, CsvSettings(url=Variable.get("csv_url"))], 
+#     )
+
+#     read_file_task >> load_to_snowflake_task
 
 
 # from airflow import DAG
