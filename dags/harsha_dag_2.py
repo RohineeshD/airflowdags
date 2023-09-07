@@ -8,6 +8,7 @@ from datetime import datetime
 import requests
 import pandas as pd
 import os
+import io
 
 # Define default_args for the DAG
 default_args = {
@@ -77,7 +78,7 @@ def copy_csv_to_snowflake():
         FILE_FORMAT = (
             TYPE = 'CSV'
             SKIP_HEADER = 1
-            FIELD_DELIMITER = ','  
+            RECORD_DELIMITER = '\\n'  
         );
         '''
         cursor.execute(create_stage_sql)
@@ -104,7 +105,7 @@ def copy_csv_to_snowflake():
             FILE_FORMAT = (
                 TYPE = 'CSV'
                 SKIP_HEADER = 1
-                FIELD_DELIMITER = ','
+                RECORD_DELIMITER = '\\n'
             )
             ON_ERROR = 'CONTINUE';
             '''
