@@ -104,6 +104,7 @@ def copy_csv_to_snowflake():
             FILE_FORMAT = (
                 TYPE = 'CSV'
                 SKIP_HEADER = 1
+                FIELD_DELIMITER = ','
             )
             ON_ERROR = 'CONTINUE';
             '''
