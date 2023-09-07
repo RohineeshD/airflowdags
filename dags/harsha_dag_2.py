@@ -2,10 +2,15 @@ from airflow import DAG
 from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
 from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
 from airflow.operators.python_operator import PythonOperator
+from airflow.operators.python import ShortCircuitOperator
 from airflow.utils.dates import days_ago
 from datetime import datetime
+from airflow.models import Variable
 import requests
 import pandas as pd
+import os
+
+
 
 # Define default_args for the DAG
 default_args = {
