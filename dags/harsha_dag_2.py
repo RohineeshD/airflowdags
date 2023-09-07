@@ -120,13 +120,6 @@ def copy_csv_to_snowflake():
         print("Data loading failed -", str(e))
         return False
 
-# Function to print CSV data before loading
-def print_csv_data():
-    response = requests.get(csv_url)
-    data = response.text
-    df = pd.read_csv(pd.compat.StringIO(data))
-    print("CSV Data:")
-    print(df.head())
 
 insert_data_task = PythonOperator(
     task_id='load_data_task',
@@ -135,12 +128,6 @@ insert_data_task = PythonOperator(
     dag=dag,
 )
 
-# Task to print CSV data before loading
-print_csv_task = PythonOperator(
-    task_id='print_csv_data_task',
-    python_callable=print_csv_data,
-    dag=dag
-)
 
 # Task to truncate the Snowflake table before loading
 truncate_table_task = SnowflakeOperator(
@@ -159,10 +146,10 @@ copy_csv_task = PythonOperator(
 
 # Set task dependencies
 insert_data_task >> truncate_table_task >> copy_csv_task
-copy_csv_task >> print_csv_task
 
-if __name__ == "__main__":
-    dag.cli()
+
+# if __name__ == "__main__":
+#     dag.cli()
 
 
 
