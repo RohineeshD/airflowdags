@@ -1,13 +1,11 @@
 from airflow import DAG
 from airflow.operators.python import PythonOperator
 from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
-from pydantic import BaseModel, ValidationError, constr
+from pydantic import BaseModel, ValidationError
+from airflow.models import Variable
 from datetime import datetime
 import requests
 import logging
-import pandas as pd
-from io import StringIO
-from airflow.models import Variable
 
 
 # Snowflake connection ID
@@ -18,9 +16,6 @@ class CsvSettings(BaseModel):
     main_table: str = 'sample_csv'
     error_table: str = 'error_log'
 
-class SSNModel(BaseModel):
-    ssn: constr(min_length=4, max_length=4)
-
 default_args = {
     'start_date': datetime(2023, 8, 25),
     'retries': 1,
@@ -28,75 +23,98 @@ default_args = {
 }
 
 dag_args = {
-    'dag_id': 'charishma_csv',
+    'dag_id': 'charishma_csv_dag',
     'schedule_interval': None,
     'default_args': default_args,
     'catchup': False,
 }
 dag = DAG(**dag_args)
 
-def read_file_from_url_and_display():
-    csv_url = Variable.get('csv_url')  # Get the CSV URL from Airflow variables
-    response = requests.get(csv_url)
+# def read_file_from_url(settings: CsvSettings):
+#     url = settings.url
+#     response = requests.get(url)
+#     data = response.text
+#     print(f"Read data from URL. Content: {data}")
+#     return data
+def read_file_from_url():
+    url = Variable.get("csv_url")  
+    response = requests.get(url)
     data = response.text
     print(f"Read data from URL. Content: {data}")
     return data
 
-def load_data_to_snowflake(data: str):
+def load_data_to_snowflake(data: str, settings: CsvSettings):
     snowflake_hook = SnowflakeHook(snowflake_conn_id=SNOWFLAKE_CONN_ID)
-
-    df = pd.read_csv(StringIO(data))
-
-    df.columns = df.columns.str.strip().str.lower()
-
-    if 'ssn' not in df.columns:  # Changed to lowercase 'ssn'
-        logging.error("The 'ssn' column does not exist in the CSV data.")
+    
+    # Data validation using Pydantic
+    try:
+        CsvSettings(url=settings.url, main_table=settings.main_table, error_table=settings.error_table)
+    except ValidationError as e:
+        logging.error(f"Invalid settings: {e}")
         return
+    
+    # Create a CSVValidator instance and define validation rules
+    validator = CSVValidator()
+    validator.add_column_validation("SSN", lambda SSN: len(SSN) == 4, "Invalid SSN length should be 4 digits")
 
-    valid_ssn_data = []
-    invalid_ssn_data = []
-
-    for _, row in df.iterrows():
+    # Parse and validate the CSV data
+    valid_data, invalid_data = validator.process(data)
+    
+    # Log the number of rows in the data
+    logging.info(f"Number of rows in data: {len(valid_data) + len(invalid_data)}")
+    
+    # Log the number of valid and invalid rows
+    logging.info(f"Number of valid rows: {len(valid_data)}")
+    logging.info(f"Number of invalid rows: {len(invalid_data)}")
+    
+    # Load valid data to main table
+    if valid_data:
+        logging.info(f"Loading valid data into Snowflake table: {settings.main_table}...")
         try:
-            ssn_model = SSNModel(ssn=str(row['ssn']))
-            valid_ssn_data.append(row)
-        except ValidationError as e:
-            logging.error(f"Invalid SSN value: {e}")
-            row['Error_message'] = str(e)
-            invalid_ssn_data.append(row)
-
-    logging.info(f"Number of rows in data: {len(df)}")
-    logging.info(f"Number of valid rows: {len(valid_ssn_data)}")
-    logging.info(f"Number of invalid rows: {len(invalid_ssn_data)}")
-
-    if valid_ssn_data:
-        logging.info(f"Loading valid data into Snowflake table: sample_csv...")
-        try:
-            # Assuming 'valid_data' is meant to be 'df'
-            df.to_sql('sample_csv', con=snowflake_hook.get_sqlalchemy_engine(), if_exists='append', index=False)
-            logging.info(f"Data loaded successfully into sample_csv with {len(valid_ssn_data)} rows.")
+            with snowflake_hook.get_conn() as conn:
+                with conn.cursor() as cursor:
+                    cursor.executemany(f"INSERT INTO {settings.main_table} VALUES (?, ?, ?, ?)", valid_data)
+                    logging.info(f"Data loaded successfully into {settings.main_table} with {len(valid_data)} rows.")
         except Exception as e:
-            logging.error(f"Error loading data into sample_csv: {str(e)}")
-
-    if invalid_ssn_data:
-        logging.info(f"Loading invalid data into Snowflake table: error_log...")
+            logging.error(f"Error loading data into {settings.main_table}: {str(e)}")
+    
+    # Load invalid data to error_log table
+    if invalid_data:
+        logging.info(f"Loading invalid data into Snowflake table: {settings.error_table}...")
         try:
-            # Assuming 'invalid_data' is meant to be 'df'
-            df.to_sql('error_log', con=snowflake_hook.get_sqlalchemy_engine(), if_exists='append', index=False)
-            logging.info(f"Data loaded successfully into error_log with {len(invalid_ssn_data)} rows.")
+            with snowflake_hook.get_conn() as conn:
+                with conn.cursor() as cursor:
+                    cursor.executemany(f"INSERT INTO {settings.error_table} VALUES (?, ?, ?, ?, ?)", invalid_data)
+                    logging.info(f"Data loaded successfully into {settings.error_table} with {len(invalid_data)} rows.")
         except Exception as e:
-            logging.error(f"Error loading data into error_log: {str(e)}")
+            logging.error(f"Error loading data into {settings.error_table}: {str(e)}")
 
 with dag:
     read_file_task = PythonOperator(
         task_id='read_file_task',
-        python_callable=read_file_from_url_and_display,
+        python_callable=read_file_from_url,
+  
     )
 
     load_to_snowflake_task = PythonOperator(
         task_id='load_to_snowflake_task',
         python_callable=load_data_to_snowflake,
-        op_args=[read_file_task.output],
+        op_args=[read_file_task.output, CsvSettings(url=Variable.get("csv_url"))], 
+    )
+
+    read_file_task >> load_to_snowflake_task
+
+with dag:
+    read_file_task = PythonOperator(
+        task_id='read_file_task',
+        python_callable=read_file_from_url,
+        op_args=[CsvSettings(url="{{ var.value.csv_url }}")],  # Fetch URL from Airflow Variable
+    )
+
+    load_to_snowflake_task = PythonOperator(
+        task_id='load_to_snowflake_task',
+        python_callable=load_data_to_snowflake,
+        op_args=[read_file_task.output, CsvSettings(url="{{ var.value.csv_url }}")], 
     )
 
     read_file_task >> load_to_snowflake_task
