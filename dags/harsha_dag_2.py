@@ -101,7 +101,8 @@ def copy_csv_to_snowflake():
             COPY INTO {snowflake_table}
             FROM @{stage_name}
             FILE_FORMAT = (
-                FORMAT_NAME = my_csv_format  
+                TYPE = 'CSV'
+                SKIP_HEADER = 1
             )
             ON_ERROR = 'CONTINUE';
             '''
@@ -242,8 +243,8 @@ if __name__ == "__main__":
 #             COPY INTO {snowflake_table}
 #             FROM @{stage_name}
 #             FILE_FORMAT = (
-#                 TYPE = 'CSV'
-#                 SKIP_HEADER = 1
+                # TYPE = 'CSV'
+                # SKIP_HEADER = 1
 
 #             )
 #             ON_ERROR = 'CONTINUE';
