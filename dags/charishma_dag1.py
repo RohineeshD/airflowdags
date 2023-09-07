@@ -2,18 +2,17 @@ from airflow import DAG
 from airflow.operators.python_operator import PythonOperator
 from datetime import datetime
 from airflow.hooks.base_hook import BaseHook
-from sqlalchemy import create_engine 
-from sqlalchemy.engine import URL
+from sqlalchemy import create_engine
 import csv
 import requests
 from pydantic import BaseModel, ValidationError
 
 # Snowflake connection ID and DAG configuration
 SNOWFLAKE_CONN_ID = 'snow_sc'
-DAG_OWNER = 'airflow' 
+DAG_OWNER = 'airflow'
 # DAG_START_DATE = datetime(2023, 9, 7)
-DAG_SCHEDULE_INTERVAL = None  
-DAG_CATCHUP = False  
+DAG_SCHEDULE_INTERVAL = None
+DAG_CATCHUP = False
 
 
 default_args = {
@@ -30,7 +29,11 @@ dag = DAG(
     catchup=DAG_CATCHUP,
 )
 
-
+# Define the Pydantic model for CSV data at the module level
+class CSVRecord(BaseModel):
+    NAME: str
+    EMAIL: str
+    SSN: int
 
 def validate_csv_and_insert():
     # Snowflake connection using the connection ID
@@ -79,6 +82,8 @@ validate_task = PythonOperator(
     python_callable=validate_csv_and_insert,
     dag=dag,
 )
+validate_task
+
 
 
 # def validate_csv_and_insert():
@@ -131,7 +136,7 @@ validate_task = PythonOperator(
 #     dag=dag,
 # )
 
-validate_task
+# validate_task
 
 
 # from airflow import DAG
