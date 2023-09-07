@@ -27,8 +27,19 @@ dag = DAG(
 )
 
 def validate_csv_and_insert():
+  
     # Snowflake connection using the connection ID
     snowflake_conn = BaseHook.get_connection(SNOWFLAKE_CONN_ID)
+    
+    # Define the Snowflake SQLAlchemy engine using the retrieved connection
+    engine = create_engine(URL(
+        account=snowflake_conn.extra_dejson['account'],
+        warehouse=snowflake_conn.extra_dejson['warehouse'],
+        database=snowflake_conn.extra_dejson['database'],
+        schema=snowflake_conn.extra_dejson['schema'],
+        insecure_mode=snowflake_conn.extra_dejson['insecure_mode']
+    ))
+
     
     # Define the Snowflake SQLAlchemy engine using the retrieved connection
     engine = create_engine(snowflake_conn.extra_dejson)
