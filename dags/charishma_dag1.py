@@ -35,14 +35,7 @@ dag_args = {
 }
 dag = DAG(**dag_args)
 
-def read_file_from_url():
-    url = Variable.get("csv_url")
-    response = requests.get(url)
-    data = response.text
-    print(f"Read data from URL. Content: {data}")
-    return data
-
-def load_data_to_snowflake(data: str, settings: CsvSettings):
+def read_file_from_url_and_load(data: str, settings: CsvSettings):
     snowflake_hook = SnowflakeHook(snowflake_conn_id=SNOWFLAKE_CONN_ID)
 
     # Read CSV data into a DataFrame
@@ -80,37 +73,41 @@ def load_data_to_snowflake(data: str, settings: CsvSettings):
     logging.info(f"Number of valid rows: {len(valid_data)}")
     logging.info(f"Number of invalid rows: {len(invalid_data)}")
 
-    # Load valid data to main table
-    if not valid_data.empty:
-        logging.info(f"Loading valid data into Snowflake table: {settings.main_table}...")
+    # Load all data into Snowflake tables
+    if not df.empty:
         try:
-            valid_data.to_sql(settings.main_table, con=snowflake_hook.get_sqlalchemy_engine(), if_exists='append', index=False)
-            logging.info(f"Data loaded successfully into {settings.main_table} with {len(valid_data)} rows.")
+            df.to_sql(settings.main_table, con=snowflake_hook.get_sqlalchemy_engine(), if_exists='append', index=False)
+            logging.info(f"Data loaded successfully into {settings.main_table} with {len(df)} rows.")
         except Exception as e:
             logging.error(f"Error loading data into {settings.main_table}: {str(e)}")
 
+    # Load valid data to main table
+    if not valid_data.empty:
+        try:
+            valid_data.to_sql(settings.main_table, con=snowflake_hook.get_sqlalchemy_engine(), if_exists='append', index=False)
+            logging.info(f"Valid data loaded successfully into {settings.main_table} with {len(valid_data)} rows.")
+        except Exception as e:
+            logging.error(f"Error loading valid data into {settings.main_table}: {str(e)}")
+
     # Load invalid data to error_log table
     if not invalid_data.empty:
-        logging.info(f"Loading invalid data into Snowflake table: {settings.error_table}...")
         try:
             invalid_data.to_sql(settings.error_table, con=snowflake_hook.get_sqlalchemy_engine(), if_exists='append', index=False)
-            logging.info(f"Data loaded successfully into {settings.error_table} with {len(invalid_data)} rows.")
+            logging.info(f"Invalid data loaded successfully into {settings.error_table} with {len(invalid_data)} rows.")
         except Exception as e:
-            logging.error(f"Error loading data into {settings.error_table}: {str(e)}")
+            logging.error(f"Error loading invalid data into {settings.error_table}: {str(e)}")
 
 with dag:
-    read_file_task = PythonOperator(
-        task_id='read_file_task',
-        python_callable=read_file_from_url,
+    read_and_load_task = PythonOperator(
+        task_id='read_and_load_task',
+        python_callable=read_file_from_url_and_load,
+        op_args=[Variable.get("csv_url"), CsvSettings(url=Variable.get("csv_url"))],
     )
 
-    load_to_snowflake_task = PythonOperator(
-        task_id='load_to_snowflake_task',
-        python_callable=load_data_to_snowflake,
-        op_args=[read_file_task.output, CsvSettings(url=Variable.get("csv_url"))], 
-    )
+    read_and_load_task
 
-    read_file_task >> load_to_snowflake_task
+
+
 
 
 # from airflow import DAG
