@@ -46,7 +46,7 @@ def validate_csv_and_insert():
     engine = create_engine(engine_url)
 
     # Input CSV file URL
-    csv_url = 'https://raw.githubusercontent.com/jcharishma/my.repo/master/sample_csv.csv'
+    csv_url = 'https://github.com/jcharishma/my.repo/blob/master/sample_csv.csv?plain=1'
 
     # Download the CSV file
     response = requests.get(csv_url)
