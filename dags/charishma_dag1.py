@@ -49,7 +49,7 @@ def load_data_to_snowflake(data: str):
 
     df.columns = df.columns.str.strip().str.lower()
 
-    if 'SSN' not in df.columns:
+    if 'ssn' not in df.columns:  # Changed to lowercase 'ssn'
         logging.error("The 'ssn' column does not exist in the CSV data.")
         return
 
@@ -69,18 +69,20 @@ def load_data_to_snowflake(data: str):
     logging.info(f"Number of valid rows: {len(valid_ssn_data)}")
     logging.info(f"Number of invalid rows: {len(invalid_ssn_data)}")
 
-    if not valid_ssn_data.empty:
+    if valid_ssn_data:
         logging.info(f"Loading valid data into Snowflake table: sample_csv...")
         try:
-            valid_data.to_sql('sample_csv', con=snowflake_hook.get_sqlalchemy_engine(), if_exists='append', index=False)
+            # Assuming 'valid_data' is meant to be 'df'
+            df.to_sql('sample_csv', con=snowflake_hook.get_sqlalchemy_engine(), if_exists='append', index=False)
             logging.info(f"Data loaded successfully into sample_csv with {len(valid_ssn_data)} rows.")
         except Exception as e:
             logging.error(f"Error loading data into sample_csv: {str(e)}")
 
-    if not invalid_ssn_data.empty:
+    if invalid_ssn_data:
         logging.info(f"Loading invalid data into Snowflake table: error_log...")
         try:
-            invalid_data.to_sql('error_log', con=snowflake_hook.get_sqlalchemy_engine(), if_exists='append', index=False)
+            # Assuming 'invalid_data' is meant to be 'df'
+            df.to_sql('error_log', con=snowflake_hook.get_sqlalchemy_engine(), if_exists='append', index=False)
             logging.info(f"Data loaded successfully into error_log with {len(invalid_ssn_data)} rows.")
         except Exception as e:
             logging.error(f"Error loading data into error_log: {str(e)}")
@@ -98,6 +100,7 @@ with dag:
     )
 
     read_file_task >> load_to_snowflake_task
+
 
 
 
