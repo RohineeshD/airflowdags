@@ -28,6 +28,31 @@ snowflake_conn_id = 'air_conn'
 def get_snowflake_hook(conn_id):
     return SnowflakeHook(snowflake_conn_id=conn_id)
 
+def insert_data_to_snowflake(**kwargs):
+    url = "https://raw.githubusercontent.com/fivethirtyeight/data/master/airline-safety/airline-safety.csv"
+    response = requests.get(url)
+    
+    if response.status_code == 200:
+        data = response.text
+        lines = data.strip().split('\n')[1:]
+        snowflake_hook = SnowflakeHook(snowflake_conn_id=snowflake_conn_id)
+
+        # Truncate the table before loading new data
+        truncate_query = "TRUNCATE TABLE airflow_tasks"
+        snowflake_hook.run(truncate_query)
+        
+        for line in lines:
+            values = line.split(',')
+            query = f"""
+                INSERT INTO airflow_tasks (airline, avail_seat_km_per_week, incidents_85_99, fatal_accidents_85_99, fatalities_85_99, incidents_00_14, fatal_accidents_00_14, fatalities_00_14)
+                VALUES ('{values[0]}', '{values[1]}', '{values[2]}', '{values[3]}', '{values[4]}', '{values[5]}', '{values[6]}', '{values[7]}')
+            """
+            snowflake_hook.run(query)
+            
+        print("Data loaded into Snowflake successfully.")
+    else:
+        raise Exception(f"Failed to fetch data from URL. Status code: {response.status_code}")
+
 # Define Snowflake target table
 snowflake_table = 'bulk_table'
 
@@ -35,7 +60,7 @@ snowflake_table = 'bulk_table'
 csv_url = 'https://media.githubusercontent.com/media/datablist/sample-csv-files/main/files/customers/customers-100000.csv'
 
 # Function to load CSV data into Snowflake
-def load_csv_to_snowflake():
+def copy_csv_to_snowflake():
     try:
         snowflake_hook = get_snowflake_hook(snowflake_conn_id)
 
@@ -98,17 +123,18 @@ def print_csv_data():
     print("CSV Data:")
     print(df.head())
 
+insert_data_task = PythonOperator(
+    task_id='load_data_task',
+    python_callable=insert_data_to_snowflake,
+    provide_context=True,
+    dag=dag,
+)
+
+
 # Task to print CSV data before loading
 print_csv_task = PythonOperator(
     task_id='print_csv_data_task',
     python_callable=print_csv_data,
-    dag=dag
-)
-
-# Task to call the load_csv_to_snowflake function
-load_csv_task = PythonOperator(
-    task_id='load_csv_to_snowflake_task',
-    python_callable=load_csv_to_snowflake,
     dag=dag
 )
 
@@ -120,8 +146,23 @@ truncate_table_task = SnowflakeOperator(
     dag=dag
 )
 
+# Task to call the load_csv_to_snowflake function
+copy_csv_task = PythonOperator(
+    task_id='load_csv_to_snowflake_task',
+    python_callable=copy_csv_to_snowflake,
+    dag=dag
+)
+
+# # Task to truncate the Snowflake table before loading
+# truncate_table_task = SnowflakeOperator(
+#     task_id='truncate_snowflake_table_task',
+#     sql=f'TRUNCATE TABLE {snowflake_table}',
+#     snowflake_conn_id=snowflake_conn_id,
+#     dag=dag
+# )
+
 # Set task dependencies
-print_csv_task >> truncate_table_task >> load_csv_task
+insert_data_task >> print_csv_task >> truncate_table_task >> load_csv_task
 
 
 
