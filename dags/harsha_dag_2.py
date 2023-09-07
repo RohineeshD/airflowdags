@@ -5,12 +5,8 @@ from airflow.operators.python_operator import PythonOperator
 from airflow.operators.python import ShortCircuitOperator
 from airflow.utils.dates import days_ago
 from datetime import datetime
-from airflow.models import Variable
 import requests
 import pandas as pd
-import os
-
-
 
 # Define default_args for the DAG
 default_args = {
@@ -80,6 +76,7 @@ def copy_csv_to_snowflake():
         FILE_FORMAT = (
             TYPE = 'CSV'
             SKIP_HEADER = 1
+            FIELD_DELIMITER = ','  -- Specify the field delimiter as a comma
         );
         '''
         cursor.execute(create_stage_sql)
@@ -104,8 +101,7 @@ def copy_csv_to_snowflake():
             COPY INTO {snowflake_table}
             FROM @{stage_name}
             FILE_FORMAT = (
-                TYPE = 'CSV'
-                SKIP_HEADER = 1
+                FORMAT_NAME = my_csv_format  -- Use the defined FILE_FORMAT
             )
             ON_ERROR = 'CONTINUE';
             '''
@@ -135,7 +131,6 @@ insert_data_task = PythonOperator(
     dag=dag,
 )
 
-
 # Task to print CSV data before loading
 print_csv_task = PythonOperator(
     task_id='print_csv_data_task',
@@ -158,16 +153,15 @@ copy_csv_task = PythonOperator(
     dag=dag
 )
 
-# # Task to truncate the Snowflake table before loading
-# truncate_table_task = SnowflakeOperator(
-#     task_id='truncate_snowflake_table_task',
-#     sql=f'TRUNCATE TABLE {snowflake_table}',
-#     snowflake_conn_id=snowflake_conn_id,
-#     dag=dag
-# )
-
 # Set task dependencies
-insert_data_task >> print_csv_task >> truncate_table_task >> load_csv_task
+insert_data_task >> truncate_table_task >> copy_csv_task
+copy_csv_task >> print_csv_task
+
+if __name__ == "__main__":
+    dag.cli()
+
+
+
 
 
 
