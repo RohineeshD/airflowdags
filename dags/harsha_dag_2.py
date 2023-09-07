@@ -76,7 +76,7 @@ def copy_csv_to_snowflake():
         FILE_FORMAT = (
             TYPE = 'CSV'
             SKIP_HEADER = 1
-            FIELD_DELIMITER = ','  -- Specify the field delimiter as a comma
+            FIELD_DELIMITER = ','  
         );
         '''
         cursor.execute(create_stage_sql)
@@ -101,7 +101,7 @@ def copy_csv_to_snowflake():
             COPY INTO {snowflake_table}
             FROM @{stage_name}
             FILE_FORMAT = (
-                FORMAT_NAME = my_csv_format  -- Use the defined FILE_FORMAT
+                FORMAT_NAME = my_csv_format  
             )
             ON_ERROR = 'CONTINUE';
             '''
