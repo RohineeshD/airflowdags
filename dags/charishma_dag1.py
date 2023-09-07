@@ -30,8 +30,14 @@ dag_args = {
 }
 dag = DAG(**dag_args)
 
-def read_file_from_url(settings: CsvSettings):
-    url = settings.url
+# def read_file_from_url(settings: CsvSettings):
+#     url = settings.url
+#     response = requests.get(url)
+#     data = response.text
+#     print(f"Read data from URL. Content: {data}")
+#     return data
+def read_file_from_url():
+    url = Variable.get("csv_url")  
     response = requests.get(url)
     data = response.text
     print(f"Read data from URL. Content: {data}")
@@ -82,20 +88,36 @@ def load_data_to_snowflake(data: str, settings: CsvSettings):
                     logging.info(f"Data loaded successfully into {settings.error_table} with {len(invalid_data)} rows.")
         except Exception as e:
             logging.error(f"Error loading data into {settings.error_table}: {str(e)}")
+
 with dag:
     read_file_task = PythonOperator(
         task_id='read_file_task',
         python_callable=read_file_from_url,
-        op_args=[CsvSettings(url="{{ var.value.csv_url }}")],  # Fetch URL from Airflow Variable
+  
     )
 
     load_to_snowflake_task = PythonOperator(
         task_id='load_to_snowflake_task',
         python_callable=load_data_to_snowflake,
-        op_args=[read_file_task.output, CsvSettings(url="{{ var.value.csv_url }}")],  # Fetch URL from Airflow Variable
+        op_args=[read_file_task.output, CsvSettings(url=Variable.get("csv_url"))], 
     )
 
     read_file_task >> load_to_snowflake_task
+
+# with dag:
+#     read_file_task = PythonOperator(
+#         task_id='read_file_task',
+#         python_callable=read_file_from_url,
+#         op_args=[CsvSettings(url="{{ var.value.csv_url }}")],  # Fetch URL from Airflow Variable
+#     )
+
+#     load_to_snowflake_task = PythonOperator(
+#         task_id='load_to_snowflake_task',
+#         python_callable=load_data_to_snowflake,
+#         op_args=[read_file_task.output, CsvSettings(url="{{ var.value.csv_url }}")], 
+#     )
+
+#     read_file_task >> load_to_snowflake_task
 
 ##variable
 # from airflow import DAG
