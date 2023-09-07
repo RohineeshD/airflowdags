@@ -22,20 +22,20 @@ dag = DAG(
 )
 
 
-def check_environment_variable():
+# def check_environment_variable():
 
-   env_value = Variable.get('harsha_air_env')
-   if (bool(env_value)):
-       print (True)
-   else:
-       print (False)
+#    env_value = Variable.get('harsha_air_env')
+#    if (bool(env_value)):
+#        print (True)
+#    else:
+#        print (False)
 
-task_1 = PythonOperator(
-    task_id='check_env_variable',
-    python_callable=check_environment_variable,
-    provide_context=True,
-    dag=dag,
-)
+# task_1 = PythonOperator(
+#     task_id='check_env_variable',
+#     python_callable=check_environment_variable,
+#     provide_context=True,
+#     dag=dag,
+# )
 
 
 def load_data_to_snowflake(**kwargs):
@@ -45,7 +45,7 @@ def load_data_to_snowflake(**kwargs):
     if response.status_code == 200:
         data = response.text
         lines = data.strip().split('\n')[1:]
-        snowflake_hook = SnowflakeHook(snowflake_conn_id="snowflake_creds")
+        snowflake_hook = SnowflakeHook(snowflake_conn_id="air_conn")
         
         for line in lines:
             values = line.split(',')
@@ -69,7 +69,7 @@ task_2 = PythonOperator(
 # the function is getting records from table graterthan 698012498
 
 def print_records_all(**kwargs):
-    snowflake_hook = SnowflakeHook(snowflake_conn_id="snowflake_conn")
+    snowflake_hook = SnowflakeHook(snowflake_conn_id="air_conn")
     query = """ SELECT * FROM airflow_tasks WHERE avail_seat_km_per_week > 698012498 
      """
     records = snowflake_hook.get_records(query)
@@ -85,7 +85,7 @@ task_3 = PythonOperator(
 )
 # function working on condition 
 def print_records_limit(**kwargs):
-    snowflake_hook = SnowflakeHook(snowflake_conn_id="snowflake_conn")
+    snowflake_hook = SnowflakeHook(snowflake_conn_id="air_conn")
     query = "SELECT * FROM airflow_tasks WHERE avail_seat_km_per_week > 698012498 LIMIT 10"
     records = snowflake_hook.get_records(query)
     
@@ -116,7 +116,8 @@ task_5 = PythonOperator(
     dag=dag,
 )
 
-task_1 >> task_2 >> task_3 >> task_4 >> task_5
+# task_1 >> 
+task_2 >> task_3 >> task_4 >> task_5
 
 
 
