@@ -65,7 +65,7 @@ def insert_data_to_snowflake(table_name, snowflake_conn_id, csv_url):
         print(f"An error occurred: {str(e)}")
 
 # Usage example
-insert_data_to_snowflake("traditional_insert", "your_snowflake_conn_id", "https://media.githubusercontent.com/media/datablist/sample-csv-files/main/files/customers/customers-100000.csv")
+insert_data_to_snowflake("table_name", "snowflake_conn_id", "csv_url")
 
 insert_data_task = PythonOperator(
     task_id='load_data_task',
