@@ -5,6 +5,7 @@ from airflow.hooks.base_hook import BaseHook
 from sqlalchemy import create_engine 
 from sqlalchemy.engine import URL
 import csv
+import requests
 from pydantic import BaseModel, ValidationError
 
 # Snowflake connection ID and DAG configuration
@@ -29,55 +30,106 @@ dag = DAG(
     catchup=DAG_CATCHUP,
 )
 
+
+
 def validate_csv_and_insert():
-  
     # Snowflake connection using the connection ID
     snowflake_conn = BaseHook.get_connection(SNOWFLAKE_CONN_ID)
-    
-  # Construct the Snowflake SQLAlchemy engine URL
+
+    # Construct the Snowflake SQLAlchemy engine URL
     engine_url = f'snowflake://{snowflake_conn.login}:{snowflake_conn.password}@{snowflake_conn.host}/{snowflake_conn.schema}?warehouse={snowflake_conn.extra_dejson["warehouse"]}&database={snowflake_conn.extra_dejson["database"]}&account={snowflake_conn.extra_dejson["account"]}'
 
-    
-    # Define the Snowflake SQLAlchemy engine using the retrieved connection
-    # engine = create_engine(snowflake_conn.extra_dejson)
+    # Create the SQLAlchemy engine using the engine URL
     engine = create_engine(engine_url)
-    
+
     # Input CSV file URL
     csv_url = 'https://raw.githubusercontent.com/jcharishma/my.repo/master/sample_csv.csv'
 
-    # Pydantic model for CSV data
-    class CSVRecord(BaseModel):
-        name: str
-        email: str
-        SSN: int
+    # Download the CSV file
+    response = requests.get(csv_url)
+    if response.status_code == 200:
+        # Process the downloaded CSV content
+        csv_content = response.text
+        csv_lines = csv_content.split('\n')
+        csvreader = csv.DictReader(csv_lines)
+        for row in csvreader:
+            try:
+                record = CSVRecord(**row)
+                engine.execute("""
+                    INSERT INTO sample_csv (name, email, SSN)
+                    VALUES (%s, %s, %s)
+                """, (record.name, record.email, record.SSN))
+            except ValidationError as e:
+                for error in e.errors():
+                    field_name = error.get('loc')[-1]
+                    error_msg = error.get('msg')
+                    print(f"Error in {field_name}: {error_msg}")
+            except Exception as e:
+                engine.execute("""
+                    INSERT INTO error_log (name, email, SSN, Error_message)
+                    VALUES (%s, %s, %s, %s)
+                """, (row['name'], row['email'], row['SSN'], str(e)))
+                print(f"Error: {str(e)}")
+    else:
+        print(f"Failed to download CSV file from URL: {csv_url}")
 
-    with engine.connect() as con:
-        with open('sample_csv.csv', 'r') as csvfile:
-            csvreader = csv.DictReader(csvfile)
-            for row in csvreader:
-                try:
-                    record = CSVRecord(**row)
-                    con.execute("""
-                        INSERT INTO sample_csv (name, email, SSN)
-                        VALUES (%s, %s, %s)
-                    """, (record.name, record.email, record.SSN))
-                except ValidationError as e:
-                    for error in e.errors():
-                        field_name = error.get('loc')[-1]
-                        error_msg = error.get('msg')
-                        print(f"Error in {field_name}: {error_msg}")
-                except Exception as e:
-                    con.execute("""
-                        INSERT INTO error_log (name, email, SSN, Error_message)
-                        VALUES (%s, %s, %s, %s)
-                    """, (row['name'], row['email'], row['SSN'], str(e)))
-                    print(f"Error: {str(e)}")
-
+# Define the task
 validate_task = PythonOperator(
     task_id='validate_csv_and_insert',
     python_callable=validate_csv_and_insert,
     dag=dag,
 )
+
+
+# def validate_csv_and_insert():
+  
+#     # Snowflake connection using the connection ID
+#     snowflake_conn = BaseHook.get_connection(SNOWFLAKE_CONN_ID)
+    
+#   # Construct the Snowflake SQLAlchemy engine URL
+#     engine_url = f'snowflake://{snowflake_conn.login}:{snowflake_conn.password}@{snowflake_conn.host}/{snowflake_conn.schema}?warehouse={snowflake_conn.extra_dejson["warehouse"]}&database={snowflake_conn.extra_dejson["database"]}&account={snowflake_conn.extra_dejson["account"]}'
+
+    
+#     # Define the Snowflake SQLAlchemy engine using the retrieved connection
+#     # engine = create_engine(snowflake_conn.extra_dejson)
+#     engine = create_engine(engine_url)
+    
+#     # Input CSV file URL
+#     csv_url = 'https://raw.githubusercontent.com/jcharishma/my.repo/master/sample_csv.csv'
+
+#     # Pydantic model for CSV data
+#     class CSVRecord(BaseModel):
+#         name: str
+#         email: str
+#         SSN: int
+
+#     with engine.connect() as con:
+#         with open('sample_csv.csv', 'r') as csvfile:
+#             csvreader = csv.DictReader(csvfile)
+#             for row in csvreader:
+#                 try:
+#                     record = CSVRecord(**row)
+#                     con.execute("""
+#                         INSERT INTO sample_csv (name, email, SSN)
+#                         VALUES (%s, %s, %s)
+#                     """, (record.name, record.email, record.SSN))
+#                 except ValidationError as e:
+#                     for error in e.errors():
+#                         field_name = error.get('loc')[-1]
+#                         error_msg = error.get('msg')
+#                         print(f"Error in {field_name}: {error_msg}")
+#                 except Exception as e:
+#                     con.execute("""
+#                         INSERT INTO error_log (name, email, SSN, Error_message)
+#                         VALUES (%s, %s, %s, %s)
+#                     """, (row['name'], row['email'], row['SSN'], str(e)))
+#                     print(f"Error: {str(e)}")
+
+# validate_task = PythonOperator(
+#     task_id='validate_csv_and_insert',
+#     python_callable=validate_csv_and_insert,
+#     dag=dag,
+# )
 
 validate_task
 
