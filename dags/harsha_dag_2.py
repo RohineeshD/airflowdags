@@ -32,7 +32,7 @@ def get_snowflake_hook(conn_id):
     return SnowflakeHook(snowflake_conn_id=conn_id)
 
 def insert_data_to_snowflake(**kwargs):
-    url = "https://raw.githubusercontent.com/fivethirtyeight/data/master/airline-safety/airline-safety.csv"
+    url = "https://media.githubusercontent.com/media/datablist/sample-csv-files/main/files/customers/customers-100000.csv"
     response = requests.get(url)
     
     if response.status_code == 200:
@@ -47,8 +47,8 @@ def insert_data_to_snowflake(**kwargs):
         for line in lines:
             values = line.split(',')
             query = f"""
-                INSERT INTO airflow_tasks (airline, avail_seat_km_per_week, incidents_85_99, fatal_accidents_85_99, fatalities_85_99, incidents_00_14, fatal_accidents_00_14, fatalities_00_14)
-                VALUES ('{values[0]}', '{values[1]}', '{values[2]}', '{values[3]}', '{values[4]}', '{values[5]}', '{values[6]}', '{values[7]}')
+                INSERT INTO traditional_insert (Index, CustomerId, FirstName, LastName, Company, City, Country, Phone1,Phone2,Email,SubscriptionDate,Website)
+                VALUES ('{values[0]}', '{values[1]}', '{values[2]}', '{values[3]}', '{values[4]}', '{values[5]}', '{values[6]}', '{values[8]}','{values[9]}','{values[10]}','{values[11]}')
             """
             snowflake_hook.run(query)
             
