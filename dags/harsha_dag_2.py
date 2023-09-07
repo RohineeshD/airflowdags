@@ -79,7 +79,7 @@ def insert_data_to_snowflake(table_name, snowflake_conn_id, csv_url):
                                 values[6], values[7], values[8], values[9], values[10], values[11]
                     )
 
-                    snowflake_hook.execute(query, parameters=params)
+                    snowflake_hook.run(query, parameters=params)
                 else:
                     print("Skipping row with insufficient columns.")
 
