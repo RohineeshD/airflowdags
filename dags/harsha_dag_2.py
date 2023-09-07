@@ -70,6 +70,7 @@ insert_data_to_snowflake("table_name", "snowflake_conn_id", "csv_url")
 insert_data_task = PythonOperator(
     task_id='load_data_task',
     python_callable=insert_data_to_snowflake,
+    op_args=[table_name, snowflake_conn_id, csv_url],
     provide_context=True,
     dag=dag,
 )
