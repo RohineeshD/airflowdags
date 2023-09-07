@@ -48,7 +48,7 @@ def insert_data_to_snowflake(**kwargs):
             values = line.split(',')
             query = f"""
                 INSERT INTO traditional_insert (Index, CustomerId, FirstName, LastName, Company, City, Country, Phone1,Phone2,Email,SubscriptionDate,Website)
-                VALUES ( '{values[1]}', '{values[2]}', '{values[3]}', '{values[4]}', '{values[5]}', '{values[6]}', '{values[8]}','{values[9]}','{values[10]}','{values[11]}','{values[12]}',)
+                VALUES ( '{values[1]}', '{values[2]}', '{values[3]}', '{values[4]}', '{values[5]}', '{values[6]}', '{values[8]}','{values[9]}','{values[10]}','{values[11]}','{values[12]}')
             """
             snowflake_hook.run(query)
             
