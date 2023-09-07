@@ -57,7 +57,7 @@ def get_snowflake_hook(conn_id):
 #         raise Exception(f"Failed to fetch data from URL. Status code: {response.status_code}")
 
 # Define Snowflake target table
-snowflake_table = 'bulk_table'
+ snowflake_table = 'bulk_table'
 
 # Define the CSV URL
 csv_url = 'https://media.githubusercontent.com/media/datablist/sample-csv-files/main/files/customers/customers-100000.csv'
