@@ -78,7 +78,8 @@ def copy_csv_to_snowflake():
         FILE_FORMAT = (
             TYPE = 'CSV'
             SKIP_HEADER = 1
-            RECORD_DELIMITER = '\\n'  
+            FIELD_DELIMITER = ','
+            RECORD_DELIMITER = '\n'  
         );
         '''
         cursor.execute(create_stage_sql)
@@ -105,7 +106,8 @@ def copy_csv_to_snowflake():
             FILE_FORMAT = (
                 TYPE = 'CSV'
                 SKIP_HEADER = 1
-                RECORD_DELIMITER = '\\n'
+                FIELD_DELIMITER = ','
+                RECORD_DELIMITER = '\n'
             )
             ON_ERROR = 'CONTINUE';
             '''
