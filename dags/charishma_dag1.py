@@ -20,7 +20,7 @@ default_args = {
 }
 
 dag = DAG(
-    'validate_csv_and_insert_to_snowflake',
+    'charishma_csv_dag',
     default_args=default_args,
     schedule_interval=DAG_SCHEDULE_INTERVAL,
     catchup=DAG_CATCHUP,
