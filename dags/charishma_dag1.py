@@ -39,7 +39,8 @@ def validate_csv_and_insert():
 
     
     # Define the Snowflake SQLAlchemy engine using the retrieved connection
-    engine = create_engine(snowflake_conn.extra_dejson)
+    # engine = create_engine(snowflake_conn.extra_dejson)
+    engine = create_engine(engine_url)
     
     # Input CSV file URL
     csv_url = 'https://raw.githubusercontent.com/jcharishma/my.repo/master/sample_csv.csv'
