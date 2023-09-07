@@ -2,21 +2,24 @@ from airflow import DAG
 from airflow.operators.python_operator import PythonOperator
 from datetime import datetime
 from airflow.hooks.base_hook import BaseHook
-from sqlalchemy import create_engine  
+from sqlalchemy import create_engine 
+from sqlalchemy.engine import URL
 import csv
 from pydantic import BaseModel, ValidationError
 
 # Snowflake connection ID and DAG configuration
 SNOWFLAKE_CONN_ID = 'snow_sc'
 DAG_OWNER = 'airflow' 
-DAG_START_DATE = datetime(2023, 9, 7)
+# DAG_START_DATE = datetime(2023, 9, 7)
 DAG_SCHEDULE_INTERVAL = None  
 DAG_CATCHUP = False  
 
+
 default_args = {
     'owner': DAG_OWNER,
-    'start_date': DAG_START_DATE,
+    'start_date': datetime(2023, 9, 7),
     'retries': 1,
+    'catchup': True,
 }
 
 dag = DAG(
