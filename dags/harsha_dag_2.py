@@ -56,18 +56,18 @@ def insert_data_to_snowflake(table_name, snowflake_conn_id, csv_url):
                 values = line.split(',')
                 if len(values) >= 13:
                      # Remove double quotes from values
-                    # values = [v.strip('"').strip() for v in values]
+                    values = [v.strip('"').strip() for v in values]
                     # params = tuple(values)  # Convert values to a tuple
-                    # query = f"""
-                    #     INSERT INTO {table_name} (Index, CustomerId, FirstName, LastName, Company, City, Country, Phone1, Phone2, Email, SubscriptionDate, Website)
+                    query = f"""
+                        INSERT INTO {table_name} (Index, CustomerId, FirstName, LastName, Company, City, Country, Phone1, Phone2, Email, SubscriptionDate, Website)
                         
-                    #     VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
                         
-                    # """
-                    query = """
-                        INSERT INTO table_name (Index, CustomerId, FirstName, LastName, Company, City, Country, Phone1, Phone2, Email, SubscriptionDate,Website)
-                        VALUES ('{0}', '{1}', '{2}', '{3}', '{4}', '{5}', '{6}', '{7}', '{8}', '{9}', '{10}')
-                        """.format(values[1], values[2], values[3], values[4], values[5], values[6], values[8], values[9], values[10], values[11], values[12])
+                    """
+                    # query = """
+                    #     INSERT INTO table_name (Index, CustomerId, FirstName, LastName, Company, City, Country, Phone1, Phone2, Email, SubscriptionDate,Website)
+                    #     VALUES ('{0}', '{1}', '{2}', '{3}', '{4}', '{5}', '{6}', '{7}', '{8}', '{9}', '{10}')
+                    #     """.format(values[1], values[2], values[3], values[4], values[5], values[6], values[8], values[9], values[10], values[11], values[12])
                 
                     
                     # Execute the query with parameter binding
