@@ -7,6 +7,7 @@ from airflow.utils.dates import days_ago
 from datetime import datetime
 import requests
 import pandas as pd
+import os
 
 # Define default_args for the DAG
 default_args = {
