@@ -6,6 +6,9 @@ import requests
 import logging
 import pandas as pd
 from io import StringIO
+import snowflake.connector  # Snowflake Python connector
+from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
+from airflow.models import Variable
 
 # Snowflake connection ID
 SNOWFLAKE_CONN_ID = 'snow_sc'
@@ -49,7 +52,7 @@ def load_data_to_snowflake(data: str, settings: CsvSettings):
     # Clean column names (remove extra spaces and make them lowercase)
     df.columns = df.columns.str.strip().str.lower()
 
-    # Check if 'SSN' column exists in the DataFrame
+    # Check if 'ssn' column exists in the DataFrame
     if 'ssn' not in df.columns:
         logging.error("The 'ssn' column does not exist in the CSV data.")
         return
@@ -110,6 +113,7 @@ with dag:
     )
 
     read_file_task >> load_to_snowflake_task
+
 
 
 
