@@ -40,12 +40,19 @@ def read_file_from_url():
     data = response.text
     print(f"Read data from URL. Content: {data}")
     return data
+
+
+
 def load_data_to_snowflake(data: str, settings: CsvSettings):
     snowflake_hook = SnowflakeHook(snowflake_conn_id=SNOWFLAKE_CONN_ID)
 
     # Read CSV data into a DataFrame
     df = pd.read_csv(StringIO(data))
-
+    
+    # Print the DataFrame and its columns for debugging
+    print(df)
+    print(df.columns)
+    
     # Validate SSN column using Pydantic
     try:
         ssn_model = SSNModel(ssn=df['SSN'].astype(str))
@@ -66,15 +73,15 @@ def load_data_to_snowflake(data: str, settings: CsvSettings):
     
     # Read CSV data into a DataFrame
     # df = pd.read_csv(pd.compat.StringIO(data))
-    df = pd.read_csv(StringIO(data))
+    # df = pd.read_csv(StringIO(data))
     
     # Validate SSN column using Pydantic
     
-    try:
-        ssn_model = SSNModel(ssn=df['SSN'].astype(str))
-    except ValidationError as e:
-        logging.error(f"Invalid SSN values: {e}")
-        return
+    # try:
+    #     ssn_model = SSNModel(ssn=df['SSN'].astype(str))
+    # except ValidationError as e:
+    #     logging.error(f"Invalid SSN values: {e}")
+    #     return
 
     
     # Split data into valid and invalid based on Pydantic validation
