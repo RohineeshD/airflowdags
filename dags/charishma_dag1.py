@@ -43,6 +43,8 @@ def read_file_from_url():
 
 def load_data_to_snowflake(data: str, settings: CsvSettings):
     snowflake_hook = SnowflakeHook(snowflake_conn_id=SNOWFLAKE_CONN_ID)
+
+    print(df.columns)
     
     # Data validation using Pydantic
     try:
@@ -56,11 +58,13 @@ def load_data_to_snowflake(data: str, settings: CsvSettings):
     df = pd.read_csv(StringIO(data))
     
     # Validate SSN column using Pydantic
+    
     try:
         ssn_model = SSNModel(ssn=df['SSN'].astype(str))
     except ValidationError as e:
         logging.error(f"Invalid SSN values: {e}")
         return
+
     
     # Split data into valid and invalid based on Pydantic validation
     valid_data = df[ssn_model.index]
