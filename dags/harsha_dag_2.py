@@ -57,7 +57,8 @@ def insert_data_to_snowflake(table_name, snowflake_conn_id, csv_url):
                 if len(values) >= 13:
                     query = f"""
                         INSERT INTO {table_name} (Index, CustomerId, FirstName, LastName, Company, City, Country, Phone1, Phone2, Email, SubscriptionDate, Website)
-                        VALUES (?,?,?,?,?,?,?,?,?,?,?,?)
+                        # VALUES (?,?,?,?,?,?,?,?,?,?,?,?)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                     """
                     # Execute the query with parameter binding
                     # cursor.execute(query, values[1], values[2], values[3], values[4], values[5], values[6], values[8], values[9], values[10], values[11], values[12])
