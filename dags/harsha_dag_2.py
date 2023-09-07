@@ -27,7 +27,7 @@ dag = DAG(
     catchup=False
 )
 
-table_name ='traditional_insert'
+# table_name ='traditional_insert'
 
 snowflake_conn_id ='air_conn'
 
