@@ -110,7 +110,7 @@ def copy_csv_to_snowflake():
                 SKIP_HEADER = 1
                 FIELD_OPTIONALLY_ENCLOSED_BY = 'NONE'
                 FIELD_DELIMITER = ','
-                RECORD_DELIMITER = `'\n'`
+                RECORD_DELIMITER = '\n'
             )
             ON_ERROR = 'CONTINUE';
             '''
