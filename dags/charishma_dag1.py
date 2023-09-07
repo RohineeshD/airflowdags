@@ -8,7 +8,7 @@ import logging
 import pandas as pd
 from io import StringIO
 from airflow.models import Variable
-from airflow.hooks import SnowflakeHook
+
 
 # Snowflake connection ID
 SNOWFLAKE_CONN_ID = 'snow_sc'
