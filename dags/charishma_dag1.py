@@ -61,14 +61,17 @@ def load_data_to_snowflake(data: str, settings: CsvSettings):
     valid_ssn_data = []
     invalid_ssn_data = []
     # Check if 'ssn' column has exactly 4 digits
-if df['ssn'].str.match(r'^\d{4}$').all():
-    # All rows have valid SSN format
-    valid_data = df
-    invalid_data = pd.DataFrame()  # Empty DataFrame for invalid data
-else:
-    # Split data based on SSN format
-    valid_data = df[df['ssn'].str.match(r'^\d{4}$')]
-    invalid_data = df[~df['ssn'].str.match(r'^\d{4}$')]
+# Validate SSN column using Pydantic and split data accordingly
+for _, row in df.iterrows():
+    try:
+        ssn_model = SSNModel(ssn=str(row['ssn']))
+        valid_ssn_data.append(row)
+    except ValidationError as e:
+        logging.error(f"Invalid SSN value: {e}")
+        row['Error_message'] = str(e)
+        invalid_ssn_data.append(row)
+
+
 
 # Log the number of rows in the data
 logging.info(f"Number of rows in data: {len(df)}")
