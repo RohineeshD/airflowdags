@@ -34,14 +34,8 @@ def validate_csv_and_insert():
     # Snowflake connection using the connection ID
     snowflake_conn = BaseHook.get_connection(SNOWFLAKE_CONN_ID)
     
-    # Define the Snowflake SQLAlchemy engine using the retrieved connection
-    engine = create_engine(URL(
-        account=snowflake_conn.extra_dejson['account'],
-        warehouse=snowflake_conn.extra_dejson['warehouse'],
-        database=snowflake_conn.extra_dejson['database'],
-        schema=snowflake_conn.extra_dejson['schema'],
-        insecure_mode=snowflake_conn.extra_dejson['insecure_mode']
-    ))
+  # Construct the Snowflake SQLAlchemy engine URL
+    engine_url = f'snowflake://{snowflake_conn.login}:{snowflake_conn.password}@{snowflake_conn.host}/{snowflake_conn.schema}?warehouse={snowflake_conn.extra_dejson["warehouse"]}&database={snowflake_conn.extra_dejson["database"]}&role={snowflake_conn.extra_dejson["role"]}&account={snowflake_conn.extra_dejson["account"]}'
 
     
     # Define the Snowflake SQLAlchemy engine using the retrieved connection
