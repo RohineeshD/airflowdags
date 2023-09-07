@@ -1,10 +1,12 @@
 from airflow import DAG
 from airflow.operators.python import PythonOperator
 from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
-from datetime import datetime
 from pydantic import BaseModel, ValidationError
+from airflow.models import Variable
+from datetime import datetime
 import requests
 import logging
+
 
 # Snowflake connection ID
 SNOWFLAKE_CONN_ID = 'snow_sc'
