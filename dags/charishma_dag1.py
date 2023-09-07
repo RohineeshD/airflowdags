@@ -52,7 +52,8 @@ def load_data_to_snowflake(data: str, settings: CsvSettings):
         return
     
     # Read CSV data into a DataFrame
-    df = pd.read_csv(pd.compat.StringIO(data))
+    # df = pd.read_csv(pd.compat.StringIO(data))
+    df = pd.read_csv(StringIO(data))
     
     # Validate SSN column using Pydantic
     try:
