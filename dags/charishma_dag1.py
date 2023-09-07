@@ -60,45 +60,45 @@ def load_data_to_snowflake(data: str, settings: CsvSettings):
     # Create a list to store valid and invalid SSNs
     valid_ssn_data = []
     invalid_ssn_data = []
-    # Check if 'ssn' column has exactly 4 digits
-# Validate SSN column using Pydantic and split data accordingly
-for _, row in df.iterrows():
-    try:
-        ssn_model = SSNModel(ssn=str(row['ssn']))
-        valid_ssn_data.append(row)
-    except ValidationError as e:
-        logging.error(f"Invalid SSN value: {e}")
-        row['Error_message'] = str(e)
-        invalid_ssn_data.append(row)
 
+    # Validate SSN column using Pydantic and split data accordingly
+    for _, row in df.iterrows():
+        try:
+            ssn_model = SSNModel(ssn=str(row['ssn']))
+            valid_ssn_data.append(row)
+        except ValidationError as e:
+            logging.error(f"Invalid SSN value: {e}")
+            row['Error_message'] = str(e)
+            invalid_ssn_data.append(row)
 
+    # Convert valid and invalid SSN data back to DataFrames
+    valid_data = pd.DataFrame(valid_ssn_data)
+    invalid_data = pd.DataFrame(invalid_ssn_data)
 
-# Log the number of rows in the data
-logging.info(f"Number of rows in data: {len(df)}")
+    # Log the number of rows in the data
+    logging.info(f"Number of rows in data: {len(df)}")
 
-# Log the number of valid and invalid rows
-logging.info(f"Number of valid rows: {len(valid_data)}")
-logging.info(f"Number of invalid rows: {len(invalid_data)}")
+    # Log the number of valid and invalid rows
+    logging.info(f"Number of valid rows: {len(valid_data)}")
+    logging.info(f"Number of invalid rows: {len(invalid_data)}")
 
-# Load valid data to main table
-if not valid_data.empty:
-    logging.info(f"Loading valid data into Snowflake table: {settings.main_table}...")
-    try:
-        valid_data.to_sql(settings.main_table, con=snowflake_hook.get_sqlalchemy_engine(), if_exists='append', index=False)
-        logging.info(f"Data loaded successfully into {settings.main_table} with {len(valid_data)} rows.")
-    except Exception as e:
-        logging.error(f"Error loading data into {settings.main_table}: {str(e)}")
+    # Load valid data to main table
+    if not valid_data.empty:
+        logging.info(f"Loading valid data into Snowflake table: {settings.main_table}...")
+        try:
+            valid_data.to_sql(settings.main_table, con=snowflake_hook.get_sqlalchemy_engine(), if_exists='append', index=False)
+            logging.info(f"Data loaded successfully into {settings.main_table} with {len(valid_data)} rows.")
+        except Exception as e:
+            logging.error(f"Error loading data into {settings.main_table}: {str(e)}")
 
-# Load invalid data to error_log table
-if not invalid_data.empty:
-    logging.info(f"Loading invalid data into Snowflake table: {settings.error_table}...")
-    try:
-        invalid_data.to_sql(settings.error_table, con=snowflake_hook.get_sqlalchemy_engine(), if_exists='append', index=False)
-        logging.info(f"Data loaded successfully into {settings.error_table} with {len(invalid_data)} rows.")
-    except Exception as e:
-        logging.error(f"Error loading data into {settings.error_table}: {str(e)}")
-
-   
+    # Load invalid data to error_log table
+    if not invalid_data.empty:
+        logging.info(f"Loading invalid data into Snowflake table: {settings.error_table}...")
+        try:
+            invalid_data.to_sql(settings.error_table, con=snowflake_hook.get_sqlalchemy_engine(), if_exists='append', index=False)
+            logging.info(f"Data loaded successfully into {settings.error_table} with {len(invalid_data)} rows.")
+        except Exception as e:
+            logging.error(f"Error loading data into {settings.error_table}: {str(e)}")
 
 with dag:
     read_file_task = PythonOperator(
@@ -113,7 +113,6 @@ with dag:
     )
 
     read_file_task >> load_to_snowflake_task
-
 
 
 
