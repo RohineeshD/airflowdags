@@ -65,8 +65,8 @@ def insert_data_to_snowflake(table_name, snowflake_conn_id, csv_url):
                         
                     # """
                     query = """
-                        INSERT INTO my_table (col1, col2, col3, col4, col5, col6, col8, col9, col10, col11, col12)
-                        VALUES ('{0}', '{1}', '{2}', '{3}', '{4}', '{5}', '{6}', '{7}', '{8}', '{9}', '{10}')
+                        INSERT INTO {table_name} (Index, CustomerId, FirstName, LastName, Company, City, Country, Phone1, Phone2, Email, SubscriptionDate,Website)
+                        VALUES ('{0}', '{1}', '{2}', '{3}', '{4}', '{5}', '{6}', '{7}', '{8}', '{9}', '{10}',{11})
                         """.format(values[1], values[2], values[3], values[4], values[5], values[6], values[8], values[9], values[10], values[11], values[12])
                 
                     
@@ -88,6 +88,7 @@ def insert_data_to_snowflake(table_name, snowflake_conn_id, csv_url):
                     snowflake_hook.run(query, parameters=params)
                     # snowflake_hook.run(query, parameters=params)
                 else:
+                    print("Not enough elements in the 'values' list.")
                     print("Skipping row with insufficient columns.")
 
             # Commit the transaction
