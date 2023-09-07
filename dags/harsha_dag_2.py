@@ -29,7 +29,7 @@ dag = DAG(
 snowflake_conn_id = 'air_conn'
 
 def get_snowflake_hook(conn_id):
-#     return SnowflakeHook(snowflake_conn_id=conn_id)
+    return SnowflakeHook(snowflake_conn_id=conn_id)
 
 # def insert_data_to_snowflake(**kwargs):
 #     url = "https://raw.githubusercontent.com/fivethirtyeight/data/master/airline-safety/airline-safety.csv"
@@ -57,7 +57,7 @@ def get_snowflake_hook(conn_id):
 #         raise Exception(f"Failed to fetch data from URL. Status code: {response.status_code}")
 
 # Define Snowflake target table
- snowflake_table = 'bulk_table'
+snowflake_table = 'bulk_table'
 
 # Define the CSV URL
 csv_url = 'https://media.githubusercontent.com/media/datablist/sample-csv-files/main/files/customers/customers-100000.csv'
