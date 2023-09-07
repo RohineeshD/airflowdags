@@ -60,7 +60,8 @@ def insert_data_to_snowflake(table_name, snowflake_conn_id, csv_url):
                     values = [v.strip() for v in values]
                     query = f"""
                         INSERT INTO {table_name} (Index, CustomerId, FirstName, LastName, Company, City, Country, Phone1, Phone2, Email, SubscriptionDate, Website)
-                        VALUES (?,?,?,?,?,?,?,?,?,?,?,?)
+                        # VALUES (?,?,?,?,?,?,?,?,?,?,?,?)
+                        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
                         
                     """
                     # Execute the query with parameter binding
