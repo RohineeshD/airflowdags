@@ -1,5 +1,6 @@
 from airflow import DAG
 from airflow.operators.python import PythonOperator
+from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
 from pydantic import BaseModel, ValidationError, constr
 from datetime import datetime
 import requests
