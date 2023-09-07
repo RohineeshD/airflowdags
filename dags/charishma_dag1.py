@@ -6,8 +6,8 @@ from airflow.models import Variable
 from datetime import datetime
 import requests
 import logging
-from io import StringIO
 import pandas as pd
+from io import StringIO
 
 # Snowflake connection ID
 SNOWFLAKE_CONN_ID = 'snow_sc'
