@@ -8,7 +8,7 @@ from pydantic import BaseModel, ValidationError
 
 # Snowflake connection ID and DAG configuration
 SNOWFLAKE_CONN_ID = 'snow_sc'
-DAG_OWNER = 'charishma_csv_dag' 
+DAG_OWNER = 'airflow' 
 DAG_START_DATE = datetime(2023, 9, 7)
 DAG_SCHEDULE_INTERVAL = None  
 DAG_CATCHUP = False  
