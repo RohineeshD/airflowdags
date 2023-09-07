@@ -6,7 +6,7 @@ import requests
 import logging
 import pandas as pd
 from io import StringIO
-import snowflake.connector  # Snowflake Python connector
+import snowflake.connector  
 from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
 from airflow.models import Variable
 
@@ -37,7 +37,7 @@ dag_args = {
 dag = DAG(**dag_args)
 
 def read_file_from_url_and_display():
-    url = "https://github.com/jcharishma/my.repo/blob/master/sample_csv.csv"  # Replace with your CSV URL
+    url = "https://github.com/jcharishma/my.repo/blob/master/sample_csv.csv"  
     response = requests.get(url)
     data = response.text
     print(f"Read data from URL. Content: {data}")
@@ -49,7 +49,7 @@ def load_data_to_snowflake(data: str, settings: CsvSettings):
     # Read CSV data into a DataFrame
     df = pd.read_csv(StringIO(data))
 
-    # Clean column names (remove extra spaces and make them lowercase)
+    # Clean column names
     df.columns = df.columns.str.strip().str.lower()
 
     # Check if 'ssn' column exists in the DataFrame
