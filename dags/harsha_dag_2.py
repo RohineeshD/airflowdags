@@ -73,6 +73,7 @@ def insert_data_to_snowflake(table_name, snowflake_conn_id, csv_url):
                     # Execute the query with parameter binding
                     # snowflake_hook.run(query, values[1], values[2], values[3], values[4], values[5], values[6], values[8], values[9], values[10], values[11], values[12])
                     # cursor.execute(query, *values[1:13])
+                    params = tuple(values[1:13])
                     # Execute the query with parameter binding
                     # snowflake_hook.run(query, tuple(values[1:]))
                     # snowflake_hook.run(query, parameters=(
@@ -85,7 +86,7 @@ def insert_data_to_snowflake(table_name, snowflake_conn_id, csv_url):
                     #             values[0], values[1], values[2], values[3], values[4], values[5],
                     #             values[6], values[7], values[8], values[9], values[10], values[11]
                     # )
-                    # snowflake_hook.run(query, parameters=params)
+                    snowflake_hook.run(query, parameters=params)
                     # snowflake_hook.run(query, parameters=params)
                 else:
                     print("Not enough elements in the 'values' list.")
