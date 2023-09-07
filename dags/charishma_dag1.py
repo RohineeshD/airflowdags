@@ -53,7 +53,7 @@ def load_data_to_snowflake(data: str, settings: CsvSettings):
     df.columns = df.columns.str.strip().str.lower()
 
     # Check if 'ssn' column exists in the DataFrame
-    if 'ssn' not in df.columns:
+    if 'SSN' not in df.columns:
         logging.error("The 'ssn' column does not exist in the CSV data.")
         return
 
