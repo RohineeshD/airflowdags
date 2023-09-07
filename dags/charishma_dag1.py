@@ -40,25 +40,47 @@ def read_file_from_url():
     data = response.text
     print(f"Read data from URL. Content: {data}")
     return data
-
-
-
 def load_data_to_snowflake(data: str, settings: CsvSettings):
     snowflake_hook = SnowflakeHook(snowflake_conn_id=SNOWFLAKE_CONN_ID)
 
     # Read CSV data into a DataFrame
     df = pd.read_csv(StringIO(data))
-    
-    # Print the DataFrame and its columns for debugging
-    print(df)
-    print(df.columns)
-    
-    # Validate SSN column using Pydantic
+
+    # Define a Pydantic model for the entire DataFrame
+    class DataFrameModel(BaseModel):
+        class Config:
+            arbitrary_types_allowed = True
+
     try:
-        ssn_model = SSNModel(ssn=df['SSN'].astype(str))
+        # Attempt to validate the entire DataFrame using Pydantic
+        df_model = DataFrameModel(**df.to_dict(orient='records'))
     except ValidationError as e:
-        logging.error(f"Invalid SSN values: {e}")
+        logging.error(f"Invalid data: {e}")
         return
+
+    # Split data into valid and invalid based on Pydantic validation
+    valid_data = df[df_model.dict(exclude_unset=True).keys()]
+    invalid_data = df.drop(valid_data.columns, axis=1)
+
+
+
+
+# def load_data_to_snowflake(data: str, settings: CsvSettings):
+#     snowflake_hook = SnowflakeHook(snowflake_conn_id=SNOWFLAKE_CONN_ID)
+
+#     # Read CSV data into a DataFrame
+#     df = pd.read_csv(StringIO(data))
+    
+#     # Print the DataFrame and its columns for debugging
+#     print(df)
+#     print(df.columns)
+    
+#     # Validate SSN column using Pydantic
+#     try:
+#         ssn_model = SSNModel(ssn=df['SSN'].astype(str))
+#     except ValidationError as e:
+#         logging.error(f"Invalid SSN values: {e}")
+#         return
 # def load_data_to_snowflake(data: str, settings: CsvSettings):
 #     snowflake_hook = SnowflakeHook(snowflake_conn_id=SNOWFLAKE_CONN_ID)
 
