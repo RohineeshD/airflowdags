@@ -96,10 +96,9 @@ dag = DAG(
     catchup=False,
 )
 
-# Task to read file from provided URL and display data
 read_file_task = PythonOperator(
     task_id='read_file_and_display_data',
-    python_callable=read_file_and_display_data,
+    python_callable=read_file_and_display_data,  # Make sure this function is defined above
     dag=dag,
 )
 
