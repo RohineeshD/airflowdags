@@ -34,6 +34,8 @@ def read_file_and_display_data():
     else:
         raise Exception(f"Failed to fetch CSV: Status Code {response.status_code}")
 
+# ...
+
 # Task to validate and load data using Pydantic
 def validate_and_load_data():
     snowflake_conn = create_snowflake_connection()
@@ -46,24 +48,11 @@ def validate_and_load_data():
     if response.status_code == 200:
         csv_content = response.text
         csv_lines = csv_content.split('\n')
-        csvreader = csv.DictReader(csv_lines, delimiter='\t')  # Use '\t' as the delimiter
+        csvreader = csv.DictReader(csv_lines, delimiter=',')  # Use ',' as the delimiter
         for row in csvreader:
             try:
                 record = CSVRecord(**row)
-                # Validate SSN length
-                if len(record.SSN) > 4:
-                    # Insert into ERROR_LOG table
-                    insert_error_task = SnowflakeOperator(
-                        task_id='insert_into_error_log',
-                        sql=f"""
-                            INSERT INTO ERROR_LOG (NAME, EMAIL, SSN, ERROR_MESSAGE)
-                            VALUES ('{record.NAME}', '{record.EMAIL}', '{record.SSN}', 'Invalid SSN length should not be more than 4 digits')
-                        """,
-                        snowflake_conn_id="snow_sc",  # Connection ID defined in Airflow
-                        dag=dag,
-                    )
-                    insert_error_task.execute(snowflake_conn)
-                else:
+                if len(record.SSN) == 4:
                     # Insert into SAMPLE_CSV table
                     insert_task = SnowflakeOperator(
                         task_id='insert_into_sample_csv',
@@ -75,6 +64,18 @@ def validate_and_load_data():
                         dag=dag,
                     )
                     insert_task.execute(snowflake_conn)
+                else:
+                    # Insert into ERROR_LOG table
+                    insert_error_task = SnowflakeOperator(
+                        task_id='insert_into_error_log',
+                        sql=f"""
+                            INSERT INTO ERROR_LOG (NAME, EMAIL, SSN, ERROR_MESSAGE)
+                            VALUES ('{record.NAME}', '{record.EMAIL}', '{record.SSN}', 'Invalid SSN length should be 4 digits')
+                        """,
+                        snowflake_conn_id="snow_sc",  # Connection ID defined in Airflow
+                        dag=dag,
+                    )
+                    insert_error_task.execute(snowflake_conn)
             except ValidationError as e:
                 for error in e.errors():
                     field_name = error.get('loc')[-1]
