@@ -1,155 +1,245 @@
 from airflow import DAG
-from airflow.operators.python_operator import PythonOperator
-from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
-from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
-from datetime import datetime
-import requests
+from airflow.providers.snowflake.transfers.snowflake_to_csv import SnowflakeToCSVOperator
+from airflow.providers.snowflake.operators.snowflake_operator import SnowflakeOperator
+from airflow.utils.dates import days_ago
 from pydantic import BaseModel, ValidationError, constr
+import pandas as pd
 
-# Create a function to establish the Snowflake connection using SnowflakeHook
-def create_snowflake_connection():
-    hook = SnowflakeHook(snowflake_conn_id="snow_sc")
-    conn = hook.get_conn()
-    return conn
-
-# Define the Pydantic model for CSV data
-class CSVRecord(BaseModel):
-    NAME: constr(strip_whitespace=True, min_length=1)
-    EMAIL: constr(strip_whitespace=True, min_length=1, regex=r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$')
-    SSN: constr(
-        strip_whitespace=True,
-        regex=r'^\d{4}$',  # Check for exactly 4 digits
-    )
-
-# Function to bulk insert valid records into SAMPLE_CSV
-def insert_valid_records(records, snowflake_conn):
-    if records:
-        cursor = snowflake_conn.cursor()
-        try:
-            cursor.executemany(
-                f"""
-                INSERT INTO SAMPLE_CSV (NAME, EMAIL, SSN)
-                VALUES (?, ?, ?)
-                """,
-                records,
-            )
-            snowflake_conn.commit()
-        finally:
-            cursor.close()
-
-# Function to bulk insert error records into ERROR_LOG
-def insert_error_records(records, snowflake_conn):
-    if records:
-        cursor = snowflake_conn.cursor()
-        try:
-            cursor.executemany(
-                f"""
-                INSERT INTO ERROR_LOG (NAME, EMAIL, SSN, ERROR_MESSAGE)
-                VALUES (?, ?, ?, ?)
-                """,
-                records,
-            )
-            snowflake_conn.commit()
-        finally:
-            cursor.close()
-
-# Task to read file from the provided URL and display data
-def read_file_and_display_data():
-    # Input CSV file URL
-    csv_url = 'https://raw.githubusercontent.com/jcharishma/my.repo/master/sample_csv.csv'
-
-    # Fetch CSV data from the URL
-    response = requests.get(csv_url)
-    if response.status_code == 200:
-        csv_content = response.text
-        print("CSV Data:")
-        print(csv_content)
-        return csv_content
-    else:
-        raise Exception(f"Failed to fetch CSV: Status Code {response.status_code}")
-
-# Task to validate and load data using Pydantic
-def validate_and_load_data():
-    snowflake_conn = create_snowflake_connection()
-
-    # Input CSV file URL
-    csv_url = 'https://raw.githubusercontent.com/jcharishma/my.repo/master/sample_csv.csv'
-
-    # Fetch CSV data from the URL
-    response = requests.get(csv_url)
-    if response.status_code == 200:
-        csv_content = response.text
-        csv_lines = csv_content.split('\n')
-        header = None
-        valid_records = []
-        error_records = []
-
-        for line in csv_lines:
-            line = line.strip()
-            if not line:
-                continue
-            if not header:
-                header = line.split('\t')  # Split by tab
-                continue
-            row = line.split('\t')
-            if len(row) != len(header):
-                # Invalid format, add to error_records
-                error_records.append((row[0], row[1], row[2], 'Invalid CSV format'))
-                continue
-
-            try:
-                record = CSVRecord(NAME=row[0], EMAIL=row[1], SSN=row[2])
-                record_dict = record.dict()
-                valid_records.append((record_dict['NAME'], record_dict['EMAIL'], record_dict['SSN']))
-            except ValidationError as e:
-                for error in e.errors():
-                    field_name = error['loc'][-1]
-                    error_msg = error['msg']
-                    # Add to error_records
-                    error_records.append((row[0], row[1], row[2], error_msg))
-            except Exception as e:
-                # Handle other exceptions as needed
-                print(f"Error: {str(e)}")
-
-        # Bulk insert valid and error records
-        insert_valid_records(valid_records, snowflake_conn)
-        insert_error_records(error_records, snowflake_conn)
-
-    # Close Snowflake connection
-    snowflake_conn.close()
-
-# Airflow default arguments
+# Define the default_args for the DAG
 default_args = {
-    'owner': 'airflow',
-    'start_date': datetime(2023, 9, 7),
+    'owner': 'your_name',
+    'start_date': days_ago(1),
     'retries': 1,
-    'catchup': True,
 }
 
-# Create the DAG
-dag = DAG(
-    'csv_dag',
+# Define the Snowflake connection ID
+snowflake_conn_id = 'snow_sc'
+
+# Define the Pydantic model for validation
+class CSVRecord(BaseModel):
+    SSN: constr(regex=r"^\d{4}$")  # SSN should have exactly 4 digits
+
+# Define the DAG
+with DAG(
+    'csv_to_snowflake',
     default_args=default_args,
-    schedule_interval=None,
+    schedule_interval=None,  # You can adjust the schedule as needed
     catchup=False,
-)
+) as dag:
 
-# Task to read file from the provided URL and display data
-read_file_task = PythonOperator(
-    task_id='read_file_and_display_data',
-    python_callable=read_file_and_display_data,
-    dag=dag,
-)
+    # Task 1: Read and display the CSV file from the URL
+    def read_and_display_csv():
+        csv_url = "https://github.com/jcharishma/my.repo/raw/master/sample_csv.csv"
+        df = pd.read_csv(csv_url)
+        print(df)
+    
+    read_csv_task = PythonOperator(
+        task_id='read_csv',
+        python_callable=read_and_display_csv,
+    )
 
-# Task to validate and load data using Pydantic
-validate_task = PythonOperator(
-    task_id='validate_and_load_data',
-    python_callable=validate_and_load_data,
-    dag=dag,
-)
+    # Task 2: Load data into Snowflake tables and perform validation
+    def load_data_into_snowflake():
+        try:
+            # Initialize Snowflake hook
+            snowflake_hook = SnowflakeHook(snowflake_conn_id=snowflake_conn_id)
+            connection = snowflake_hook.get_conn()
+            cursor = connection.cursor()
 
-# Set task dependencies
-read_file_task >> validate_task
+            # Define Snowflake table names
+            sample_csv_table = "SAMPLE_CSV"
+            error_log_table = "ERROR_LOG"
+
+            # Read the CSV file into a DataFrame
+            csv_url = "https://github.com/jcharishma/my.repo/raw/master/sample_csv.csv"
+            df = pd.read_csv(csv_url)
+
+            for index, row in df.iterrows():
+                try:
+                    # Validate each record using Pydantic
+                    record = CSVRecord(**row.to_dict())
+
+                    # If validation passes, insert the record into SAMPLE_CSV table
+                    cursor.execute(f"INSERT INTO {sample_csv_table} VALUES (?)", (record.SSN,))
+
+                except ValidationError as e:
+                    # If validation fails, insert the record into ERROR_LOG table with error message
+                    cursor.execute(f"INSERT INTO {error_log_table} VALUES (?, ?)", (row.to_dict(), str(e)))
+
+            # Commit the changes to the Snowflake database
+            cursor.close()
+            connection.commit()
+
+        except Exception as e:
+            print(f"Error: {e}")
+        finally:
+            connection.close()
+
+    load_data_task = PythonOperator(
+        task_id='load_data_into_snowflake',
+        python_callable=load_data_into_snowflake,
+    )
+
+    # Set task dependencies
+    read_csv_task >> load_data_task
+
+if __name__ == "__main__":
+    dag.cli()
+
+
+
+# from airflow import DAG
+# from airflow.operators.python_operator import PythonOperator
+# from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
+# from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
+# from datetime import datetime
+# import requests
+# from pydantic import BaseModel, ValidationError, constr
+
+# # Create a function to establish the Snowflake connection using SnowflakeHook
+# def create_snowflake_connection():
+#     hook = SnowflakeHook(snowflake_conn_id="snow_sc")
+#     conn = hook.get_conn()
+#     return conn
+
+# # Define the Pydantic model for CSV data
+# class CSVRecord(BaseModel):
+#     NAME: constr(strip_whitespace=True, min_length=1)
+#     EMAIL: constr(strip_whitespace=True, min_length=1, regex=r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$')
+#     SSN: constr(
+#         strip_whitespace=True,
+#         regex=r'^\d{4}$',  # Check for exactly 4 digits
+#     )
+
+# # Function to bulk insert valid records into SAMPLE_CSV
+# def insert_valid_records(records, snowflake_conn):
+#     if records:
+#         cursor = snowflake_conn.cursor()
+#         try:
+#             cursor.executemany(
+#                 f"""
+#                 INSERT INTO SAMPLE_CSV (NAME, EMAIL, SSN)
+#                 VALUES (?, ?, ?)
+#                 """,
+#                 records,
+#             )
+#             snowflake_conn.commit()
+#         finally:
+#             cursor.close()
+
+# # Function to bulk insert error records into ERROR_LOG
+# def insert_error_records(records, snowflake_conn):
+#     if records:
+#         cursor = snowflake_conn.cursor()
+#         try:
+#             cursor.executemany(
+#                 f"""
+#                 INSERT INTO ERROR_LOG (NAME, EMAIL, SSN, ERROR_MESSAGE)
+#                 VALUES (?, ?, ?, ?)
+#                 """,
+#                 records,
+#             )
+#             snowflake_conn.commit()
+#         finally:
+#             cursor.close()
+
+# # Task to read file from the provided URL and display data
+# def read_file_and_display_data():
+#     # Input CSV file URL
+#     csv_url = 'https://raw.githubusercontent.com/jcharishma/my.repo/master/sample_csv.csv'
+
+#     # Fetch CSV data from the URL
+#     response = requests.get(csv_url)
+#     if response.status_code == 200:
+#         csv_content = response.text
+#         print("CSV Data:")
+#         print(csv_content)
+#         return csv_content
+#     else:
+#         raise Exception(f"Failed to fetch CSV: Status Code {response.status_code}")
+
+# # Task to validate and load data using Pydantic
+# def validate_and_load_data():
+#     snowflake_conn = create_snowflake_connection()
+
+#     # Input CSV file URL
+#     csv_url = 'https://raw.githubusercontent.com/jcharishma/my.repo/master/sample_csv.csv'
+
+#     # Fetch CSV data from the URL
+#     response = requests.get(csv_url)
+#     if response.status_code == 200:
+#         csv_content = response.text
+#         csv_lines = csv_content.split('\n')
+#         header = None
+#         valid_records = []
+#         error_records = []
+
+#         for line in csv_lines:
+#             line = line.strip()
+#             if not line:
+#                 continue
+#             if not header:
+#                 header = line.split('\t')  # Split by tab
+#                 continue
+#             row = line.split('\t')
+#             if len(row) != len(header):
+#                 # Invalid format, add to error_records
+#                 error_records.append((row[0], row[1], row[2], 'Invalid CSV format'))
+#                 continue
+
+#             try:
+#                 record = CSVRecord(NAME=row[0], EMAIL=row[1], SSN=row[2])
+#                 record_dict = record.dict()
+#                 valid_records.append((record_dict['NAME'], record_dict['EMAIL'], record_dict['SSN']))
+#             except ValidationError as e:
+#                 for error in e.errors():
+#                     field_name = error['loc'][-1]
+#                     error_msg = error['msg']
+#                     # Add to error_records
+#                     error_records.append((row[0], row[1], row[2], error_msg))
+#             except Exception as e:
+#                 # Handle other exceptions as needed
+#                 print(f"Error: {str(e)}")
+
+#         # Bulk insert valid and error records
+#         insert_valid_records(valid_records, snowflake_conn)
+#         insert_error_records(error_records, snowflake_conn)
+
+#     # Close Snowflake connection
+#     snowflake_conn.close()
+
+# # Airflow default arguments
+# default_args = {
+#     'owner': 'airflow',
+#     'start_date': datetime(2023, 9, 7),
+#     'retries': 1,
+#     'catchup': True,
+# }
+
+# # Create the DAG
+# dag = DAG(
+#     'csv_dag',
+#     default_args=default_args,
+#     schedule_interval=None,
+#     catchup=False,
+# )
+
+# # Task to read file from the provided URL and display data
+# read_file_task = PythonOperator(
+#     task_id='read_file_and_display_data',
+#     python_callable=read_file_and_display_data,
+#     dag=dag,
+# )
+
+# # Task to validate and load data using Pydantic
+# validate_task = PythonOperator(
+#     task_id='validate_and_load_data',
+#     python_callable=validate_and_load_data,
+#     dag=dag,
+# )
+
+# # Set task dependencies
+# read_file_task >> validate_task
 
 
 
