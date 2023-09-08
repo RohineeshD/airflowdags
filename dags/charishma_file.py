@@ -19,7 +19,7 @@ class CSVRecord(BaseModel):
     EMAIL: str
     SSN: str
 
-# Task to read file from provided URL and display data
+# Task to read file from the provided URL and display data
 def read_file_and_display_data():
     # Input CSV file URL
     csv_url = 'https://raw.githubusercontent.com/jcharishma/my.repo/master/sample_csv.csv'
@@ -46,7 +46,7 @@ def validate_and_load_data():
     if response.status_code == 200:
         csv_content = response.text
         csv_lines = csv_content.split('\n')
-        csvreader = csv.DictReader(csv_lines)
+        csvreader = csv.DictReader(csv_lines, delimiter='\t')  # Use '\t' as the delimiter
         for row in csvreader:
             try:
                 record = CSVRecord(**row)
@@ -85,7 +85,6 @@ def validate_and_load_data():
 
     snowflake_conn.close()
 
-
 # Airflow default arguments
 default_args = {
     'owner': 'airflow',
@@ -102,7 +101,7 @@ dag = DAG(
     catchup=False,
 )
 
-# Task to read file from provided URL and display data
+# Task to read file from the provided URL and display data
 read_file_task = PythonOperator(
     task_id='read_file_and_display_data',
     python_callable=read_file_and_display_data,
@@ -118,6 +117,7 @@ validate_task = PythonOperator(
 
 # Set task dependencies
 read_file_task >> validate_task
+
 
 
 
