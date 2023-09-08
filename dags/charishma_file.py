@@ -50,7 +50,7 @@ def validate_and_load_data():
         for row in csvreader:
             try:
                 record = CSVRecord(**row)
-                # Your validation and insertion logic here...
+                # Validate SSN length
                 if len(record.SSN) > 4:
                     # Insert into ERROR_LOG table
                     insert_error_task = SnowflakeOperator(
@@ -84,6 +84,7 @@ def validate_and_load_data():
                 print(f"Error: {str(e)}")
 
     snowflake_conn.close()
+
 
 # Airflow default arguments
 default_args = {
