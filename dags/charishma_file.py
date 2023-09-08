@@ -5,6 +5,7 @@ from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
 from datetime import datetime
 import requests
 import csv
+import re
 from pydantic import BaseModel, ValidationError
 
 # Create a function to establish the Snowflake connection using SnowflakeHook
@@ -34,7 +35,6 @@ def read_file_and_display_data():
     else:
         raise Exception(f"Failed to fetch CSV: Status Code {response.status_code}")
 
-# import csv
 
 # ...
 
@@ -55,10 +55,10 @@ def validate_and_load_data():
             line = line.strip()
             if not line:
                 continue
-            row = line.split(',')
             if not header:
-                header = row
+                header = re.split(r'\s+', line)  # Split by varying spaces
                 continue
+            row = re.split(r'\s+', line)
             if len(row) != len(header):
                 # Invalid format, insert into ERROR_LOG table
                 insert_error_task = SnowflakeOperator(
@@ -119,6 +119,7 @@ def validate_and_load_data():
                 print(f"Error: {str(e)}")
 
     snowflake_conn.close()
+
 
 # # Task to validate and load data using Pydantic
 # def validate_and_load_data():
