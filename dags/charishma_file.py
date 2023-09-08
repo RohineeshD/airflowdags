@@ -5,6 +5,7 @@ from pydantic import BaseModel, ValidationError, validator
 from datetime import datetime
 import requests
 import snowflake.connector
+import pandas as pd
 
 # Snowflake connection ID
 SNOWFLAKE_CONN_ID = 'snow_sc'
