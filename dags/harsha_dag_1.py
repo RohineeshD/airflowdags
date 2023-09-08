@@ -120,7 +120,7 @@ copy_csv_task = PythonOperator(
 )
 
 # task dependencies
- truncate_table_task >> copy_csv_task
+truncate_table_task >> copy_csv_task
 
 
 
