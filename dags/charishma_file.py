@@ -1,6 +1,5 @@
 from airflow import DAG
 from airflow.operators.python import PythonOperator
-from airflow.providers.snowflake.transfers.snowflake_to_snowflake import SnowflakeToSnowflakeOperator  
 from pydantic import BaseModel, ValidationError, validator
 from datetime import datetime
 import requests
@@ -52,6 +51,13 @@ def validate_and_load_data():
         csv_lines = csv_content.split('\n')
         header = None
 
+        # Establish Snowflake connection 
+       conn = snowflake.connector.connect(
+    connection_name=SNOWFLAKE_CONN_ID  
+)
+
+        cursor = conn.cursor()
+        
         for line in csv_lines:
             line = line.strip()
             if not line:
@@ -64,58 +70,38 @@ def validate_and_load_data():
             if len(row) != len(header):
                 # Handle invalid CSV format by inserting a record into the ERROR_LOG table
                 error_message = 'Invalid CSV format'
-                insert_error_task = SnowflakeToSnowflakeOperator(
-                    task_id='insert_into_error_log',
-                    sql=f"INSERT INTO ERROR_LOG (NAME, EMAIL, SSN, ERROR_MESSAGE) VALUES (%s, %s, %s, %s)",
-                    parameters=(row[0], row[1], row[2], error_message),
-                    snowflake_source_conn_id=SNOWFLAKE_CONN_ID,
-                    snowflake_destination_conn_id=SNOWFLAKE_CONN_ID,
-                    dag=dag,
-                )
-                insert_error_task.execute()
+                insert_error_sql = f"INSERT INTO ERROR_LOG (NAME, EMAIL, SSN, ERROR_MESSAGE) VALUES ('{row[0]}', '{row[1]}', '{row[2]}', '{error_message}')"
+                cursor.execute(insert_error_sql)
+                conn.commit()
                 continue
 
             try:
                 record = CSVRecord(NAME=row[0], EMAIL=row[1], SSN=row[2])
                 if len(record.SSN) == 4:
                     # Insert valid records into the SAMPLE_CSV table
-                    insert_task = SnowflakeToSnowflakeOperator(
-                        task_id='insert_into_sample_csv',
-                        sql=f"INSERT INTO SAMPLE_CSV (NAME, EMAIL, SSN) VALUES (%s, %s, %s)",
-                        parameters=(record.NAME, record.EMAIL, record.SSN),
-                        snowflake_source_conn_id=SNOWFLAKE_CONN_ID,
-                        snowflake_destination_conn_id=SNOWFLAKE_CONN_ID,
-                        dag=dag,
-                    )
-                    insert_task.execute()
+                    insert_sql = f"INSERT INTO SAMPLE_CSV (NAME, EMAIL, SSN) VALUES ('{record.NAME}', '{record.EMAIL}', '{record.SSN}')"
+                    cursor.execute(insert_sql)
+                    conn.commit()
                 else:
-                    #  invalid SSN lengt and insert to  ERROR_LOG table
+                    # Handle invalid SSN length by inserting a record into the ERROR_LOG table
                     error_message = 'Invalid SSN length should be 4 digits'
-                    insert_error_task = SnowflakeToSnowflakeOperator(
-                        task_id='insert_into_error_log',
-                        sql=f"INSERT INTO ERROR_LOG (NAME, EMAIL, SSN, ERROR_MESSAGE) VALUES (%s, %s, %s, %s)",
-                        parameters=(row[0], row[1], row[2], error_message),
-                        snowflake_source_conn_id=SNOWFLAKE_CONN_ID,
-                        snowflake_destination_conn_id=SNOWFLAKE_CONN_ID,
-                        dag=dag,
-                    )
-                    insert_error_task.execute()
+                    insert_error_sql = f"INSERT INTO ERROR_LOG (NAME, EMAIL, SSN, ERROR_MESSAGE) VALUES ('{row[0]}', '{row[1]}', '{row[2]}', '{error_message}')"
+                    cursor.execute(insert_error_sql)
+                    conn.commit()
             except ValidationError as e:
                 for error in e.errors():
                     field_name = error.get('loc')[-1]
                     error_msg = error.get('msg')
                     # Handle validation errors by inserting a record into the ERROR_LOG table
-                    insert_error_task = SnowflakeToSnowflakeOperator(
-                        task_id='insert_into_error_log',
-                        sql=f"INSERT INTO ERROR_LOG (NAME, EMAIL, SSN, ERROR_MESSAGE) VALUES (%s, %s, %s, %s)",
-                        parameters=(row[0], row[1], row[2], error_msg),
-                        snowflake_source_conn_id=SNOWFLAKE_CONN_ID,
-                        snowflake_destination_conn_id=SNOWFLAKE_CONN_ID,
-                        dag=dag,
-                    )
-                    insert_error_task.execute()
+                    insert_error_sql = f"INSERT INTO ERROR_LOG (NAME, EMAIL, SSN, ERROR_MESSAGE) VALUES ('{row[0]}', '{row[1]}', '{row[2]}', '{error_msg}')"
+                    cursor.execute(insert_error_sql)
+                    conn.commit()
             except Exception as e:
                 print(f"Error: {str(e)}")
+
+        # Close Snowflake connection
+        cursor.close()
+        conn.close()
 
 validate_load_task = PythonOperator(
     task_id='validate_and_load_data',
@@ -125,6 +111,7 @@ validate_load_task = PythonOperator(
 
 # Set task dependencies
 read_file_task >> validate_load_task
+
 
 
 
