@@ -19,7 +19,7 @@ snowflake_credentials = {
 
 # Create a function to establish the Snowflake connection using SnowflakeHook
 def create_snowflake_connection():
-    hook = SnowflakeHook(snowflake_conn_id="snowflake_conn_id")  # Define a connection ID in Airflow
+    hook = SnowflakeHook(snowflake_conn_id="snow_sc")  
     conn = hook.get_conn()
     return conn
 
