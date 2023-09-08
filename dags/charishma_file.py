@@ -57,7 +57,7 @@ def validate_and_load_data():
                     insert_error_task = SnowflakeOperator(
                         task_id='insert_into_error_log',
                         sql=f"""
-                            INSERT INTO ERROR_TABLE (NAME, EMAIL, SSN, ERROR_MESSAGE)
+                            INSERT INTO ERROR_LOG (NAME, EMAIL, SSN, ERROR_MESSAGE)
                             VALUES ('{record.NAME}', '{record.EMAIL}', '{record.SSN}', 'Invalid SSN length should not be more than 4 digits')
                         """,
                         snowflake_conn_id="snow_sc",  # Connection ID defined in Airflow
@@ -69,7 +69,7 @@ def validate_and_load_data():
                     insert_task = SnowflakeOperator(
                         task_id='insert_into_sample_csv',
                         sql=f"""
-                            INSERT INTO CSV_FILE (NAME, EMAIL, SSN)
+                            INSERT INTO SAMPLE_CSV (NAME, EMAIL, SSN)
                             VALUES ('{record.NAME}', '{record.EMAIL}', '{record.SSN}')
                         """,
                         snowflake_conn_id="snow_sc",  # Connection ID defined in Airflow
