@@ -1,9 +1,10 @@
 from airflow import DAG
 from airflow.operators.python import PythonOperator
-from airflow.providers.snowflake.transfers.snowflake_to_snowflake import SnowflakeToSnowflakeOperator
+from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
 from pydantic import BaseModel, ValidationError, validator
 from datetime import datetime
 import requests
+import snowflake.connector
 
 # Snowflake connection ID
 SNOWFLAKE_CONN_ID = 'snow_sc'
