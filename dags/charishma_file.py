@@ -1,9 +1,10 @@
 from airflow import DAG
-from airflow.providers.snowflake.transfers.snowflake_to_csv import SnowflakeToCSVOperator
-from airflow.providers.snowflake.operators.snowflake_operator import SnowflakeOperator
+from airflow.operators.python_operator import PythonOperator
 from airflow.utils.dates import days_ago
 from pydantic import BaseModel, ValidationError, constr
 import pandas as pd
+from airflow.hooks.base_hook import BaseHook
+import snowflake.connector
 
 # Define the default_args for the DAG
 default_args = {
@@ -17,7 +18,7 @@ snowflake_conn_id = 'snow_sc'
 
 # Define the Pydantic model for validation
 class CSVRecord(BaseModel):
-    SSN: constr(regex=r"^\d{4}$") 
+    SSN: constr(regex=r"^\d{4}$")  # SSN should have exactly 4 digits
 
 # Define the DAG
 with DAG(
@@ -41,10 +42,22 @@ with DAG(
     # Task 2: Load data into Snowflake tables and perform validation
     def load_data_into_snowflake():
         try:
-            # Initialize Snowflake hook
-            snowflake_hook = SnowflakeHook(snowflake_conn_id=snowflake_conn_id)
-            connection = snowflake_hook.get_conn()
-            cursor = connection.cursor()
+            # Get Snowflake connection details using the connection ID
+            snowflake_hook = BaseHook.get_hook(conn_id=snowflake_conn_id)
+            snowflake_config = snowflake_hook.get_connection()
+            
+            # Initialize the Snowflake connection
+            conn = snowflake.connector.connect(
+                user=snowflake_config.login,
+                password=snowflake_config.password,
+                account=snowflake_config.host,
+                warehouse=snowflake_config.extra_dejson.get('warehouse'),
+                database=snowflake_config.schema,
+                schema=snowflake_config.extra_dejson.get('schema')
+            )
+
+            # Create a cursor to execute SQL statements
+            cursor = conn.cursor()
 
             # Define Snowflake table names
             sample_csv_table = "SAMPLE_CSV"
@@ -56,8 +69,8 @@ with DAG(
 
             for index, row in df.iterrows():
                 try:
-                    # Validate each record using Pydantic
-                    record = CSVRecord(**row.to_dict())
+                    # Validate SSN using Pydantic
+                    record = CSVRecord(SSN=row['SSN'])
 
                     # If validation passes, insert the record into SAMPLE_CSV table
                     cursor.execute(f"INSERT INTO {sample_csv_table} VALUES (?)", (record.SSN,))
@@ -67,13 +80,14 @@ with DAG(
                     cursor.execute(f"INSERT INTO {error_log_table} VALUES (?, ?)", (row.to_dict(), str(e)))
 
             # Commit the changes to the Snowflake database
-            cursor.close()
-            connection.commit()
+            conn.commit()
 
         except Exception as e:
             print(f"Error: {e}")
         finally:
-            connection.close()
+            # Close the cursor and Snowflake connection
+            cursor.close()
+            conn.close()
 
     load_data_task = PythonOperator(
         task_id='load_data_into_snowflake',
@@ -85,6 +99,7 @@ with DAG(
 
 if __name__ == "__main__":
     dag.cli()
+
 
 
 
