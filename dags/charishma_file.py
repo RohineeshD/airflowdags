@@ -17,7 +17,7 @@ snowflake_conn_id = 'snow_sc'
 
 # Define the Pydantic model for validation
 class CSVRecord(BaseModel):
-    SSN: constr(regex=r"^\d{4}$")  # SSN should have exactly 4 digits
+    SSN: constr(regex=r"^\d{4}$") 
 
 # Define the DAG
 with DAG(
