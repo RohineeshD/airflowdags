@@ -7,7 +7,7 @@ import csv
 import requests
 
 # Snowflake connection parameters
-SNOWFLAKE_CONN_ID = 'sf_sc'
+SNOWFLAKE_CONN_ID = 'snow_sc'
 
 default_args = {
     'owner': 'airflow',
