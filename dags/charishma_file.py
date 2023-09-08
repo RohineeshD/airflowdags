@@ -4,12 +4,13 @@ from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
 from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
 from datetime import datetime
 import requests
-import csv
+import re
 from pydantic import BaseModel, ValidationError
+import snowflake.connector
 
 # Create a function to establish the Snowflake connection using SnowflakeHook
 def create_snowflake_connection():
-    hook = SnowflakeHook(snowflake_conn_id="snow_sc")  
+    hook = SnowflakeHook(snowflake_conn_id="snow_sc")
     conn = hook.get_conn()
     return conn
 
@@ -18,6 +19,38 @@ class CSVRecord(BaseModel):
     NAME: str
     EMAIL: str
     SSN: str
+
+# Function to bulk insert valid records into SAMPLE_CSV
+def insert_valid_records(records, snowflake_conn):
+    if records:
+        cursor = snowflake_conn.cursor()
+        try:
+            cursor.executemany(
+                f"""
+                INSERT INTO SAMPLE_CSV (NAME, EMAIL, SSN)
+                VALUES (?, ?, ?)
+                """,
+                records,
+            )
+            snowflake_conn.commit()
+        finally:
+            cursor.close()
+
+# Function to bulk insert error records into ERROR_LOG
+def insert_error_records(records, snowflake_conn):
+    if records:
+        cursor = snowflake_conn.cursor()
+        try:
+            cursor.executemany(
+                f"""
+                INSERT INTO ERROR_LOG (NAME, EMAIL, SSN, ERROR_MESSAGE)
+                VALUES (?, ?, ?, ?)
+                """,
+                records,
+            )
+            snowflake_conn.commit()
+        finally:
+            cursor.close()
 
 # Task to read file from the provided URL and display data
 def read_file_and_display_data():
@@ -47,6 +80,9 @@ def validate_and_load_data():
         csv_content = response.text
         csv_lines = csv_content.split('\n')
         header = None
+        valid_records = []
+        error_records = []
+
         for line in csv_lines:
             line = line.strip()
             if not line:
@@ -56,64 +92,29 @@ def validate_and_load_data():
                 continue
             row = line.split('\t')
             if len(row) != len(header):
-                # Invalid format, insert into ERROR_LOG table
-                insert_error_task = SnowflakeOperator(
-                    task_id='insert_into_error_log',
-                    sql=f"""
-                        INSERT INTO ERROR_LOG (name, email, SSN, Error_message)
-                        VALUES ('{row[0]}', '{row[1]}', '{row[2]}', 'Invalid CSV format')
-                    """,
-                    snowflake_conn_id="snow_sc",  # Connection ID defined in Airflow
-                    dag=dag,
-                )
-                insert_error_task.execute(snowflake_conn)
+                # Invalid format, add to error_records
+                error_records.append((row[0], row[1], row[2], 'Invalid CSV format'))
                 continue
 
             try:
-                record = CSVRecord(NAME=row[0], EMAIL=row[1], SSN=row[2])
-                if len(record.SSN) == 4:
-                    # Insert into SAMPLE_CSV table
-                    insert_task = SnowflakeOperator(
-                        task_id='insert_into_sample_csv',
-                        sql=f"""
-                            INSERT INTO SAMPLE_CSV (name, email, SSN)
-                            VALUES ('{record.NAME}', '{record.EMAIL}', '{record.SSN}')
-                        """,
-                        snowflake_conn_id="snow_sc",  # Connection ID defined in Airflow
-                        dag=dag,
-                    )
-                    insert_task.execute(snowflake_conn)
-                else:
-                    # Insert into ERROR_LOG table
-                    insert_error_task = SnowflakeOperator(
-                        task_id='insert_into_error_log',
-                        sql=f"""
-                            INSERT INTO ERROR_LOG (name, email, SSN, Error_message)
-                            VALUES ('{record.NAME}', '{record.EMAIL}', '{record.SSN}', 'Invalid SSN length should be 4 digits')
-                        """,
-                        snowflake_conn_id="snow_sc",  # Connection ID defined in Airflow
-                        dag=dag,
-                    )
-                    insert_error_task.execute(snowflake_conn)
+                record = CSVRecord(NAME=row[0], EMAIL=row[1], SSN=row[2].replace(',', ''))  # Remove commas from SSN
+                record_dict = record.dict()
+                valid_records.append((record_dict['NAME'], record_dict['EMAIL'], record_dict['SSN']))
             except ValidationError as e:
                 for error in e.errors():
-                    field_name = error.get('loc')[-1]
-                    error_msg = error.get('msg')
-                    print(f"Error in {field_name}: {error_msg}")
-                    # Insert into ERROR_LOG table
-                    insert_error_task = SnowflakeOperator(
-                        task_id='insert_into_error_log',
-                        sql=f"""
-                            INSERT INTO ERROR_LOG (name, email, SSN, Error_message)
-                            VALUES ('{row[0]}', '{row[1]}', '{row[2]}', '{error_msg}')
-                        """,
-                        snowflake_conn_id="snow_sc",  # Connection ID defined in Airflow
-                        dag=dag,
-                    )
-                    insert_error_task.execute(snowflake_conn)
+                    field_name = error['loc'][-1]
+                    error_msg = error['msg']
+                    # Add to error_records
+                    error_records.append((row[0], row[1], row[2], error_msg))
             except Exception as e:
+                # Handle other exceptions as needed
                 print(f"Error: {str(e)}")
 
+        # Bulk insert valid and error records
+        insert_valid_records(valid_records, snowflake_conn)
+        insert_error_records(error_records, snowflake_conn)
+
+    # Close Snowflake connection
     snowflake_conn.close()
 
 # Airflow default arguments
@@ -148,6 +149,7 @@ validate_task = PythonOperator(
 
 # Set task dependencies
 read_file_task >> validate_task
+
 
 
 
