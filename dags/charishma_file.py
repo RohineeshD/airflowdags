@@ -1,6 +1,6 @@
 from airflow import DAG
 from airflow.operators.python import PythonOperator
-from airflow.providers.snowflake.operators.snowflake import SnowflakeToSnowflakeOperator
+from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
 from pydantic import BaseModel, ValidationError, validator
 from datetime import datetime
 import requests
