@@ -3,8 +3,8 @@ from airflow.operators.python_operator import PythonOperator
 from airflow.utils.dates import days_ago
 from pydantic import BaseModel, ValidationError, constr
 import pandas as pd
-from airflow.hooks.base_hook import BaseHook
-import snowflake.connector
+from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator  # Import SnowflakeOperator
+from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook  # Import SnowflakeHook
 
 # Define the default_args for the DAG
 default_args = {
@@ -40,43 +40,42 @@ with DAG(
     )
 
     # Task 2: Load data into Snowflake tables and perform validation
-def load_data_into_snowflake():
-    try:
-        # Initialize Snowflake hook
-        snowflake_hook = SnowflakeHook(snowflake_conn_id=snowflake_conn_id)
-        connection = snowflake_hook.get_conn()
-        cursor = connection.cursor()
+    def load_data_into_snowflake():
+        try:
+            # Initialize Snowflake hook
+            snowflake_hook = SnowflakeHook(snowflake_conn_id=snowflake_conn_id)
+            connection = snowflake_hook.get_conn()
+            cursor = connection.cursor()
 
-        # Define Snowflake table names
-        sample_csv_table = "SAMPLE_CSV"
-        error_log_table = "ERROR_LOG"
+            # Define Snowflake table names
+            sample_csv_table = "SAMPLE_CSV"
+            error_log_table = "ERROR_LOG"
 
-        # Read the CSV file into a DataFrame
-        csv_url = "https://github.com/jcharishma/my.repo/raw/master/sample_csv.csv"
-        df = pd.read_csv(csv_url)
+            # Read the CSV file into a DataFrame
+            csv_url = "https://github.com/jcharishma/my.repo/raw/master/sample_csv.csv"
+            df = pd.read_csv(csv_url)
 
-        for index, row in df.iterrows():
-            try:
-                # Validate each record using Pydantic
-                record = CSVRecord(**row.to_dict())
+            for index, row in df.iterrows():
+                try:
+                    # Validate each record using Pydantic
+                    record = CSVRecord(**row.to_dict())
 
-                # If validation passes, insert the record into SAMPLE_CSV table
-                cursor.execute(f"INSERT INTO {sample_csv_table} VALUES (?)", (record.SSN,))
+                    # If validation passes, insert the record into SAMPLE_CSV table
+                    cursor.execute(f"INSERT INTO {sample_csv_table} VALUES (?)", (record.SSN,))
 
-            except ValidationError as e:
-                # If validation fails, insert the record into ERROR_LOG table with error message
-                cursor.execute(f"INSERT INTO {error_log_table} VALUES (?, ?)", (row.to_dict(), str(e)))
+                except ValidationError as e:
+                    # If validation fails, insert the record into ERROR_LOG table with error message
+                    cursor.execute(f"INSERT INTO {error_log_table} VALUES (?, ?)", (row.to_dict(), str(e)))
 
-        # Commit the changes to the Snowflake database
-        connection.commit()
+            # Commit the changes to the Snowflake database
+            connection.commit()
 
-    except Exception as e:
-        print(f"Error: {e}")
-    finally:
-        # Close the cursor and connection
-        cursor.close()
-        connection.close()
-
+        except Exception as e:
+            print(f"Error: {e}")
+        finally:
+            # Close the cursor and connection
+            cursor.close()
+            connection.close()
 
     load_data_task = PythonOperator(
         task_id='load_data_into_snowflake',
@@ -88,6 +87,7 @@ def load_data_into_snowflake():
 
 if __name__ == "__main__":
     dag.cli()
+
 
 
 
