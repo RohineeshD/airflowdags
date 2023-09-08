@@ -48,20 +48,20 @@ def read_file_and_display_data():
         return csv_data
     else:
         raise Exception(f"Failed to fetch CSV: Status Code {response.status_code}")
-
 # Task to validate and load data using Pydantic
-def validate_and_load_data(csv_data):
+def validate_and_load_data(csv_data, **kwargs):
+    # The **kwargs parameter allows you to access additional context if needed
     snowflake_conn = create_snowflake_connection()
 
     csv_lines = csv_data.split('\n')
     csvreader = csv.DictReader(csv_lines)
-    
+
     for row in csvreader:
         try:
             # Convert all data types to strings
             for key, value in row.items():
                 row[key] = str(value)
-            
+
             # Validate using Pydantic
             record = CSVRecord(**row)
 
@@ -86,6 +86,7 @@ def validate_and_load_data(csv_data):
             print(f"Error: {str(e)}")
 
     snowflake_conn.close()
+
 
 # Airflow default arguments
 default_args = {
@@ -115,6 +116,8 @@ validate_and_load_task = PythonOperator(
     task_id='validate_and_load_data',
     python_callable=validate_and_load_data,
     provide_context=True,
+    op_args=[],
+    op_kwargs={},
     dag=dag,
 )
 
