@@ -85,21 +85,12 @@ def validate_and_load_data():
                 else:
                     # Handle invalid SSN length by inserting a record into the ERROR_LOG table
                     error_message = 'Invalid SSN length should be 4 digits'
-                    insert_error_sql = f"INSERT INTO ERROR_LOG (NAME, EMAIL, SSN, ERROR_MESSAGE) VALUES ('{row[0]}', '{row[1]}', '{row[2]}', '{error_message}')"
-                    cursor.execute(insert_error_sql)
-                    conn.commit()
-            except ValidationError as e:
-                for error in e.errors():
-                    field_name = error.get('loc')[-1]
-                    error_msg = error.get('msg')
-                    # Handle validation errors by inserting a record into the ERROR_LOG table
-                    insert_error_sql = f"INSERT INTO ERROR_LOG (NAME, EMAIL, SSN, ERROR_MESSAGE) VALUES ('{row[0]}', '{row[1]}', '{row[2]}', '{error_msg}')"
+                    insert_error_sql = f"INSERT INTO ERROR_LOG (NAME, EMAIL, SSN, ERROR_MESSAGE) VALUES ('{record.NAME}', '{record.EMAIL}', '{record.SSN}', '{error_message}')"
                     cursor.execute(insert_error_sql)
                     conn.commit()
             except Exception as e:
                 print(f"Error: {str(e)}")
 
-        # Close Snowflake connection
         cursor.close()
         conn.close()
 
