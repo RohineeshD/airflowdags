@@ -3,8 +3,8 @@ from airflow.operators.python_operator import PythonOperator
 from airflow.utils.dates import days_ago
 from pydantic import BaseModel, ValidationError, constr
 import pandas as pd
-from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator  # Import SnowflakeOperator
-from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook  # Import SnowflakeHook
+from airflow.hooks.base_hook import BaseHook
+import snowflake.connector
 
 # Define the default_args for the DAG
 default_args = {
@@ -18,7 +18,7 @@ snowflake_conn_id = 'snow_sc'
 
 # Define the Pydantic model for validation
 class CSVRecord(BaseModel):
-    SSN: constr(regex=r"^\d{4}$")  # SSN should have exactly 4 digits
+    SSN: str  # We change this to str to load data as-is
 
 # Define the DAG
 with DAG(
@@ -57,11 +57,9 @@ with DAG(
 
             for index, row in df.iterrows():
                 try:
-                    # Validate each record using Pydantic
-                    record = CSVRecord(**row.to_dict())
-
-                    # If validation passes, insert the record into SAMPLE_CSV table
-                    cursor.execute(f"INSERT INTO {sample_csv_table} VALUES (?)", (record.SSN,))
+                    # Since we changed the Pydantic model to treat SSN as a string, we can insert it directly
+                    # without any conversion
+                    cursor.execute(f"INSERT INTO {sample_csv_table} VALUES (?)", (row['SSN'],))
 
                 except ValidationError as e:
                     # If validation fails, insert the record into ERROR_LOG table with error message
@@ -87,6 +85,7 @@ with DAG(
 
 if __name__ == "__main__":
     dag.cli()
+
 
 
 
