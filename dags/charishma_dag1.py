@@ -48,6 +48,7 @@ def read_file_and_display_data():
         return csv_data
     else:
         raise Exception(f"Failed to fetch CSV: Status Code {response.status_code}")
+
 # Task to validate and load data using Pydantic
 def validate_and_load_data(csv_data, **kwargs):
     # The **kwargs parameter allows you to access additional context if needed
@@ -87,7 +88,6 @@ def validate_and_load_data(csv_data, **kwargs):
 
     snowflake_conn.close()
 
-
 # Airflow default arguments
 default_args = {
     'owner': 'airflow',
@@ -121,6 +121,7 @@ validate_and_load_task = PythonOperator(
 
 # Set task dependencies
 read_file_task >> validate_and_load_task
+
 
 
 
