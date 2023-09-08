@@ -7,15 +7,15 @@ import requests
 import csv
 from pydantic import BaseModel, ValidationError
 
-# Define Snowflake connection credentials
-snowflake_credentials = {
-    "account": "https://hzciyrm-kj91758.snowflakecomputing.com",
-    "warehouse": "COMPUTE_WH",
-    "database": "DEMO",
-    "schema": "SC1",
-    "username": "CJ",
-    "password": "Cherry@2468"
-}
+# # Define Snowflake connection credentials
+# snowflake_credentials = {
+#     "account": "https://hzciyrm-kj91758.snowflakecomputing.com",
+#     "warehouse": "COMPUTE_WH",
+#     "database": "DEMO",
+#     "schema": "SC1",
+#     "username": "CJ",
+#     "password": "Cherry@2468"
+# }
 
 # Create a function to establish the Snowflake connection using SnowflakeHook
 def create_snowflake_connection():
