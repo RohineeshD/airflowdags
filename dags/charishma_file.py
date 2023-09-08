@@ -1,90 +1,211 @@
 from airflow import DAG
-from airflow.operators.python_operator import PythonOperator
-from airflow.utils.dates import days_ago
-from pydantic import BaseModel, ValidationError, constr
+from airflow.operators.python import PythonOperator
+import requests
 import pandas as pd
-from airflow.hooks.base_hook import BaseHook
-import snowflake.connector
+from datetime import datetime
 
-# Define the default_args for the DAG
-default_args = {
-    'owner': 'airflow',
-    'start_date': days_ago(1),
-    'retries': 1,
-}
-
-# Define the Snowflake connection ID
-snowflake_conn_id = 'snow_sc'
-
-# Define the Pydantic model for validation
-class CSVRecord(BaseModel):
-    SSN: str  # We change this to str to load data as-is
+# Snowflake connection ID
+SNOWFLAKE_CONN_ID = 'snow_sc'
 
 # Define the DAG
-with DAG(
-    'csv_dag',
-    default_args=default_args,
-    schedule_interval=None,  # You can adjust the schedule as needed
+dag = DAG(
+    'validate_and_load_csv',
+    start_date=datetime(2023, 1, 1),
+    schedule_interval=None,  # Define your desired schedule interval here
     catchup=False,
-) as dag:
+)
 
-    # Task 1: Read and display the CSV file from the URL
-    def read_and_display_csv():
-        csv_url = "https://github.com/jcharishma/my.repo/raw/master/sample_csv.csv"
-        df = pd.read_csv(csv_url)
-        print(df)
+# Pydantic model for CSV records
+class CSVRecord(BaseModel):
+    NAME: str
+    EMAIL: str
+    SSN: str
+
+    @validator('SSN')
+    def validate_ssn_length(cls, ssn):
+        if len(ssn) != 4:
+            raise ValueError("SSN length should be 4 digits")
+        return ssn
+
+# Task 1: Read and display the CSV file from the URL
+def read_and_display_csv():
+    csv_url = "https://github.com/jcharishma/my.repo/raw/master/sample_csv.csv"
+    df = pd.read_csv(csv_url)
+    print(df)
+
+read_csv_task = PythonOperator(
+    task_id='read_csv',
+    python_callable=read_and_display_csv,
+    dag=dag,
+)
+
+# Task 2: Validate and load data
+def validate_and_load_data():
+    snowflake_conn = create_snowflake_connection()
+
+    # Input CSV file URL
+    csv_url = 'https://raw.githubusercontent.com/jcharishma/my.repo/master/sample_csv.csv'
+
+    # Fetch CSV data from the URL
+    response = requests.get(csv_url)
+    if response.status_code == 200:
+        csv_content = response.text
+        csv_lines = csv_content.split('\n')
+        header = csv_lines[0].strip().split(',')
+        for line in csv_lines[1:]:
+            line = line.strip()
+            if not line:
+                continue
+            row = line.split(',')
+            if len(row) != len(header):
+                # Invalid format, insert into ERROR_LOG table
+                insert_error_task = SnowflakeOperator(
+                    task_id='insert_into_error_log',
+                    sql=f"""
+                        INSERT INTO ERROR_LOG (NAME, EMAIL, SSN, ERROR_MESSAGE)
+                        VALUES ('{row[0]}', '{row[1]}', '{row[2]}', 'Invalid CSV format')
+                    """,
+                    snowflake_conn_id=SNOWFLAKE_CONN_ID,
+                    dag=dag,
+                )
+                insert_error_task.execute(snowflake_conn)
+                continue
+
+            try:
+                row_data = CSVRecord(NAME=row[0], EMAIL=row[1], SSN=row[2])
+                # If we reach this point, data is valid according to the model
+
+                # Insert into SAMPLE_CSV table
+                insert_task = SnowflakeOperator(
+                    task_id='insert_into_sample_csv',
+                    sql=f"""
+                        INSERT INTO SAMPLE_CSV (NAME, EMAIL, SSN)
+                        VALUES ('{row_data.NAME}', '{row_data.EMAIL}', '{row_data.SSN}')
+                    """,
+                    snowflake_conn_id=SNOWFLAKE_CONN_ID,
+                    dag=dag,
+                )
+                insert_task.execute(snowflake_conn)
+            except ValidationError as e:
+                for error in e.errors():
+                    field_name = error['loc'][0]
+                    error_msg = error['msg']
+                    print(f"Error in {field_name}: {error_msg}")
+                    # Insert into ERROR_LOG table
+                    insert_error_task = SnowflakeOperator(
+                        task_id='insert_into_error_log',
+                        sql=f"""
+                            INSERT INTO ERROR_LOG (NAME, EMAIL, SSN, ERROR_MESSAGE)
+                            VALUES ('{row[0]}', '{row[1]}', '{row[2]}', '{error_msg}')
+                        """,
+                        snowflake_conn_id=SNOWFLAKE_CONN_ID,
+                        dag=dag,
+                    )
+                    insert_error_task.execute(snowflake_conn)
+            except Exception as e:
+                print(f"Error: {str(e)}")
+
+    snowflake_conn.close()
+
+# Task 3: Validate and load data
+validate_load_task = PythonOperator(
+    task_id='validate_and_load_data',
+    python_callable=validate_and_load_data,
+    dag=dag,
+)
+
+# Set task dependencies
+read_csv_task >> validate_load_task
+
+
+
+# from airflow import DAG
+# from airflow.operators.python_operator import PythonOperator
+# from airflow.utils.dates import days_ago
+# from pydantic import BaseModel, ValidationError, constr
+# import pandas as pd
+# from airflow.hooks.base_hook import BaseHook
+# import snowflake.connector
+
+# # Define the default_args for the DAG
+# default_args = {
+#     'owner': 'airflow',
+#     'start_date': days_ago(1),
+#     'retries': 1,
+# }
+
+# # Define the Snowflake connection ID
+# snowflake_conn_id = 'snow_sc'
+
+# # Define the Pydantic model for validation
+# class CSVRecord(BaseModel):
+#     SSN: str  # We change this to str to load data as-is
+
+# # Define the DAG
+# with DAG(
+#     'csv_dag',
+#     default_args=default_args,
+#     schedule_interval=None,  # You can adjust the schedule as needed
+#     catchup=False,
+# ) as dag:
+
+#     # Task 1: Read and display the CSV file from the URL
+#     def read_and_display_csv():
+#         csv_url = "https://github.com/jcharishma/my.repo/raw/master/sample_csv.csv"
+#         df = pd.read_csv(csv_url)
+#         print(df)
     
-    read_csv_task = PythonOperator(
-        task_id='read_csv',
-        python_callable=read_and_display_csv,
-    )
+#     read_csv_task = PythonOperator(
+#         task_id='read_csv',
+#         python_callable=read_and_display_csv,
+#     )
 
-    # Task 2: Load data into Snowflake tables and perform validation
-    def load_data_into_snowflake():
-        try:
-            # Initialize Snowflake hook
-            snowflake_hook = SnowflakeHook(snowflake_conn_id=snowflake_conn_id)
-            connection = snowflake_hook.get_conn()
-            cursor = connection.cursor()
+#     # Task 2: Load data into Snowflake tables and perform validation
+#     def load_data_into_snowflake():
+#         try:
+#             # Initialize Snowflake hook
+#             snowflake_hook = SnowflakeHook(snowflake_conn_id=snowflake_conn_id)
+#             connection = snowflake_hook.get_conn()
+#             cursor = connection.cursor()
 
-            # Define Snowflake table names
-            sample_csv_table = "SAMPLE_CSV"
-            error_log_table = "ERROR_LOG"
+#             # Define Snowflake table names
+#             sample_csv_table = "SAMPLE_CSV"
+#             error_log_table = "ERROR_LOG"
 
-            # Read the CSV file into a DataFrame
-            csv_url = "https://github.com/jcharishma/my.repo/raw/master/sample_csv.csv"
-            df = pd.read_csv(csv_url)
+#             # Read the CSV file into a DataFrame
+#             csv_url = "https://github.com/jcharishma/my.repo/raw/master/sample_csv.csv"
+#             df = pd.read_csv(csv_url)
 
-            for index, row in df.iterrows():
-                try:
-                    # Since we changed the Pydantic model to treat SSN as a string, we can insert it directly
-                    # without any conversion
-                    cursor.execute(f"INSERT INTO {sample_csv_table} VALUES (?)", (row['SSN'],))
+#             for index, row in df.iterrows():
+#                 try:
+#                     # Since we changed the Pydantic model to treat SSN as a string, we can insert it directly
+#                     # without any conversion
+#                     cursor.execute(f"INSERT INTO {sample_csv_table} VALUES (?)", (row['SSN'],))
 
-                except ValidationError as e:
-                    # If validation fails, insert the record into ERROR_LOG table with error message
-                    cursor.execute(f"INSERT INTO {error_log_table} VALUES (?, ?)", (row.to_dict(), str(e)))
+#                 except ValidationError as e:
+#                     # If validation fails, insert the record into ERROR_LOG table with error message
+#                     cursor.execute(f"INSERT INTO {error_log_table} VALUES (?, ?)", (row.to_dict(), str(e)))
 
-            # Commit the changes to the Snowflake database
-            connection.commit()
+#             # Commit the changes to the Snowflake database
+#             connection.commit()
 
-        except Exception as e:
-            print(f"Error: {e}")
-        finally:
-            # Close the cursor and connection
-            cursor.close()
-            connection.close()
+#         except Exception as e:
+#             print(f"Error: {e}")
+#         finally:
+#             # Close the cursor and connection
+#             cursor.close()
+#             connection.close()
 
-    load_data_task = PythonOperator(
-        task_id='load_data_into_snowflake',
-        python_callable=load_data_into_snowflake,
-    )
+#     load_data_task = PythonOperator(
+#         task_id='load_data_into_snowflake',
+#         python_callable=load_data_into_snowflake,
+#     )
 
-    # Set task dependencies
-    read_csv_task >> load_data_task
+#     # Set task dependencies
+#     read_csv_task >> load_data_task
 
-if __name__ == "__main__":
-    dag.cli()
+# if __name__ == "__main__":
+#     dag.cli()
 
 
 
@@ -335,7 +456,7 @@ if __name__ == "__main__":
 
 
 
-# # Task to validate and load data using Pydantic
+# # # Task to validate and load data using Pydantic
 # def validate_and_load_data():
 #     snowflake_conn = create_snowflake_connection()
 
@@ -361,7 +482,7 @@ if __name__ == "__main__":
 #                         INSERT INTO ERROR_LOG (NAME, EMAIL, SSN, ERROR_MESSAGE)
 #                         VALUES ('{row[0]}', '{row[1]}', '{row[2]}', 'Invalid CSV format')
 #                     """,
-#                     snowflake_conn_id="snow_sc",  # Connection ID defined in Airflow
+#                     snowflake_conn_id="snow_sc",  # Connection ID 
 #                     dag=dag,
 #                 )
 #                 insert_error_task.execute(snowflake_conn)
@@ -377,7 +498,7 @@ if __name__ == "__main__":
 #                             INSERT INTO SAMPLE_CSV (NAME, EMAIL, SSN)
 #                             VALUES ('{record.NAME}', '{record.EMAIL}', '{record.SSN}')
 #                         """,
-#                         snowflake_conn_id="snow_sc",  # Connection ID defined in Airflow
+#                         snowflake_conn_id="snow_sc",  # Connection ID 
 #                         dag=dag,
 #                     )
 #                     insert_task.execute(snowflake_conn)
@@ -389,7 +510,7 @@ if __name__ == "__main__":
 #                             INSERT INTO ERROR_LOG (NAME, EMAIL, SSN, ERROR_MESSAGE)
 #                             VALUES ('{record.NAME}', '{record.EMAIL}', '{record.SSN}', 'Invalid SSN length should be 4 digits')
 #                         """,
-#                         snowflake_conn_id="snow_sc",  # Connection ID defined in Airflow
+#                         snowflake_conn_id="snow_sc",  # Connection ID
 #                         dag=dag,
 #                     )
 #                     insert_error_task.execute(snowflake_conn)
@@ -405,7 +526,7 @@ if __name__ == "__main__":
 #                             INSERT INTO ERROR_LOG (NAME, EMAIL, SSN, ERROR_MESSAGE)
 #                             VALUES ('{row[0]}', '{row[1]}', '{row[2]}', '{error_msg}')
 #                         """,
-#                         snowflake_conn_id="snow_sc",  # Connection ID defined in Airflow
+#                         snowflake_conn_id="snow_sc",  # Connection ID
 #                         dag=dag,
 #                     )
 #                     insert_error_task.execute(snowflake_conn)
