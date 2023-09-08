@@ -113,6 +113,8 @@ insert_data_task = PythonOperator(
     dag=dag,
 )
 
+insert_data_task
+
 # ===========================below not working===============================================
 # import requests
 # from snowflake.connector import SnowflakeConnection
