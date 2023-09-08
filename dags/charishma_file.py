@@ -88,9 +88,6 @@ def validate_and_load_data():
             except Exception as e:
                 print(f"Error: {str(e)}")
 
-        # Close the csvreader here
-        csvreader.close()
-
     snowflake_conn.close()
 
 # Airflow default arguments
