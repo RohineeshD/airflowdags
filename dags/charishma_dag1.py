@@ -1,145 +1,34 @@
-from airflow import DAG
-from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
-from airflow.operators.python_operator import PythonOperator
-from datetime import datetime
-import requests
-import csv
-from io import StringIO
-import snowflake.connector
-from pydantic import BaseModel, ValidationError
-
-# Define Snowflake connection credentials
-snowflake_credentials = {
-    "account": "https://hzciyrm-kj91758.snowflakecomputing.com",
-    "warehouse": "COMPUTE_WH",
-    "database": "DEMO",
-    "schema": "SC1",
-    "username": "CJ",
-    "password": "Cherry@2468"
-}
-
-# Create a function to establish the Snowflake connection
-def create_snowflake_connection():
-    conn = snowflake.connector.connect(
-        account=snowflake_credentials["account"],
-        warehouse=snowflake_credentials["warehouse"],
-        database=snowflake_credentials["database"],
-        schema=snowflake_credentials["schema"],
-        user=snowflake_credentials["username"],
-        password=snowflake_credentials["password"]
-    )
-    return conn
-
-# Define the Pydantic model for CSV data
-class CSVRecord(BaseModel):
-    NAME: str
-    EMAIL: str
-    SSN: int
-
-# Task to download CSV file
-def download_csv():
-    csv_url = 'https://raw.githubusercontent.com/jcharishma/my.repo/master/sample_csv.csv'
-    response = requests.get(csv_url)
-    if response.status_code == 200:
-        return response.text
-    else:
-        raise Exception(f"Failed to download CSV: Status Code {response.status_code}")
-
-# Task to process CSV and load into Snowflake
-def csv_load_to_snowflake(**kwargs):
-    snowflake_conn = create_snowflake_connection()
-    csv_data = kwargs['ti'].xcom_pull(task_ids='download_csv')
-    
-    if csv_data:
-        csv_lines = csv_data.split('\n')
-        csvreader = csv.DictReader(csv_lines)
-        
-        for row in csvreader:
-            try:
-                record = CSVRecord(**row)
-                cursor = snowflake_conn.cursor()
-                cursor.execute("""
-                    INSERT INTO SAMPLE_CSV (NAME, EMAIL, SSN)
-                    VALUES (%s, %s, %s)
-                """, (record.NAME, record.EMAIL, record.SSN))
-                cursor.close()
-            except ValidationError as e:
-                for error in e.errors():
-                    field_name = error.get('loc')[-1]
-                    error_msg = error.get('msg')
-                    print(f"Error in {field_name}: {error_msg}")
-            except Exception as e:
-                cursor = snowflake_conn.cursor()
-                cursor.execute("""
-                    INSERT INTO ERROR_LOG (NAME, EMAIL, SSN, Error_message)
-                    VALUES (%s, %s, %s, %s)
-                """, (row['NAME'], row['EMAIL'], row['SSN'], str(e)))
-                cursor.close()
-                print(f"Error: {str(e)}")
-
-    snowflake_conn.close()
-
-# Airflow default arguments
-default_args = {
-    'owner': 'airflow',
-    'start_date': datetime(2023, 9, 7),
-    'retries': 1,
-    'catchup': True,
-}
-
-# Create the DAG
-dag = DAG(
-    'charishma_csv_dag',
-    default_args=default_args,
-    schedule_interval=None,
-    catchup=False,
-)
-
-# Task to download CSV
-download_task = PythonOperator(
-    task_id='download_csv',
-    python_callable=download_csv,
-    provide_context=True,
-    dag=dag,
-)
-
-# Task to process CSV and load into Snowflake
-load_to_snowflake_task = PythonOperator(
-    task_id='csv_load_to_snowflake',
-    python_callable=csv_load_to_snowflake,
-    provide_context=True,
-    dag=dag,
-)
-
-# Set task dependencies
-download_task >> load_to_snowflake_task
-
-
-
 # from airflow import DAG
+# from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
 # from airflow.operators.python_operator import PythonOperator
 # from datetime import datetime
-# from pydantic import BaseModel, ValidationError
-# import snowflake.connector
-# import csv
 # import requests
+# import csv
+# from io import StringIO
+# import snowflake.connector
+# from pydantic import BaseModel, ValidationError
 
-# # Snowflake connection parameters
-# SNOWFLAKE_CONN_ID = 'snow_sc'
-
-# default_args = {
-#     'owner': 'airflow',
-#     'start_date': datetime(2023, 9, 7),
-#     'retries': 1,
-#     'catchup': True,
+# # Define Snowflake connection credentials
+# snowflake_credentials = {
+#     "account": "https://hzciyrm-kj91758.snowflakecomputing.com",
+#     "warehouse": "COMPUTE_WH",
+#     "database": "DEMO",
+#     "schema": "SC1",
+#     "username": "CJ",
+#     "password": "Cherry@2468"
 # }
 
-# dag = DAG(
-#     'charishma_csv_dag',
-#     default_args=default_args,
-#     schedule_interval=None,
-#     catchup=False,
-# )
+# # Create a function to establish the Snowflake connection
+# def create_snowflake_connection():
+#     conn = snowflake.connector.connect(
+#         account=snowflake_credentials["account"],
+#         warehouse=snowflake_credentials["warehouse"],
+#         database=snowflake_credentials["database"],
+#         schema=snowflake_credentials["schema"],
+#         user=snowflake_credentials["username"],
+#         password=snowflake_credentials["password"]
+#     )
+#     return conn
 
 # # Define the Pydantic model for CSV data
 # class CSVRecord(BaseModel):
@@ -147,20 +36,24 @@ download_task >> load_to_snowflake_task
 #     EMAIL: str
 #     SSN: int
 
-# def validate_csv_and_insert():
-#     # Snowflake connection using the connection ID
-#     snowflake_conn = snowflake.connector.connect(conn_name_attr=SNOWFLAKE_CONN_ID)
-
-#     # Input CSV file URL
-#     csv_url = 'https://github.com/jcharishma/my.repo/blob/master/sample_csv.csv?raw=true'
-
-#     # Download the CSV file
+# # Task to download CSV file
+# def download_csv():
+#     csv_url = 'https://raw.githubusercontent.com/jcharishma/my.repo/master/sample_csv.csv'
 #     response = requests.get(csv_url)
 #     if response.status_code == 200:
-#         # Process the downloaded CSV content
-#         csv_content = response.text
-#         csv_lines = csv_content.split('\n')
+#         return response.text
+#     else:
+#         raise Exception(f"Failed to download CSV: Status Code {response.status_code}")
+
+# # Task to process CSV and load into Snowflake
+# def csv_load_to_snowflake(**kwargs):
+#     snowflake_conn = create_snowflake_connection()
+#     csv_data = kwargs['ti'].xcom_pull(task_ids='download_csv')
+    
+#     if csv_data:
+#         csv_lines = csv_data.split('\n')
 #         csvreader = csv.DictReader(csv_lines)
+        
 #         for row in csvreader:
 #             try:
 #                 record = CSVRecord(**row)
@@ -186,14 +79,121 @@ download_task >> load_to_snowflake_task
 
 #     snowflake_conn.close()
 
-# # Define the task
-# validate_task = PythonOperator(
-#     task_id='validate_csv_and_insert',
-#     python_callable=validate_csv_and_insert,
+# # Airflow default arguments
+# default_args = {
+#     'owner': 'airflow',
+#     'start_date': datetime(2023, 9, 7),
+#     'retries': 1,
+#     'catchup': True,
+# }
+
+# # Create the DAG
+# dag = DAG(
+#     'charishma_csv_dag',
+#     default_args=default_args,
+#     schedule_interval=None,
+#     catchup=False,
+# )
+
+# # Task to download CSV
+# download_task = PythonOperator(
+#     task_id='download_csv',
+#     python_callable=download_csv,
+#     provide_context=True,
 #     dag=dag,
 # )
 
-# validate_task
+# # Task to process CSV and load into Snowflake
+# load_to_snowflake_task = PythonOperator(
+#     task_id='csv_load_to_snowflake',
+#     python_callable=csv_load_to_snowflake,
+#     provide_context=True,
+#     dag=dag,
+# )
+
+# # Set task dependencies
+# download_task >> load_to_snowflake_task
+
+
+
+from airflow import DAG
+from airflow.operators.python_operator import PythonOperator
+from datetime import datetime
+from pydantic import BaseModel, ValidationError
+import snowflake.connector
+import csv
+import requests
+
+# Snowflake connection parameters
+SNOWFLAKE_CONN_ID = 's_h_connection'
+
+default_args = {
+    'owner': 'airflow',
+    'start_date': datetime(2023, 9, 7),
+    'retries': 1,
+    'catchup': True,
+}
+
+dag = DAG(
+    'charishma_csv_dag',
+    default_args=default_args,
+    schedule_interval=None,
+    catchup=False,
+)
+
+# Define the Pydantic model for CSV data
+class CSVRecord(BaseModel):
+    NAME: str
+    EMAIL: str
+    SSN: int
+
+def validate_csv_and_insert():
+    # Snowflake connection using the connection ID
+    snowflake_conn = snowflake.connector.connect(conn_name_attr=SNOWFLAKE_CONN_ID)
+
+    # Input CSV file URL
+    csv_url = 'https://github.com/jcharishma/my.repo/blob/master/sample_csv.csv?raw=true'
+
+    # Download the CSV file
+    response = requests.get(csv_url)
+    if response.status_code == 200:
+        # Process the downloaded CSV content
+        csv_content = response.text
+        csv_lines = csv_content.split('\n')
+        csvreader = csv.DictReader(csv_lines)
+        for row in csvreader:
+            try:
+                record = CSVRecord(**row)
+                cursor = snowflake_conn.cursor()
+                cursor.execute("""
+                    INSERT INTO SAMPLE_CSV (NAME, EMAIL, SSN)
+                    VALUES (%s, %s, %s)
+                """, (record.NAME, record.EMAIL, record.SSN))
+                cursor.close()
+            except ValidationError as e:
+                for error in e.errors():
+                    field_name = error.get('loc')[-1]
+                    error_msg = error.get('msg')
+                    print(f"Error in {field_name}: {error_msg}")
+            except Exception as e:
+                cursor = snowflake_conn.cursor()
+                cursor.execute("""
+                    INSERT INTO ERROR_LOG (NAME, EMAIL, SSN, Error_message)
+                    VALUES (%s, %s, %s, %s)
+                """, (row['NAME'], row['EMAIL'], row['SSN'], str(e)))
+                cursor.close()
+                print(f"Error: {str(e)}")
+
+    snowflake_conn.close()
+
+# Define the task
+validate_task = PythonOperator(
+    task_id='validate_csv_and_insert',
+    python_callable=validate_csv_and_insert,
+    dag=dag,
+)
+
+validate_task
 
 
 # from airflow import DAG
