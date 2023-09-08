@@ -1,6 +1,6 @@
 from airflow import DAG
 from airflow.operators.python import PythonOperator
-from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
+from airflow.providers.snowflake.transfers.snowflake_to_snowflake import SnowflakeToSnowflakeOperator  
 from pydantic import BaseModel, ValidationError, validator
 from datetime import datetime
 import requests
@@ -14,7 +14,7 @@ SNOWFLAKE_CONN_ID = 'snow_sc'
 dag = DAG(
     'csv_dag',
     start_date=datetime(2023, 1, 1),
-    schedule_interval=None,  # Define your desired schedule interval here
+    schedule_interval=None,  
     catchup=False,
 )
 
@@ -89,16 +89,16 @@ def validate_and_load_data():
                     )
                     insert_task.execute()
                 else:
-                    # Handle invalid SSN length by inserting a record into the ERROR_LOG table
+                    #  invalid SSN lengt and insert to  ERROR_LOG table
                     error_message = 'Invalid SSN length should be 4 digits'
-                    insert_error_task = SnowflakeOperator(
+                    insert_error_task = SnowflakeToSnowflakeOperator(
                         task_id='insert_into_error_log',
                         sql=f"INSERT INTO ERROR_LOG (NAME, EMAIL, SSN, ERROR_MESSAGE) VALUES (%s, %s, %s, %s)",
-                        parameters=(row[0], row[1], row[2], 'Invalid CSV format'),
-                        snowflake_conn_id=SNOWFLAKE_CONN_ID, 
+                        parameters=(row[0], row[1], row[2], error_message),
+                        snowflake_source_conn_id=SNOWFLAKE_CONN_ID,
+                        snowflake_destination_conn_id=SNOWFLAKE_CONN_ID,
                         dag=dag,
                     )
-
                     insert_error_task.execute()
             except ValidationError as e:
                 for error in e.errors():
@@ -125,6 +125,7 @@ validate_load_task = PythonOperator(
 
 # Set task dependencies
 read_file_task >> validate_load_task
+
 
 
 
