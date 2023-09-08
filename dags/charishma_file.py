@@ -48,10 +48,28 @@ def validate_and_load_data():
     if response.status_code == 200:
         csv_content = response.text
         csv_lines = csv_content.split('\n')
-        csvreader = csv.DictReader(csv_lines, delimiter=',')  # Use ',' as the delimiter
-        for row in csvreader:
+        header = csv_lines[0].strip().split(',')
+        for line in csv_lines[1:]:
+            line = line.strip()
+            if not line:
+                continue
+            row = line.split(',')
+            if len(row) != len(header):
+                # Invalid format, insert into ERROR_LOG table
+                insert_error_task = SnowflakeOperator(
+                    task_id='insert_into_error_log',
+                    sql=f"""
+                        INSERT INTO ERROR_LOG (NAME, EMAIL, SSN, ERROR_MESSAGE)
+                        VALUES ('{row[0]}', '{row[1]}', '{row[2]}', 'Invalid CSV format')
+                    """,
+                    snowflake_conn_id="snow_sc",  # Connection ID defined in Airflow
+                    dag=dag,
+                )
+                insert_error_task.execute(snowflake_conn)
+                continue
+
             try:
-                record = CSVRecord(**row)
+                record = CSVRecord(NAME=row[0], EMAIL=row[1], SSN=row[2])
                 if len(record.SSN) == 4:
                     # Insert into SAMPLE_CSV table
                     insert_task = SnowflakeOperator(
@@ -81,10 +99,22 @@ def validate_and_load_data():
                     field_name = error.get('loc')[-1]
                     error_msg = error.get('msg')
                     print(f"Error in {field_name}: {error_msg}")
+                    # Insert into ERROR_LOG table
+                    insert_error_task = SnowflakeOperator(
+                        task_id='insert_into_error_log',
+                        sql=f"""
+                            INSERT INTO ERROR_LOG (NAME, EMAIL, SSN, ERROR_MESSAGE)
+                            VALUES ('{row[0]}', '{row[1]}', '{row[2]}', '{error_msg}')
+                        """,
+                        snowflake_conn_id="snow_sc",  # Connection ID defined in Airflow
+                        dag=dag,
+                    )
+                    insert_error_task.execute(snowflake_conn)
             except Exception as e:
                 print(f"Error: {str(e)}")
 
     snowflake_conn.close()
+
 
 
 # Airflow default arguments
