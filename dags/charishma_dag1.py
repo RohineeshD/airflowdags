@@ -59,7 +59,7 @@ def validate_csv_and_insert():
             try:
                 record = CSVRecord(**row)
                 engine.execute("""
-                    INSERT INTO sample_csv (NAME, EMAIL, SSN)
+                    INSERT INTO SAMPLE_CSV (NAME, EMAIL, SSN)
                     VALUES (%s, %s, %s)
                 """, (record.NAME, record.EMAIL, record.SSN))
             except ValidationError as e:
@@ -69,7 +69,7 @@ def validate_csv_and_insert():
                     print(f"Error in {field_name}: {error_msg}")
             except Exception as e:
                 engine.execute("""
-                    INSERT INTO error_log (NAME, EMAIL, SSN, Error_message)
+                    INSERT INTO ERROR_LOG (NAME, EMAIL, SSN, Error_message)
                     VALUES (%s, %s, %s, %s)
                 """, (row['NAME'], row['EMAIL'], row['SSN'], str(e)))
                 print(f"Error: {str(e)}")
