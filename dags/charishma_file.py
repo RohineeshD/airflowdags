@@ -19,6 +19,21 @@ class CSVRecord(BaseModel):
     EMAIL: str
     SSN: str
 
+# Task to read file from provided URL and display data
+def read_file_and_display_data():
+    # Input CSV file URL
+    csv_url = 'https://raw.githubusercontent.com/jcharishma/my.repo/master/sample_csv.csv'
+
+    # Fetch CSV data from the URL
+    response = requests.get(csv_url)
+    if response.status_code == 200:
+        csv_content = response.text
+        print("CSV Data:")
+        print(csv_content)
+        return csv_content
+    else:
+        raise Exception(f"Failed to fetch CSV: Status Code {response.status_code}")
+
 # Task to validate and load data using Pydantic
 def validate_and_load_data():
     snowflake_conn = create_snowflake_connection()
@@ -78,8 +93,6 @@ def validate_and_load_data():
 
     snowflake_conn.close()
 
-
-
 # Airflow default arguments
 default_args = {
     'owner': 'airflow',
@@ -96,9 +109,10 @@ dag = DAG(
     catchup=False,
 )
 
+# Task to read file from provided URL and display data
 read_file_task = PythonOperator(
     task_id='read_file_and_display_data',
-    python_callable=read_file_and_display_data,  # Make sure this function is defined above
+    python_callable=read_file_and_display_data,
     dag=dag,
 )
 
