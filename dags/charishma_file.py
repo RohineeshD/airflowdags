@@ -10,7 +10,7 @@ SNOWFLAKE_CONN_ID = 'snow_sc'
 
 # Define the DAG
 dag = DAG(
-    'validate_and_load_csv',
+    'csv_dag',
     start_date=datetime(2023, 1, 1),
     schedule_interval=None,  # Define your desired schedule interval here
     catchup=False,
