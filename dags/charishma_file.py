@@ -68,7 +68,7 @@ def validate_and_load_data():
                         INSERT INTO SAMPLE_CSV (NAME, EMAIL, SSN)
                         VALUES ('{record.NAME}', '{record.EMAIL}', '{record.SSN}')
                     """,
-                    snowflake_conn_id="snowflake_conn_id",  # Connection ID defined in Airflow
+                    snowflake_conn_id="snow_sc",  # Connection ID defined in Airflow
                     dag=dag,
                 )
                 insert_task.execute(snowflake_conn)
