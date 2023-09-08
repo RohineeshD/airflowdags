@@ -1,22 +1,16 @@
 from airflow import DAG
 from airflow.operators.python_operator import PythonOperator
 from datetime import datetime
-from airflow.hooks.base_hook import BaseHook
-from sqlalchemy import create_engine
+from pydantic import BaseModel, ValidationError
+import snowflake.connector
 import csv
 import requests
-from pydantic import BaseModel, ValidationError
 
-# Snowflake connection ID and DAG configuration
+# Snowflake connection parameters
 SNOWFLAKE_CONN_ID = 'sf_sc'
-DAG_OWNER = 'airflow'
-# DAG_START_DATE = datetime(2023, 9, 7)
-DAG_SCHEDULE_INTERVAL = None
-DAG_CATCHUP = False
-
 
 default_args = {
-    'owner': DAG_OWNER,
+    'owner': 'airflow',
     'start_date': datetime(2023, 9, 7),
     'retries': 1,
     'catchup': True,
@@ -25,11 +19,11 @@ default_args = {
 dag = DAG(
     'charishma_csv_dag',
     default_args=default_args,
-    schedule_interval=DAG_SCHEDULE_INTERVAL,
-    catchup=DAG_CATCHUP,
+    schedule_interval=None,
+    catchup=False,
 )
 
-# Define the Pydantic model for CSV data at the module level
+# Define the Pydantic model for CSV data
 class CSVRecord(BaseModel):
     NAME: str
     EMAIL: str
@@ -37,16 +31,10 @@ class CSVRecord(BaseModel):
 
 def validate_csv_and_insert():
     # Snowflake connection using the connection ID
-    snowflake_conn = BaseHook.get_connection(SNOWFLAKE_CONN_ID)
-
-    # Construct the Snowflake SQLAlchemy engine URL
-    engine_url = f'snowflake://{snowflake_conn.login}:{snowflake_conn.password}@{snowflake_conn.host}/{snowflake_conn.schema}?warehouse={snowflake_conn.extra_dejson["warehouse"]}&database={snowflake_conn.extra_dejson["database"]}&account={snowflake_conn.extra_dejson["account"]}'
-
-    # Create the SQLAlchemy engine using the engine URL
-    engine = create_engine(engine_url)
+    snowflake_conn = snowflake.connector.connect(conn_name_attr=SNOWFLAKE_CONN_ID)
 
     # Input CSV file URL
-    csv_url = 'https://github.com/jcharishma/my.repo/blob/master/sample_csv.csv?plain=1'
+    csv_url = 'https://github.com/jcharishma/my.repo/blob/master/sample_csv.csv?raw=true'
 
     # Download the CSV file
     response = requests.get(csv_url)
@@ -58,23 +46,27 @@ def validate_csv_and_insert():
         for row in csvreader:
             try:
                 record = CSVRecord(**row)
-                engine.execute("""
+                cursor = snowflake_conn.cursor()
+                cursor.execute("""
                     INSERT INTO SAMPLE_CSV (NAME, EMAIL, SSN)
                     VALUES (%s, %s, %s)
                 """, (record.NAME, record.EMAIL, record.SSN))
+                cursor.close()
             except ValidationError as e:
                 for error in e.errors():
                     field_name = error.get('loc')[-1]
                     error_msg = error.get('msg')
                     print(f"Error in {field_name}: {error_msg}")
             except Exception as e:
-                engine.execute("""
+                cursor = snowflake_conn.cursor()
+                cursor.execute("""
                     INSERT INTO ERROR_LOG (NAME, EMAIL, SSN, Error_message)
                     VALUES (%s, %s, %s, %s)
                 """, (row['NAME'], row['EMAIL'], row['SSN'], str(e)))
+                cursor.close()
                 print(f"Error: {str(e)}")
-    else:
-        print(f"Failed to download CSV file from URL: {csv_url}")
+
+    snowflake_conn.close()
 
 # Define the task
 validate_task = PythonOperator(
@@ -82,7 +74,95 @@ validate_task = PythonOperator(
     python_callable=validate_csv_and_insert,
     dag=dag,
 )
+
 validate_task
+
+
+# from airflow import DAG
+# from airflow.operators.python_operator import PythonOperator
+# from datetime import datetime
+# from airflow.hooks.base_hook import BaseHook
+# from sqlalchemy import create_engine
+# import csv
+# import requests
+# from pydantic import BaseModel, ValidationError
+
+# # Snowflake connection ID and DAG configuration
+# SNOWFLAKE_CONN_ID = 'sf_sc'
+# DAG_OWNER = 'airflow'
+# # DAG_START_DATE = datetime(2023, 9, 7)
+# DAG_SCHEDULE_INTERVAL = None
+# DAG_CATCHUP = False
+
+
+# default_args = {
+#     'owner': DAG_OWNER,
+#     'start_date': datetime(2023, 9, 7),
+#     'retries': 1,
+#     'catchup': True,
+# }
+
+# dag = DAG(
+#     'charishma_csv_dag',
+#     default_args=default_args,
+#     schedule_interval=DAG_SCHEDULE_INTERVAL,
+#     catchup=DAG_CATCHUP,
+# )
+
+# # Define the Pydantic model for CSV data at the module level
+# class CSVRecord(BaseModel):
+#     NAME: str
+#     EMAIL: str
+#     SSN: int
+
+# def validate_csv_and_insert():
+#     # Snowflake connection using the connection ID
+#     snowflake_conn = BaseHook.get_connection(SNOWFLAKE_CONN_ID)
+
+#     # Construct the Snowflake SQLAlchemy engine URL
+#     engine_url = f'snowflake://{snowflake_conn.login}:{snowflake_conn.password}@{snowflake_conn.host}/{snowflake_conn.schema}?warehouse={snowflake_conn.extra_dejson["warehouse"]}&database={snowflake_conn.extra_dejson["database"]}&account={snowflake_conn.extra_dejson["account"]}'
+
+#     # Create the SQLAlchemy engine using the engine URL
+#     engine = create_engine(engine_url)
+
+#     # Input CSV file URL
+#     csv_url = 'https://github.com/jcharishma/my.repo/blob/master/sample_csv.csv?plain=1'
+
+#     # Download the CSV file
+#     response = requests.get(csv_url)
+#     if response.status_code == 200:
+#         # Process the downloaded CSV content
+#         csv_content = response.text
+#         csv_lines = csv_content.split('\n')
+#         csvreader = csv.DictReader(csv_lines)
+#         for row in csvreader:
+#             try:
+#                 record = CSVRecord(**row)
+#                 engine.execute("""
+#                     INSERT INTO SAMPLE_CSV (NAME, EMAIL, SSN)
+#                     VALUES (%s, %s, %s)
+#                 """, (record.NAME, record.EMAIL, record.SSN))
+#             except ValidationError as e:
+#                 for error in e.errors():
+#                     field_name = error.get('loc')[-1]
+#                     error_msg = error.get('msg')
+#                     print(f"Error in {field_name}: {error_msg}")
+#             except Exception as e:
+#                 engine.execute("""
+#                     INSERT INTO ERROR_LOG (NAME, EMAIL, SSN, Error_message)
+#                     VALUES (%s, %s, %s, %s)
+#                 """, (row['NAME'], row['EMAIL'], row['SSN'], str(e)))
+#                 print(f"Error: {str(e)}")
+#     else:
+#         print(f"Failed to download CSV file from URL: {csv_url}")
+
+# # Define the task
+# validate_task = PythonOperator(
+#     task_id='validate_csv_and_insert',
+#     python_callable=validate_csv_and_insert,
+#     dag=dag,
+# )
+# validate_task
 
 
 
