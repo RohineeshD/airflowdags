@@ -4,7 +4,6 @@ from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
 from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
 from datetime import datetime
 import requests
-import re
 from pydantic import BaseModel, ValidationError
 import snowflake.connector
 
@@ -122,7 +121,7 @@ default_args = {
     'owner': 'airflow',
     'start_date': datetime(2023, 9, 7),
     'retries': 1,
-    'catchup': True,
+    'catchup': False,
 }
 
 # Create the DAG
@@ -149,6 +148,7 @@ validate_task = PythonOperator(
 
 # Set task dependencies
 read_file_task >> validate_task
+
 
 
 
