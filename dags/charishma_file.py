@@ -41,7 +41,6 @@ class CSVRecord(BaseModel):
             raise ValueError("SSN length should be 4 digits")
         return ssn
 
-# Task 2: Validate and load data
 def validate_and_load_data():
     csv_url = 'https://raw.githubusercontent.com/jcharishma/my.repo/master/sample_csv.csv'
 
@@ -51,13 +50,13 @@ def validate_and_load_data():
         csv_lines = csv_content.split('\n')
         header = None
 
-        # Establish Snowflake connection 
+        # Establish Snowflake connection
         conn = snowflake.connector.connect(
-            connection_name=SNOWFLAKE_CONN_ID  
+            connection_name=SNOWFLAKE_CONN_ID
         )
 
         cursor = conn.cursor()
-        
+
         for line in csv_lines:
             line = line.strip()
             if not line:
@@ -68,12 +67,7 @@ def validate_and_load_data():
 
             row = line.split()
             if len(row) != len(header):
-                # Handle invalid CSV format by inserting a record into the ERROR_LOG table
-                error_message = 'Invalid CSV format'
-                insert_error_sql = f"INSERT INTO ERROR_LOG (NAME, EMAIL, SSN, ERROR_MESSAGE) VALUES ('{row[0]}', '{row[1]}', '{row[2]}', '{error_message}')"
-                cursor.execute(insert_error_sql)
-                conn.commit()
-                continue
+                continue 
 
             try:
                 record = CSVRecord(NAME=row[0], EMAIL=row[1], SSN=row[2])
@@ -83,16 +77,24 @@ def validate_and_load_data():
                     cursor.execute(insert_sql)
                     conn.commit()
                 else:
-                    # Handle invalid SSN length by inserting a record into the ERROR_LOG table
+                    # inserting  record into the ERROR_LOG table
                     error_message = 'Invalid SSN length should be 4 digits'
                     insert_error_sql = f"INSERT INTO ERROR_LOG (NAME, EMAIL, SSN, ERROR_MESSAGE) VALUES ('{record.NAME}', '{record.EMAIL}', '{record.SSN}', '{error_message}')"
                     cursor.execute(insert_error_sql)
                     conn.commit()
+            except ValidationError as e:
+                for error in e.errors():
+                    field_name = error.get('loc')[-1]
+                    error_msg = error.get('msg')
+                    # error message
+                    print(f"Validation Error for {field_name}: {error_msg}")
             except Exception as e:
                 print(f"Error: {str(e)}")
 
+        # Close Snowflake connection
         cursor.close()
         conn.close()
+
 
 validate_load_task = PythonOperator(
     task_id='validate_and_load_data',
