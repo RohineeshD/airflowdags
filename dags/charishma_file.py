@@ -5,7 +5,6 @@ from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
 from datetime import datetime
 import requests
 import csv
-import re
 from pydantic import BaseModel, ValidationError
 
 # Create a function to establish the Snowflake connection using SnowflakeHook
@@ -35,14 +34,6 @@ def read_file_and_display_data():
     else:
         raise Exception(f"Failed to fetch CSV: Status Code {response.status_code}")
 
-
-
-
-
-import csv
-
-# ...
-
 # Task to validate and load data using Pydantic
 def validate_and_load_data():
     snowflake_conn = create_snowflake_connection()
@@ -69,7 +60,7 @@ def validate_and_load_data():
                 insert_error_task = SnowflakeOperator(
                     task_id='insert_into_error_log',
                     sql=f"""
-                        INSERT INTO ERROR_LOG (NAME, EMAIL, SSN, ERROR_MESSAGE)
+                        INSERT INTO ERROR_LOG (name, email, SSN, Error_message)
                         VALUES ('{row[0]}', '{row[1]}', '{row[2]}', 'Invalid CSV format')
                     """,
                     snowflake_conn_id="snow_sc",  # Connection ID defined in Airflow
@@ -79,13 +70,13 @@ def validate_and_load_data():
                 continue
 
             try:
-                record = CSVRecord(NAME=row[0], EMAIL=row[1], SSN=row[2].replace(',', ''))  # Remove commas from SSN
+                record = CSVRecord(NAME=row[0], EMAIL=row[1], SSN=row[2])
                 if len(record.SSN) == 4:
                     # Insert into SAMPLE_CSV table
                     insert_task = SnowflakeOperator(
                         task_id='insert_into_sample_csv',
                         sql=f"""
-                            INSERT INTO SAMPLE_CSV (NAME, EMAIL, SSN)
+                            INSERT INTO SAMPLE_CSV (name, email, SSN)
                             VALUES ('{record.NAME}', '{record.EMAIL}', '{record.SSN}')
                         """,
                         snowflake_conn_id="snow_sc",  # Connection ID defined in Airflow
@@ -97,7 +88,7 @@ def validate_and_load_data():
                     insert_error_task = SnowflakeOperator(
                         task_id='insert_into_error_log',
                         sql=f"""
-                            INSERT INTO ERROR_LOG (NAME, EMAIL, SSN, ERROR_MESSAGE)
+                            INSERT INTO ERROR_LOG (name, email, SSN, Error_message)
                             VALUES ('{record.NAME}', '{record.EMAIL}', '{record.SSN}', 'Invalid SSN length should be 4 digits')
                         """,
                         snowflake_conn_id="snow_sc",  # Connection ID defined in Airflow
@@ -113,7 +104,7 @@ def validate_and_load_data():
                     insert_error_task = SnowflakeOperator(
                         task_id='insert_into_error_log',
                         sql=f"""
-                            INSERT INTO ERROR_LOG (NAME, EMAIL, SSN, ERROR_MESSAGE)
+                            INSERT INTO ERROR_LOG (name, email, SSN, Error_message)
                             VALUES ('{row[0]}', '{row[1]}', '{row[2]}', '{error_msg}')
                         """,
                         snowflake_conn_id="snow_sc",  # Connection ID defined in Airflow
@@ -157,6 +148,7 @@ validate_task = PythonOperator(
 
 # Set task dependencies
 read_file_task >> validate_task
+
 
 
 # ...
