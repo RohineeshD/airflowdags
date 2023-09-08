@@ -119,7 +119,7 @@ validate_task = PythonOperator(
 # Set task dependencies
 read_file_task >> validate_task
 
-
+# one rcrd
 # from airflow import DAG
 # from airflow.operators.python_operator import PythonOperator
 # from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
@@ -173,17 +173,31 @@ read_file_task >> validate_task
 #             try:
 #                 record = CSVRecord(**row)
 
-#                 # Use SnowflakeOperator to insert data into Snowflake
-#                 insert_task = SnowflakeOperator(
-#                     task_id='insert_into_sample_csv',
-#                     sql=f"""
-#                         INSERT INTO SAMPLE_CSV (NAME, EMAIL, SSN)
-#                         VALUES ('{record.NAME}', '{record.EMAIL}', '{record.SSN}')
-#                     """,
-#                     snowflake_conn_id="snow_sc",  # Connection ID defined in Airflow
-#                     dag=dag,
-#                 )
-#                 insert_task.execute(snowflake_conn)
+#                 # Check if SSN has more than 4 digits
+#                 if len(record.SSN) > 4:
+#                     # Insert into ERROR_LOG table
+#                     insert_error_task = SnowflakeOperator(
+#                         task_id='insert_into_error_log',
+#                         sql=f"""
+#                             INSERT INTO ERROR_TABLE (NAME, EMAIL, SSN, ERROR_MESSAGE)
+#                             VALUES ('{record.NAME}', '{record.EMAIL}', '{record.SSN}', 'Invalid SSN length should not be more than 4 digits')
+#                         """,
+#                         snowflake_conn_id="snow_sc",  # Connection ID defined in Airflow
+#                         dag=dag,
+#                     )
+#                     insert_error_task.execute(snowflake_conn)
+#                 else:
+#                     # Insert into SAMPLE_CSV table
+#                     insert_task = SnowflakeOperator(
+#                         task_id='insert_into_sample_csv',
+#                         sql=f"""
+#                             INSERT INTO CSV_FILE (NAME, EMAIL, SSN)
+#                             VALUES ('{record.NAME}', '{record.EMAIL}', '{record.SSN}')
+#                         """,
+#                         snowflake_conn_id="snow_sc",  # Connection ID defined in Airflow
+#                         dag=dag,
+#                     )
+#                     insert_task.execute(snowflake_conn)
 #             except ValidationError as e:
 #                 for error in e.errors():
 #                     field_name = error.get('loc')[-1]
@@ -226,6 +240,9 @@ read_file_task >> validate_task
 
 # # Set task dependencies
 # read_file_task >> validate_task
+
+
+
 
 
 
