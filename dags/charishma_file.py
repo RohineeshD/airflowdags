@@ -91,14 +91,14 @@ def validate_and_load_data():
                 else:
                     # Handle invalid SSN length by inserting a record into the ERROR_LOG table
                     error_message = 'Invalid SSN length should be 4 digits'
-                    insert_error_task = SnowflakeToSnowflakeOperator(
+                    insert_error_task = SnowflakeOperator(
                         task_id='insert_into_error_log',
                         sql=f"INSERT INTO ERROR_LOG (NAME, EMAIL, SSN, ERROR_MESSAGE) VALUES (%s, %s, %s, %s)",
-                        parameters=(record.NAME, record.EMAIL, record.SSN, error_message),
-                        snowflake_source_conn_id=SNOWFLAKE_CONN_ID,
-                        snowflake_destination_conn_id=SNOWFLAKE_CONN_ID,
+                        parameters=(row[0], row[1], row[2], 'Invalid CSV format'),
+                        snowflake_conn_id=SNOWFLAKE_CONN_ID, 
                         dag=dag,
                     )
+
                     insert_error_task.execute()
             except ValidationError as e:
                 for error in e.errors():
