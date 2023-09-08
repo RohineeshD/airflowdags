@@ -52,9 +52,9 @@ def validate_and_load_data():
         header = None
 
         # Establish Snowflake connection 
-       conn = snowflake.connector.connect(
-    connection_name=SNOWFLAKE_CONN_ID  
-)
+        conn = snowflake.connector.connect(
+            connection_name=SNOWFLAKE_CONN_ID  
+        )
 
         cursor = conn.cursor()
         
