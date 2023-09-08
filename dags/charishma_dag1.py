@@ -115,9 +115,7 @@ read_file_task = PythonOperator(
 validate_and_load_task = PythonOperator(
     task_id='validate_and_load_data',
     python_callable=validate_and_load_data,
-    provide_context=True,
-    op_args=[],
-    op_kwargs={},
+    provide_context=True,  # Add this line to provide context
     dag=dag,
 )
 
