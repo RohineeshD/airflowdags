@@ -3,6 +3,7 @@ from airflow.operators.python import PythonOperator
 import requests
 import pandas as pd
 from datetime import datetime
+from pydantic import BaseModel, ValidationError, validator 
 
 # Snowflake connection ID
 SNOWFLAKE_CONN_ID = 'snow_sc'
