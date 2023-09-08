@@ -1,119 +1,179 @@
-import requests
-from snowflake.connector import SnowflakeConnection, ProgrammingError
+
 from airflow import DAG
-from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
 from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
+from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
 from airflow.operators.python_operator import PythonOperator
-from airflow.operators.python import ShortCircuitOperator
 from airflow.utils.dates import days_ago
-from datetime import datetime
-import requests
 import pandas as pd
-import os
-import io
 
-# Define default_args for the DAG
-default_args = {
-    'owner': 'airflow',
-    'start_date': days_ago(1),
-    'schedule_interval': None,
-    'catchup': False
-}
-
+# Define your DAG
 dag = DAG(
-    'load_snowflake',
-    default_args=default_args,
-    description='Load CSV data into Snowflake',
+    'load_csv_to_snowflake',
+    start_date=days_ago(1),
+    schedule_interval=None,
     catchup=False
 )
 
-table_name ='traditional_insert'
+# Define Snowflake connection ID from Airflow's Connection UI
+snowflake_conn_id = 'snowflake_conn'  
 
-snowflake_conn_id ='air_conn'
+# Define Snowflake target table
+snowflake_table = 'bulk_table'
 
-csv_url = "https://media.githubusercontent.com/media/datablist/sample-csv-files/main/files/customers/customers-100000.csv"
+# Define the CSV URL
+csv_url = 'https://media.githubusercontent.com/media/datablist/sample-csv-files/main/files/customers/customers-100000.csv'
 
-def insert_data_to_snowflake(table_name, snowflake_conn_id, csv_url):
+# Function to load CSV data into Snowflake
+def load_csv_to_snowflake():
     try:
-        response = requests.get(csv_url)
+        # Establish a Snowflake connection using SnowflakeHook
+        snowflake_hook = SnowflakeHook(snowflake_conn_id=snowflake_conn_id)
+        conn = snowflake_hook.get_conn()
 
-        if response.status_code == 200:
-            data = response.text
-            lines = data.strip().split('\n')[1:]
-            snowflake_hook = SnowflakeHook(snowflake_conn_id=snowflake_conn_id)
+        # Read the CSV file into a Pandas DataFrame
+        df = pd.read_csv(csv_url)
 
-            # Truncate the table before loading new data
-            truncate_query = f"TRUNCATE TABLE {table_name}"
-            snowflake_hook.run(truncate_query)
+        # Create SQLAlchemy engine from Snowflake connection
+        engine = conn.cursor().connection
+        engine.connect()
 
-            # Create a Snowflake connection
-            # conn = snowflake_hook.get_conn()
+        # Snowflake COPY INTO command using Pandas DataFrame
+        # with conn:
+        #     with conn.cursor() as cursor:
+        #         cursor.execute(f"TRUNCATE TABLE {snowflake_table}")  # Optionally truncate table
+        df.to_sql(snowflake_table, conn, if_exists='append', index=False)
 
-            # # Create a cursor
-            # cursor = conn.cursor()
-
-            for line in lines:
-                values = line.split(',')
-                if len(values) >= 13:
-                     # Remove double quotes from values
-                    values = [v.strip('"').strip() for v in values]
-                    # params = tuple(values)  # Convert values to a tuple
-                    query = f"""
-                        INSERT INTO {table_name} (Index, CustomerId, FirstName, LastName, Company, City, Country, Phone1, Phone2, Email, SubscriptionDate, Website)
-                        
-                        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
-                        
-                    """
-                    # query = """
-                    #     INSERT INTO table_name (Index, CustomerId, FirstName, LastName, Company, City, Country, Phone1, Phone2, Email, SubscriptionDate,Website)
-                    #     VALUES ('{0}', '{1}', '{2}', '{3}', '{4}', '{5}', '{6}', '{7}', '{8}', '{9}', '{10}')
-                    #     """.format(values[1], values[2], values[3], values[4], values[5], values[6], values[8], values[9], values[10], values[11], values[12])
-                
-                    
-                    # Execute the query with parameter binding
-                    # snowflake_hook.run(query, values[1], values[2], values[3], values[4], values[5], values[6], values[8], values[9], values[10], values[11], values[12])
-                    # cursor.execute(query, *values[1:13])
-                    params = tuple(values[1:13])
-                    # Execute the query with parameter binding
-                    # snowflake_hook.run(query, tuple(values[1:]))
-                    # snowflake_hook.run(query, parameters=(
-                    #         values[0], values[1], values[2], values[3], values[4], values[5],
-                    #         values[6], values[7], values[7], values[9], values[10], values[11]
-                    #     )
-                    # )
-                    # Assuming that values[0] corresponds to Index, values[1] corresponds to CustomerId, and so on...
-                    # params = (
-                    #             values[0], values[1], values[2], values[3], values[4], values[5],
-                    #             values[6], values[7], values[8], values[9], values[10], values[11]
-                    # )
-                    snowflake_hook.run(query, parameters=params)
-                    # snowflake_hook.run(query, parameters=params)
-                else:
-                    print("Not enough elements in the 'values' list.")
-                    continue
-                    print("Skipping row with insufficient columns.")
-
-            # Commit the transaction
-            # conn.commit()
-
-            print("Data loaded into Snowflake successfully.")
-        else:
-            raise Exception(f"Failed to fetch data from URL. Status code: {response.status_code}")
+        print("Data loaded successfully")
+        return True
     except Exception as e:
-        print(f"An error occurred: {str(e)}")
+        print("Data loading failed -", str(e))
+        return False
 
-# Usage example
-insert_data_to_snowflake("table_name", "snowflake_conn_id", "csv_url")
-
-insert_data_task = PythonOperator(
-    task_id='load_data_task',
-    python_callable=insert_data_to_snowflake,
-    op_args=[table_name, snowflake_conn_id, csv_url],
-    provide_context=True,
-    dag=dag,
+# Task to call the load_csv_to_snowflake function
+load_csv_task = PythonOperator(
+    task_id='load_csv_to_snowflake_task',
+    python_callable=load_csv_to_snowflake,
+    dag=dag
 )
 
-insert_data_task
+load_csv_task
+
+# import requests
+# from snowflake.connector import SnowflakeConnection, ProgrammingError
+# from airflow import DAG
+# from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
+# from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
+# from airflow.operators.python_operator import PythonOperator
+# from airflow.operators.python import ShortCircuitOperator
+# from airflow.utils.dates import days_ago
+# from datetime import datetime
+# import requests
+# import pandas as pd
+# import os
+# import io
+
+# # Define default_args for the DAG
+# default_args = {
+#     'owner': 'airflow',
+#     'start_date': days_ago(1),
+#     'schedule_interval': None,
+#     'catchup': False
+# }
+
+# dag = DAG(
+#     'load_snowflake',
+#     default_args=default_args,
+#     description='Load CSV data into Snowflake',
+#     catchup=False
+# )
+
+# table_name ='traditional_insert'
+
+# snowflake_conn_id ='air_conn'
+
+# csv_url = "https://media.githubusercontent.com/media/datablist/sample-csv-files/main/files/customers/customers-100000.csv"
+
+# def insert_data_to_snowflake(table_name, snowflake_conn_id, csv_url):
+#     try:
+#         response = requests.get(csv_url)
+
+#         if response.status_code == 200:
+#             data = response.text
+#             lines = data.strip().split('\n')[1:]
+#             snowflake_hook = SnowflakeHook(snowflake_conn_id=snowflake_conn_id)
+
+#             # Truncate the table before loading new data
+#             truncate_query = f"TRUNCATE TABLE {table_name}"
+#             snowflake_hook.run(truncate_query)
+
+#             # Create a Snowflake connection
+#             # conn = snowflake_hook.get_conn()
+
+#             # # Create a cursor
+#             # cursor = conn.cursor()
+
+#             for line in lines:
+#                 values = line.split(',')
+#                 if len(values) >= 13:
+#                      # Remove double quotes from values
+#                     values = [v.strip('"').strip() for v in values]
+#                     # params = tuple(values)  # Convert values to a tuple
+#                     query = f"""
+#                         INSERT INTO {table_name} (Index, CustomerId, FirstName, LastName, Company, City, Country, Phone1, Phone2, Email, SubscriptionDate, Website)
+                        
+#                         VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                        
+#                     """
+#                     # query = """
+#                     #     INSERT INTO table_name (Index, CustomerId, FirstName, LastName, Company, City, Country, Phone1, Phone2, Email, SubscriptionDate,Website)
+#                     #     VALUES ('{0}', '{1}', '{2}', '{3}', '{4}', '{5}', '{6}', '{7}', '{8}', '{9}', '{10}')
+#                     #     """.format(values[1], values[2], values[3], values[4], values[5], values[6], values[8], values[9], values[10], values[11], values[12])
+                
+                    
+#                     # Execute the query with parameter binding
+#                     # snowflake_hook.run(query, values[1], values[2], values[3], values[4], values[5], values[6], values[8], values[9], values[10], values[11], values[12])
+#                     # cursor.execute(query, *values[1:13])
+#                     params = tuple(values[1:13])
+#                     # Execute the query with parameter binding
+#                     # snowflake_hook.run(query, tuple(values[1:]))
+#                     # snowflake_hook.run(query, parameters=(
+#                     #         values[0], values[1], values[2], values[3], values[4], values[5],
+#                     #         values[6], values[7], values[7], values[9], values[10], values[11]
+#                     #     )
+#                     # )
+#                     # Assuming that values[0] corresponds to Index, values[1] corresponds to CustomerId, and so on...
+#                     # params = (
+#                     #             values[0], values[1], values[2], values[3], values[4], values[5],
+#                     #             values[6], values[7], values[8], values[9], values[10], values[11]
+#                     # )
+#                     snowflake_hook.run(query, parameters=params)
+#                     # snowflake_hook.run(query, parameters=params)
+#                 else:
+#                     print("Not enough elements in the 'values' list.")
+#                     continue
+#                     print("Skipping row with insufficient columns.")
+
+#             # Commit the transaction
+#             # conn.commit()
+
+#             print("Data loaded into Snowflake successfully.")
+#         else:
+#             raise Exception(f"Failed to fetch data from URL. Status code: {response.status_code}")
+#     except Exception as e:
+#         print(f"An error occurred: {str(e)}")
+
+# # Usage example
+# insert_data_to_snowflake("table_name", "snowflake_conn_id", "csv_url")
+
+# insert_data_task = PythonOperator(
+#     task_id='load_data_task',
+#     python_callable=insert_data_to_snowflake,
+#     op_args=[table_name, snowflake_conn_id, csv_url],
+#     provide_context=True,
+#     dag=dag,
+# )
+
+# insert_data_task
 
 # ===========================below not working===============================================
 # import requests
