@@ -1,4 +1,6 @@
 from airflow import DAG
+from airflow.providers.http.sensors.http import HttpSensor
+from airflow.providers.http.transfers.http import HttpDownloadFile
 from airflow.operators.python_operator import PythonOperator
 from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
 from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
@@ -6,10 +8,11 @@ from datetime import datetime
 import requests
 import csv
 from pydantic import BaseModel, ValidationError
+from airflow.models import Variable
 
 # Create a function to establish the Snowflake connection using SnowflakeHook
 def create_snowflake_connection():
-    hook = SnowflakeHook(snowflake_conn_id="snow_sc")  
+    hook = SnowflakeHook(snowflake_conn_id="snow_sc")
     conn = hook.get_conn()
     return conn
 
@@ -19,74 +22,70 @@ class CSVRecord(BaseModel):
     EMAIL: str
     SSN: str
 
-# Task to read file from provided URL and display data
-def read_file_and_display_data():
+# Task to read file from provided URL and save it locally
+def download_file():
     # Input CSV file URL
     csv_url = 'https://raw.githubusercontent.com/jcharishma/my.repo/master/sample_csv.csv'
-
-    # Fetch CSV data from the URL
+    local_file_path = '/tmp/sample_csv.csv'
+    
     response = requests.get(csv_url)
     if response.status_code == 200:
-        csv_content = response.text
-        print("CSV Data:")
-        print(csv_content)
-        return csv_content
+        with open(local_file_path, 'w') as local_file:
+            local_file.write(response.text)
+        return local_file_path
     else:
         raise Exception(f"Failed to fetch CSV: Status Code {response.status_code}")
 
 # Task to validate and load data using Pydantic
-def validate_and_load_data():
+def validate_and_load_data(local_file_path):
     snowflake_conn = create_snowflake_connection()
+    
+    with open(local_file_path, 'r') as local_file:
+        csv_lines = local_file.readlines()
+    
+    # Remove the header line
+    csv_lines.pop(0)
 
-    # Input CSV file URL
-    csv_url = 'https://raw.githubusercontent.com/jcharishma/my.repo/master/sample_csv.csv'
+    for line in csv_lines:
+        row = line.strip().split('\t')
+        try:
+            # Clean up the SSN field to remove commas
+            ssn = row[2].replace(",", "")
 
-    # Fetch CSV data from the URL
-    response = requests.get(csv_url)
-    if response.status_code == 200:
-        csv_content = response.text
-        csv_lines = csv_content.split('\n')
-        csvreader = csv.reader(csv_lines, delimiter='\t')  # Use tab as the delimiter
-        next(csvreader)  # Skip the header row
-        for row in csvreader:
-            try:
-                # Clean up the SSN field to remove commas
-                ssn = row[2].replace(",", "")
+            record = CSVRecord(NAME=row[0], EMAIL=row[1], SSN=ssn)
 
-                record = CSVRecord(NAME=row[0], EMAIL=row[1], SSN=ssn)
-
-                # Check if SSN has more than 4 digits
-                if len(record.SSN) > 4:
-                    # Insert into ERROR_LOG table
-                    insert_error_task = SnowflakeOperator(
-                        task_id='insert_into_error_log',
-                        sql=f"""
-                            INSERT INTO ERROR_LOG (NAME, EMAIL, SSN, ERROR_MESSAGE)
-                            VALUES ('{record.NAME}', '{record.EMAIL}', '{record.SSN}', 'Invalid SSN length should not be more than 4 digits')
-                        """,
-                        snowflake_conn_id="snow_sc",  # Connection ID defined in Airflow
-                        dag=dag,
-                    )
-                    insert_error_task.execute(snowflake_conn)
-                else:
-                    # Insert into SAMPLE_CSV table
-                    insert_task = SnowflakeOperator(
-                        task_id='insert_into_sample_csv',
-                        sql=f"""
-                            INSERT INTO SAMPLE_CSV (NAME, EMAIL, SSN)
-                            VALUES ('{record.NAME}', '{record.EMAIL}', '{record.SSN}')
-                        """,
-                        snowflake_conn_id="snow_sc",  # Connection ID defined in Airflow
-                        dag=dag,
-                    )
-                    insert_task.execute(snowflake_conn)
-            except ValidationError as e:
-                for error in e.errors():
-                    field_name = error.get('loc')[-1]
-                    error_msg = error.get('msg')
-                    print(f"Error in {field_name}: {error_msg}")
-            except Exception as e:
-                print(f"Error: {str(e)}")
+            # Check if SSN has more than 4 digits
+            if len(record.SSN) <= 4:
+                # Insert into SAMPLE_CSV table
+                insert_task = SnowflakeOperator(
+                    task_id='insert_into_sample_csv',
+                    sql=f"""
+                        INSERT INTO SAMPLE_CSV (NAME, EMAIL, SSN)
+                        VALUES ('{record.NAME}', '{record.EMAIL}', '{record.SSN}')
+                    """,
+                    snowflake_conn_id="snow_sc",  # Connection ID defined in Airflow
+                    dag=dag,
+                )
+                insert_task.execute(snowflake_conn)
+            else:
+                # Insert into ERROR_LOG table
+                insert_error_task = SnowflakeOperator(
+                    task_id='insert_into_error_log',
+                    sql=f"""
+                        INSERT INTO ERROR_LOG (NAME, EMAIL, SSN, ERROR_MESSAGE)
+                        VALUES ('{record.NAME}', '{record.EMAIL}', '{record.SSN}', 'Invalid SSN length should not be more than 4 digits')
+                    """,
+                    snowflake_conn_id="snow_sc",  # Connection ID defined in Airflow
+                    dag=dag,
+                )
+                insert_error_task.execute(snowflake_conn)
+        except ValidationError as e:
+            for error in e.errors():
+                field_name = error.get('loc')[-1]
+                error_msg = error.get('msg')
+                print(f"Error in {field_name}: {error_msg}")
+        except Exception as e:
+            print(f"Error: {str(e)}")
 
     snowflake_conn.close()
 
@@ -106,10 +105,10 @@ dag = DAG(
     catchup=False,
 )
 
-# Task to read file from provided URL and display data
-read_file_task = PythonOperator(
-    task_id='read_file_and_display_data',
-    python_callable=read_file_and_display_data,
+# Task to download the CSV file from the provided URL
+download_file_task = PythonOperator(
+    task_id='download_file',
+    python_callable=download_file,
     dag=dag,
 )
 
@@ -117,11 +116,13 @@ read_file_task = PythonOperator(
 validate_task = PythonOperator(
     task_id='validate_and_load_data',
     python_callable=validate_and_load_data,
+    op_args=['/tmp/sample_csv.csv'],  # Pass the local file path as an argument
     dag=dag,
 )
 
 # Set task dependencies
-read_file_task >> validate_task
+download_file_task >> validate_task
+
 
 
 # # Task to validate and load data using Pydantic
