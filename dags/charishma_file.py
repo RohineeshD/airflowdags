@@ -7,16 +7,6 @@ import requests
 import csv
 from pydantic import BaseModel, ValidationError
 
-# # Define Snowflake connection credentials
-# snowflake_credentials = {
-#     "account": "https://hzciyrm-kj91758.snowflakecomputing.com",
-#     "warehouse": "COMPUTE_WH",
-#     "database": "DEMO",
-#     "schema": "SC1",
-#     "username": "CJ",
-#     "password": "Cherry@2468"
-# }
-
 # Create a function to establish the Snowflake connection using SnowflakeHook
 def create_snowflake_connection():
     hook = SnowflakeHook(snowflake_conn_id="snow_sc")  
@@ -114,6 +104,125 @@ validate_task = PythonOperator(
 
 # Set task dependencies
 read_file_task >> validate_task
+
+
+
+# from airflow import DAG
+# from airflow.operators.python_operator import PythonOperator
+# from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
+# from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
+# from datetime import datetime
+# import requests
+# import csv
+# from pydantic import BaseModel, ValidationError
+
+# # # Define Snowflake connection credentials
+# # snowflake_credentials = {
+# #     "account": "https://hzciyrm-kj91758.snowflakecomputing.com",
+# #     "warehouse": "COMPUTE_WH",
+# #     "database": "DEMO",
+# #     "schema": "SC1",
+# #     "username": "CJ",
+# #     "password": "Cherry@2468"
+# # }
+
+# # Create a function to establish the Snowflake connection using SnowflakeHook
+# def create_snowflake_connection():
+#     hook = SnowflakeHook(snowflake_conn_id="snow_sc")  
+#     conn = hook.get_conn()
+#     return conn
+
+# # Define the Pydantic model for CSV data
+# class CSVRecord(BaseModel):
+#     NAME: str
+#     EMAIL: str
+#     SSN: str
+
+# # Task to read file from provided URL and display data
+# def read_file_and_display_data():
+#     # Input CSV file URL
+#     csv_url = 'https://raw.githubusercontent.com/jcharishma/my.repo/master/sample_csv.csv'
+
+#     # Fetch CSV data from the URL
+#     response = requests.get(csv_url)
+#     if response.status_code == 200:
+#         csv_content = response.text
+#         print("CSV Data:")
+#         print(csv_content)
+#         return csv_content
+#     else:
+#         raise Exception(f"Failed to fetch CSV: Status Code {response.status_code}")
+
+# # Task to validate and load data using Pydantic
+# def validate_and_load_data():
+#     snowflake_conn = create_snowflake_connection()
+
+#     # Input CSV file URL
+#     csv_url = 'https://raw.githubusercontent.com/jcharishma/my.repo/master/sample_csv.csv'
+
+#     # Fetch CSV data from the URL
+#     response = requests.get(csv_url)
+#     if response.status_code == 200:
+#         csv_content = response.text
+#         csv_lines = csv_content.split('\n')
+#         csvreader = csv.DictReader(csv_lines)
+#         for row in csvreader:
+#             try:
+#                 record = CSVRecord(**row)
+
+#                 # Use SnowflakeOperator to insert data into Snowflake
+#                 insert_task = SnowflakeOperator(
+#                     task_id='insert_into_sample_csv',
+#                     sql=f"""
+#                         INSERT INTO SAMPLE_CSV (NAME, EMAIL, SSN)
+#                         VALUES ('{record.NAME}', '{record.EMAIL}', '{record.SSN}')
+#                     """,
+#                     snowflake_conn_id="snow_sc",  # Connection ID defined in Airflow
+#                     dag=dag,
+#                 )
+#                 insert_task.execute(snowflake_conn)
+#             except ValidationError as e:
+#                 for error in e.errors():
+#                     field_name = error.get('loc')[-1]
+#                     error_msg = error.get('msg')
+#                     print(f"Error in {field_name}: {error_msg}")
+#             except Exception as e:
+#                 print(f"Error: {str(e)}")
+
+#     snowflake_conn.close()
+
+# # Airflow default arguments
+# default_args = {
+#     'owner': 'airflow',
+#     'start_date': datetime(2023, 9, 7),
+#     'retries': 1,
+#     'catchup': True,
+# }
+
+# # Create the DAG
+# dag = DAG(
+#     'csv_dag',
+#     default_args=default_args,
+#     schedule_interval=None,
+#     catchup=False,
+# )
+
+# # Task to read file from provided URL and display data
+# read_file_task = PythonOperator(
+#     task_id='read_file_and_display_data',
+#     python_callable=read_file_and_display_data,
+#     dag=dag,
+# )
+
+# # Task to validate and load data using Pydantic
+# validate_task = PythonOperator(
+#     task_id='validate_and_load_data',
+#     python_callable=validate_and_load_data,
+#     dag=dag,
+# )
+
+# # Set task dependencies
+# read_file_task >> validate_task
 
 
 
