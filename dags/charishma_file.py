@@ -34,6 +34,8 @@ def read_file_and_display_data():
     else:
         raise Exception(f"Failed to fetch CSV: Status Code {response.status_code}")
 
+# ...
+
 # Task to validate and load data using Pydantic
 def validate_and_load_data():
     snowflake_conn = create_snowflake_connection()
@@ -46,11 +48,14 @@ def validate_and_load_data():
     if response.status_code == 200:
         csv_content = response.text
         csv_lines = csv_content.split('\n')
-        csvreader = csv.reader(csv_lines, delimiter=',')  # Use csv.reader to properly parse CSV
+        csvreader = csv.reader(csv_lines, delimiter='\t')  # Use tab as the delimiter
         next(csvreader)  # Skip the header row
         for row in csvreader:
             try:
-                record = CSVRecord(NAME=row[0], EMAIL=row[1], SSN=row[2])
+                # Clean up the SSN field to remove commas
+                ssn = row[2].replace(",", "")
+
+                record = CSVRecord(NAME=row[0], EMAIL=row[1], SSN=ssn)
 
                 # Check if SSN has more than 4 digits
                 if len(record.SSN) > 4:
@@ -87,57 +92,6 @@ def validate_and_load_data():
 
     snowflake_conn.close()
 
-# # Task to validate and load data using Pydantic
-# def validate_and_load_data():
-#     snowflake_conn = create_snowflake_connection()
-
-#     # Input CSV file URL
-#     csv_url = 'https://raw.githubusercontent.com/jcharishma/my.repo/master/sample_csv.csv'
-
-#     # Fetch CSV data from the URL
-#     response = requests.get(csv_url)
-#     if response.status_code == 200:
-#         csv_content = response.text
-#         csv_lines = csv_content.split('\n')
-#         csvreader = csv.DictReader(csv_lines)
-#         for row in csvreader:
-#             try:
-#                 record = CSVRecord(**row)
-
-#                 # Check if SSN has more than 4 digits
-#                 if len(record.SSN) > 4:
-#                     # Insert into ERROR_LOG table
-#                     insert_error_task = SnowflakeOperator(
-#                         task_id='insert_into_error_log',
-#                         sql=f"""
-#                             INSERT INTO ERROR_LOG (NAME, EMAIL, SSN, ERROR_MESSAGE)
-#                             VALUES ('{record.NAME}', '{record.EMAIL}', '{record.SSN}', 'Invalid SSN length should not be more than 4 digits')
-#                         """,
-#                         snowflake_conn_id="snow_sc",  # Connection ID defined in Airflow
-#                         dag=dag,
-#                     )
-#                     insert_error_task.execute(snowflake_conn)
-#                 else:
-#                     # Insert into SAMPLE_CSV table
-#                     insert_task = SnowflakeOperator(
-#                         task_id='insert_into_sample_csv',
-#                         sql=f"""
-#                             INSERT INTO SAMPLE_CSV (NAME, EMAIL, SSN)
-#                             VALUES ('{record.NAME}', '{record.EMAIL}', '{record.SSN}')
-#                         """,
-#                         snowflake_conn_id="snow_sc",  # Connection ID defined in Airflow
-#                         dag=dag,
-#                     )
-#                     insert_task.execute(snowflake_conn)
-#             except ValidationError as e:
-#                 for error in e.errors():
-#                     field_name = error.get('loc')[-1]
-#                     error_msg = error.get('msg')
-#                     print(f"Error in {field_name}: {error_msg}")
-#             except Exception as e:
-#                 print(f"Error: {str(e)}")
-
-#     snowflake_conn.close()
 
 # Airflow default arguments
 default_args = {
