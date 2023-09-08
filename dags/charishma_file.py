@@ -4,8 +4,7 @@ from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
 from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
 from datetime import datetime
 import requests
-from pydantic import BaseModel, ValidationError
-import snowflake.connector
+from pydantic import BaseModel, ValidationError, constr
 
 # Create a function to establish the Snowflake connection using SnowflakeHook
 def create_snowflake_connection():
@@ -15,9 +14,12 @@ def create_snowflake_connection():
 
 # Define the Pydantic model for CSV data
 class CSVRecord(BaseModel):
-    NAME: str
-    EMAIL: str
-    SSN: str
+    NAME: constr(strip_whitespace=True, min_length=1)
+    EMAIL: constr(strip_whitespace=True, min_length=1, regex=r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$')
+    SSN: constr(
+        strip_whitespace=True,
+        regex=r'^\d{4}$',  # Check for exactly 4 digits
+    )
 
 # Function to bulk insert valid records into SAMPLE_CSV
 def insert_valid_records(records, snowflake_conn):
@@ -96,7 +98,7 @@ def validate_and_load_data():
                 continue
 
             try:
-                record = CSVRecord(NAME=row[0], EMAIL=row[1], SSN=row[2].replace(',', ''))  # Remove commas from SSN
+                record = CSVRecord(NAME=row[0], EMAIL=row[1], SSN=row[2])
                 record_dict = record.dict()
                 valid_records.append((record_dict['NAME'], record_dict['EMAIL'], record_dict['SSN']))
             except ValidationError as e:
@@ -121,7 +123,7 @@ default_args = {
     'owner': 'airflow',
     'start_date': datetime(2023, 9, 7),
     'retries': 1,
-    'catchup': False,
+    'catchup': True,
 }
 
 # Create the DAG
@@ -148,6 +150,7 @@ validate_task = PythonOperator(
 
 # Set task dependencies
 read_file_task >> validate_task
+
 
 
 
