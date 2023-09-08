@@ -7,7 +7,7 @@ import pandas as pd
 
 # Define the default_args for the DAG
 default_args = {
-    'owner': 'your_name',
+    'owner': 'airflow',
     'start_date': days_ago(1),
     'retries': 1,
 }
@@ -21,7 +21,7 @@ class CSVRecord(BaseModel):
 
 # Define the DAG
 with DAG(
-    'csv_to_snowflake',
+    'csv_dag',
     default_args=default_args,
     schedule_interval=None,  # You can adjust the schedule as needed
     catchup=False,
