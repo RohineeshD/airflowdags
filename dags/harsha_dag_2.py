@@ -4,8 +4,7 @@ from airflow.operators.python_operator import PythonOperator
 import pandas as pd
 from sqlalchemy import create_engine
 import requests
-import os
-import io
+import io  # Import the io module for StringIO
 
 # Snowflake connection parameters
 snowflake_conn_id = 'air_conn'  # Make sure to create this connection in Airflow
@@ -30,7 +29,7 @@ def download_csv_and_load_to_snowflake():
         response.raise_for_status()
 
         # Read the CSV data from the response content into a pandas DataFrame
-        csv_data = pd.read_csv(pd.compat.StringIO(response.text))
+        csv_data = pd.read_csv(io.StringIO(response.text))  # Use io.StringIO
 
         # Create a Snowflake connection using SQLAlchemy
         # Replace 'your_snowflake_username' with your actual Snowflake username
@@ -52,6 +51,7 @@ download_and_load_task = PythonOperator(
 
 # Set task dependencies (no need for an HTTP sensor)
 download_and_load_task
+
 
 
 
