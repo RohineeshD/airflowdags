@@ -1,11 +1,12 @@
 from datetime import datetime
 from airflow import DAG
+from airflow.providers.http.transfers.http_to_local import HttpToLocalFilesystemOperator
 from airflow.operators.python_operator import PythonOperator
 import pandas as pd
 from sqlalchemy import create_engine
 
 # Snowflake connection parameters
-snowflake_conn_id = 'air_conn'
+snowflake_conn_id = 'air_conn'  # Make sure to create this connection in Airflow
 snowflake_schema = 'exusia_schema'
 snowflake_table = 'is_sql_table'
 
@@ -14,18 +15,28 @@ csv_url = 'https://media.githubusercontent.com/media/datablist/sample-csv-files/
 
 # Airflow DAG configuration
 dag = DAG(
-    'load_csv_from_url_to_snowflake',
-    start_date=datetime(2023, 1, 1),
-    schedule_interval=None,  # Set your desired schedule interval
-    catchup=False,
+   'load_csv_from_url_to_snowflake',
+   start_date=datetime(2023, 1, 1),
+   schedule_interval=None,  # Set your desired schedule interval
+   catchup=False,
+)
+
+# Task to download CSV file from URL
+download_csv = HttpToLocalFilesystemOperator(
+   task_id='download_csv_from_url',
+   http_conn_id='http_default',  # Create an HTTP connection in Airflow
+   endpoint=csv_url,
+   save_to='/tmp/customers.csv',  # Save the downloaded file to a temporary location
+   dag=dag,
 )
 
 def load_csv_to_snowflake():
     # Read the CSV data from the URL into a pandas DataFrame
-    csv_data = pd.read_csv(csv_url)
+    csv_data = pd.read_csv('/tmp/customers.csv')
 
     # Create a Snowflake connection using SQLAlchemy
-    snowflake_engine = create_engine(f'snowflake://{snowflake_conn_id}')
+    # Replace 'your_snowflake_username' with your actual Snowflake username
+    snowflake_engine = create_engine(f'snowflake://{snowflake_conn_id}?username=harsha')
 
     # Insert data into the Snowflake table using SQLAlchemy
     csv_data.to_sql(name=snowflake_table, con=snowflake_engine, schema=snowflake_schema, if_exists='replace', index=False)
@@ -38,7 +49,7 @@ load_csv_task = PythonOperator(
 )
 
 # Set task dependencies
-load_csv_task
+download_csv >> load_csv_task
 
 # from airflow import DAG
 # from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
