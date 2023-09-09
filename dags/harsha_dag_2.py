@@ -4,11 +4,12 @@ from airflow.operators.python_operator import PythonOperator
 import pandas as pd
 from sqlalchemy import create_engine
 import requests
-import io  # Import the io module for StringIO
+import io
+
+# Snowflake connection URL
+snowflake_conn_url = "snowflake://{harsha}:{Rama@342}@{https://app.snowflake.com/smdjtrh/gc37630/w3xPDq9SaW27#query}/{exusia_db}/{exusia_schema}"
 
 # Snowflake connection parameters
-snowflake_conn_id = 'air_conn'  # Make sure to create this connection in Airflow
-snowflake_schema = 'exusia_schema'
 snowflake_table = 'is_sql_table'
 
 # URL to the CSV file
@@ -32,11 +33,10 @@ def download_csv_and_load_to_snowflake():
         csv_data = pd.read_csv(io.StringIO(response.text))  # Use io.StringIO
 
         # Create a Snowflake connection using SQLAlchemy
-        # Replace 'your_snowflake_username' with your actual Snowflake username
-        snowflake_engine = create_engine(f'snowflake://{snowflake_conn_id}?username=harsha')
+        snowflake_engine = create_engine(snowflake_conn_url)
 
         # Insert data into the Snowflake table using SQLAlchemy
-        csv_data.to_sql(name=snowflake_table, con=snowflake_engine, schema=snowflake_schema, if_exists='replace', index=False)
+        csv_data.to_sql(name=snowflake_table, con=snowflake_engine, if_exists='replace', index=False)
 
     except Exception as e:
         # Handle the download or insertion error here
