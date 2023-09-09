@@ -6,6 +6,8 @@ from sqlalchemy import create_engine
 import requests
 import io
 
+# Snowflake account's URL
+snowflake_account_url = "https://smdjtrh-gc37630.snowflakecomputing.com"
 # Snowflake connection URL
 snowflake_conn_url = "snowflake://{harsha}:{Rama@342}@{https://app.snowflake.com/smdjtrh/gc37630/w3xPDq9SaW27#query}/{exusia_db}/{exusia_schema}"
 
