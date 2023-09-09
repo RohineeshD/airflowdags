@@ -15,10 +15,10 @@ dag = DAG(
 )
 
 # Define Snowflake connection ID from Airflow's Connection UI
-snowflake_conn_id = 'snowflake_conn'  
+snowflake_conn_id = 'air_conn'  
 
 # Define Snowflake target table
-snowflake_table = 'bulk_table'
+snowflake_table = 'is_sql_table'
 
 # Define the CSV URL
 csv_url = 'https://media.githubusercontent.com/media/datablist/sample-csv-files/main/files/customers/customers-100000.csv'
