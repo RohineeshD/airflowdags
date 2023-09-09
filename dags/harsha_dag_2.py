@@ -1,6 +1,5 @@
 from datetime import datetime
 from airflow import DAG
-from airflow.sensors.http_sensor import HttpSensor
 from airflow.operators.python_operator import PythonOperator
 import pandas as pd
 from sqlalchemy import create_engine
@@ -16,17 +15,18 @@ csv_url = 'https://media.githubusercontent.com/media/datablist/sample-csv-files/
 
 # Airflow DAG configuration
 dag = DAG(
-   'load_csv_from_url_to_snowflake',
-   start_date=datetime(2023, 1, 1),
-   schedule_interval=None,  # Set your desired schedule interval
-   catchup=False,
+    'load_csv_from_url_to_snowflake',
+    start_date=datetime(2023, 1, 1),
+    schedule_interval=None,  # Set your desired schedule interval
+    catchup=False,
 )
 
 def download_csv_and_load_to_snowflake():
-    # Make an HTTP request to download the CSV file
-    response = requests.get(csv_url)
+    try:
+        # Attempt to download the CSV file
+        response = requests.get(csv_url)
+        response.raise_for_status()
 
-    if response.status_code == 200:
         # Read the CSV data from the response content into a pandas DataFrame
         csv_data = pd.read_csv(pd.compat.StringIO(response.text))
 
@@ -37,18 +37,9 @@ def download_csv_and_load_to_snowflake():
         # Insert data into the Snowflake table using SQLAlchemy
         csv_data.to_sql(name=snowflake_table, con=snowflake_engine, schema=snowflake_schema, if_exists='replace', index=False)
 
-# Task to check if the CSV file is available for download
-check_csv_sensor = HttpSensor(
-    task_id='check_csv_sensor',
-    http_conn_id='http_default',
-    endpoint=csv_url,
-    request_params={},
-    response_check=lambda response: response.status_code == 200,
-    mode='poke',
-    timeout=600,  # Adjust timeout as needed
-    poke_interval=60,  # Adjust poke interval as needed
-    dag=dag,
-)
+    except Exception as e:
+        # Handle the download or insertion error here
+        raise e
 
 # Task to download the CSV file and load it into Snowflake
 download_and_load_task = PythonOperator(
@@ -57,8 +48,9 @@ download_and_load_task = PythonOperator(
     dag=dag,
 )
 
-# Set task dependencies
-check_csv_sensor >> download_and_load_task
+# Set task dependencies (no need for an HTTP sensor)
+download_and_load_task
+
 
 
 # from airflow import DAG
