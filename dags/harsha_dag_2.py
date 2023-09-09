@@ -6,6 +6,8 @@ from sqlalchemy import create_engine
 import requests
 import io
 
+
+snowflake_conn_id = 'air_conn'
 # Snowflake account's URL
 snowflake_account_url = "https://smdjtrh-gc37630.snowflakecomputing.com"
 # Snowflake connection URL
