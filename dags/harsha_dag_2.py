@@ -4,6 +4,8 @@ from airflow.operators.python_operator import PythonOperator
 import pandas as pd
 from sqlalchemy import create_engine
 import requests
+import os
+import io
 
 # Snowflake connection parameters
 snowflake_conn_id = 'air_conn'  # Make sure to create this connection in Airflow
