@@ -6,6 +6,10 @@ from sqlalchemy import create_engine
 import requests
 import io
 
+# Snowflake connection parameters
+
+snowflake_database = 'exusia_db'
+snowflake_schema = 'exusia_schema'
 
 snowflake_conn_id = 'air_conn'
 # Snowflake account's URL
