@@ -1,10 +1,10 @@
 from datetime import datetime
 from airflow import DAG
-from airflow.providers.http.transfers.http_to_local import HttpToLocalFilesystemOperator
+from airflow.sensors.http_sensor import HttpSensor
 from airflow.operators.python_operator import PythonOperator
 import pandas as pd
 from sqlalchemy import create_engine
-from airflow.sensors.http_sensor import HttpSensor
+import requests
 
 # Snowflake connection parameters
 snowflake_conn_id = 'air_conn'  # Make sure to create this connection in Airflow
@@ -22,35 +22,44 @@ dag = DAG(
    catchup=False,
 )
 
-# Task to download CSV file from URL
-download_csv = HttpToLocalFilesystemOperator(
-   task_id='download_csv_from_url',
-   http_conn_id='http_default',  # Create an HTTP connection in Airflow
-   endpoint=csv_url,
-   save_to='/tmp/customers.csv',  # Save the downloaded file to a temporary location
-   dag=dag,
+def download_csv_and_load_to_snowflake():
+    # Make an HTTP request to download the CSV file
+    response = requests.get(csv_url)
+
+    if response.status_code == 200:
+        # Read the CSV data from the response content into a pandas DataFrame
+        csv_data = pd.read_csv(pd.compat.StringIO(response.text))
+
+        # Create a Snowflake connection using SQLAlchemy
+        # Replace 'your_snowflake_username' with your actual Snowflake username
+        snowflake_engine = create_engine(f'snowflake://{snowflake_conn_id}?username=harsha')
+
+        # Insert data into the Snowflake table using SQLAlchemy
+        csv_data.to_sql(name=snowflake_table, con=snowflake_engine, schema=snowflake_schema, if_exists='replace', index=False)
+
+# Task to check if the CSV file is available for download
+check_csv_sensor = HttpSensor(
+    task_id='check_csv_sensor',
+    http_conn_id='http_default',
+    endpoint=csv_url,
+    request_params={},
+    response_check=lambda response: response.status_code == 200,
+    mode='poke',
+    timeout=600,  # Adjust timeout as needed
+    poke_interval=60,  # Adjust poke interval as needed
+    dag=dag,
 )
 
-def load_csv_to_snowflake():
-    # Read the CSV data from the URL into a pandas DataFrame
-    csv_data = pd.read_csv('/tmp/customers.csv')
-
-    # Create a Snowflake connection using SQLAlchemy
-    # Replace 'your_snowflake_username' with your actual Snowflake username
-    snowflake_engine = create_engine(f'snowflake://{snowflake_conn_id}?username=harsha')
-
-    # Insert data into the Snowflake table using SQLAlchemy
-    csv_data.to_sql(name=snowflake_table, con=snowflake_engine, schema=snowflake_schema, if_exists='replace', index=False)
-
-# Task to load CSV data into Snowflake
-load_csv_task = PythonOperator(
-    task_id='load_csv_to_snowflake',
-    python_callable=load_csv_to_snowflake,
+# Task to download the CSV file and load it into Snowflake
+download_and_load_task = PythonOperator(
+    task_id='download_and_load_csv',
+    python_callable=download_csv_and_load_to_snowflake,
     dag=dag,
 )
 
 # Set task dependencies
-download_csv >> load_csv_task
+check_csv_sensor >> download_and_load_task
+
 
 # from airflow import DAG
 # from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
