@@ -8,10 +8,11 @@ import io
 
 # Snowflake account's URL
 snowflake_account_url = "https://smdjtrh-gc37630.snowflakecomputing.com"
-# Snowflake connection URL
-snowflake_conn_url = "snowflake://{harsha}:{Rama@342}@{snowflake_account_url}/{exusia_db}/{exusia_schema}"
 
 # Snowflake connection parameters
+snowflake_conn_id = 'air_conn'  # Make sure to create this connection in Airflow
+snowflake_database = 'exusia_db'
+snowflake_schema = 'exusia_schema'
 snowflake_table = 'is_sql_table'
 
 # URL to the CSV file
@@ -35,6 +36,7 @@ def download_csv_and_load_to_snowflake():
         csv_data = pd.read_csv(io.StringIO(response.text))  # Use io.StringIO
 
         # Create a Snowflake connection using SQLAlchemy
+        snowflake_conn_url = f"snowflake://{snowflake_conn_id}?username=harsha&password=Rama@342&account={snowflake_account_url}&warehouse=COMPUTE_WH&database={snowflake_database}&schema={snowflake_schema}"
         snowflake_engine = create_engine(snowflake_conn_url)
 
         # Insert data into the Snowflake table using SQLAlchemy
