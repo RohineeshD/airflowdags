@@ -4,6 +4,7 @@ from airflow.providers.http.transfers.http_to_local import HttpToLocalFilesystem
 from airflow.operators.python_operator import PythonOperator
 import pandas as pd
 from sqlalchemy import create_engine
+from airflow.sensors.http_sensor import HttpSensor
 
 # Snowflake connection parameters
 snowflake_conn_id = 'air_conn'  # Make sure to create this connection in Airflow
