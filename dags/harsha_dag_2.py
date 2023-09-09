@@ -9,7 +9,7 @@ import io
 # Snowflake account's URL
 snowflake_account_url = "https://smdjtrh-gc37630.snowflakecomputing.com"
 # Snowflake connection URL
-snowflake_conn_url = "snowflake://{harsha}:{Rama@342}@{https://app.snowflake.com/smdjtrh/gc37630/w3xPDq9SaW27#query}/{exusia_db}/{exusia_schema}"
+snowflake_conn_url = "snowflake://{harsha}:{Rama@342}@{snowflake_account_url}/{exusia_db}/{exusia_schema}"
 
 # Snowflake connection parameters
 snowflake_table = 'is_sql_table'
