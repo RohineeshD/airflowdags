@@ -22,11 +22,11 @@ def download_csv_and_load_to_snowflake():
         csv_url = "https://media.githubusercontent.com/media/datablist/sample-csv-files/main/files/customers/customers-100000.csv"
 
         # Create the Snowflake connection URL
-        user = 'harsha'
-        account = 'https://smdjtrh-gc37630.snowflakecomputing.com'
-        warehouse = 'compute_wh'
-        database = 'exusia_db'
-        schema = 'exusia_schema'
+        user = "harsha"
+        account = "https://smdjtrh-gc37630.snowflakecomputing.com"
+        warehouse = "compute_wh"
+        database = "exusia_db"
+        schema = "exusia_schema"
 
         connection_url = URL(
             user=user,
