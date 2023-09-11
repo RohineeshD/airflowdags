@@ -31,7 +31,7 @@ def download_csv_and_load_to_snowflake():
 
         # Create a Snowflake connection using SQLAlchemy and the connection URL
         snowflake_engine = create_engine(URL(
-            account='https://smdjtrh-gc37630.snowflakecomputing.com',
+            account='smdjtrh-gc37630.snowflakecomputing.com',
             user='harsha',
             password='Rama@342',
             database='exusia_db',
