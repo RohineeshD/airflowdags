@@ -10,7 +10,6 @@ import os
 from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from your_database_module import SampleCSV, ErrorLog 
 # Define the DAG
 dag = DAG(
     'csv_dag',
