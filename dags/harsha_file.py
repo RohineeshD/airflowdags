@@ -1,74 +1,74 @@
-from airflow import DAG
-from airflow.operators.python_operator import PythonOperator
-from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
-from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
-from airflow.operators.python import ShortCircuitOperator
-from airflow.utils.dates import days_ago
-from airflow.models import Variable
-import os
-import requests
+# from airflow import DAG
+# from airflow.operators.python_operator import PythonOperator
+# from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
+# from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
+# from airflow.operators.python import ShortCircuitOperator
+# from airflow.utils.dates import days_ago
+# from airflow.models import Variable
+# import os
+# import requests
 
-default_args = {
-    'owner': 'airflow',
-    'start_date': days_ago(1),
-    'catchup': False,
-    'provide_context': True,
-}
+# default_args = {
+#     'owner': 'airflow',
+#     'start_date': days_ago(1),
+#     'catchup': False,
+#     'provide_context': True,
+# }
 
-dag = DAG(
-    'harsha_dags',
-    default_args=default_args,
-    schedule_interval=None,
-)
-
-
-# def check_environment_variable():
-
-#    env_value = Variable.get('harsha_air_env')
-#    if (bool(env_value)):
-#        print (True)
-#    else:
-#        print (False)
-
-# task_1 = PythonOperator(
-#     task_id='check_env_variable',
-#     python_callable=check_environment_variable,
-#     provide_context=True,
-#     dag=dag,
+# dag = DAG(
+#     'harsha_dags',
+#     default_args=default_args,
+#     schedule_interval=None,
 # )
 
 
-def load_data_to_snowflake(**kwargs):
-    url = "https://raw.githubusercontent.com/fivethirtyeight/data/master/airline-safety/airline-safety.csv"
-    response = requests.get(url)
+# # def check_environment_variable():
+
+# #    env_value = Variable.get('harsha_air_env')
+# #    if (bool(env_value)):
+# #        print (True)
+# #    else:
+# #        print (False)
+
+# # task_1 = PythonOperator(
+# #     task_id='check_env_variable',
+# #     python_callable=check_environment_variable,
+# #     provide_context=True,
+# #     dag=dag,
+# # )
+
+
+# def load_data_to_snowflake(**kwargs):
+#     url = "https://raw.githubusercontent.com/fivethirtyeight/data/master/airline-safety/airline-safety.csv"
+#     response = requests.get(url)
     
-    if response.status_code == 200:
-        data = response.text
-        lines = data.strip().split('\n')[1:]
-        snowflake_hook = SnowflakeHook(snowflake_conn_id="air_conn")
+#     if response.status_code == 200:
+#         data = response.text
+#         lines = data.strip().split('\n')[1:]
+#         snowflake_hook = SnowflakeHook(snowflake_conn_id="air_conn")
 
-        # Truncate the table before loading new data
-        truncate_query = "TRUNCATE TABLE airflow_tasks"
-        snowflake_hook.run(truncate_query)
+#         # Truncate the table before loading new data
+#         truncate_query = "TRUNCATE TABLE airflow_tasks"
+#         snowflake_hook.run(truncate_query)
         
-        for line in lines:
-            values = line.split(',')
-            query = f"""
-                INSERT INTO airflow_tasks (airline, avail_seat_km_per_week, incidents_85_99, fatal_accidents_85_99, fatalities_85_99, incidents_00_14, fatal_accidents_00_14, fatalities_00_14)
-                VALUES ('{values[0]}', '{values[1]}', '{values[2]}', '{values[3]}', '{values[4]}', '{values[5]}', '{values[6]}', '{values[7]}')
-            """
-            snowflake_hook.run(query)
+#         for line in lines:
+#             values = line.split(',')
+#             query = f"""
+#                 INSERT INTO airflow_tasks (airline, avail_seat_km_per_week, incidents_85_99, fatal_accidents_85_99, fatalities_85_99, incidents_00_14, fatal_accidents_00_14, fatalities_00_14)
+#                 VALUES ('{values[0]}', '{values[1]}', '{values[2]}', '{values[3]}', '{values[4]}', '{values[5]}', '{values[6]}', '{values[7]}')
+#             """
+#             snowflake_hook.run(query)
             
-        print("Data loaded into Snowflake successfully.")
-    else:
-        raise Exception(f"Failed to fetch data from URL. Status code: {response.status_code}")
+#         print("Data loaded into Snowflake successfully.")
+#     else:
+#         raise Exception(f"Failed to fetch data from URL. Status code: {response.status_code}")
 
-task_2 = PythonOperator(
-    task_id='load_data_task',
-    python_callable=load_data_to_snowflake,
-    provide_context=True,
-    dag=dag,
-)
+# task_2 = PythonOperator(
+#     task_id='load_data_task',
+#     python_callable=load_data_to_snowflake,
+#     provide_context=True,
+#     dag=dag,
+# )
 
 # the function is getting records from table graterthan 698012498
 
@@ -863,34 +863,36 @@ task_2 = PythonOperator(
 
 
 
-# from airflow import DAG
-# from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
-# from datetime import datetime
+from airflow import DAG
+from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
+from datetime import datetime
 
-# default_args = {
-#     'owner': 'airflow',
-#     'start_date': datetime(2023, 1, 1),
-#     'retries': 1,
-# }
+default_args = {
+    'owner': 'airflow',
+    'start_date': datetime(2023, 1, 1),
+    'retries': 1,
+}
 
-# dag = DAG(
-#     'harsha_dag',  
-#     default_args=default_args,
-#     schedule_interval='@once',
-#     catchup=False,
-# )
+dag = DAG(
+    'harsha_dag',  
+    default_args=default_args,
+    schedule_interval='@once',
+    catchup=False,
+)
 
-# sql_query = """
-# SELECT * FROM patients WHERE status = 'Recovered'
-# """
+sql_query = """
+SELECT * FROM patients WHERE status = 'Recovered'
+"""
 
-# snowflake_task = SnowflakeOperator(
-#     task_id='execute_snowflake_query',
-#     sql=sql_query,
-#     snowflake_conn_id='snowflake_conn',
-#     autocommit=True,
-#     dag=dag,
-# )
+snowflake_task = SnowflakeOperator(
+    task_id='execute_snowflake_query',
+    sql=sql_query,
+    snowflake_conn_id='air_conn',
+    autocommit=True,
+    dag=dag,
+)
+
+snowflake_task
 
 # from airflow import DAG
 # from datetime import datetime, timedelta
