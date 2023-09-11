@@ -3,8 +3,12 @@ from airflow.operators.python import PythonOperator
 from pydantic import BaseModel, ValidationError, validator
 from datetime import datetime
 import requests
+import json
+import snowflake.connector
+import pandas as pd
 import os
 from airflow.providers.snowflake.transfers.s3_to_snowflake import S3ToSnowflakeOperator
+from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
 
 # Define the DAG
 dag = DAG(
@@ -12,6 +16,18 @@ dag = DAG(
     start_date=datetime(2023, 1, 1),
     schedule_interval=None,
     catchup=False,
+)
+
+# Task 1: Read and display the CSV file from the URL
+def read_and_display_csv():
+    csv_url = 'https://github.com/jcharishma/my.repo/raw/master/sample_csv.csv'
+    df = pd.read_csv(csv_url)
+    print(df)
+
+read_file_task = PythonOperator(
+    task_id='read_file',
+    python_callable=read_and_display_csv,
+    dag=dag,
 )
 
 # Pydantic model for CSV records
@@ -36,11 +52,9 @@ def validate_and_load_data(**kwargs):
         csv_lines = csv_content.split('\n')
         header = None
 
-        # Load Snowflake credentials from Airflow connection
-        snowflake_conn_id = "snow_sc" 
-        snowflake_hook = SnowflakeHook(snowflake_conn_id=snowflake_conn_id)
+        # Use Snowflake Hook to connect to Snowflake
+        snowflake_hook = SnowflakeHook(snowflake_conn_id="snow_sc")
         conn = snowflake_hook.get_conn()
-
         cursor = conn.cursor()
 
         for line in csv_lines:
@@ -57,8 +71,8 @@ def validate_and_load_data(**kwargs):
 
             try:
                 record = CSVRecord(NAME=row[0], EMAIL=row[1], SSN=row[2])
-                insert_sql = f"INSERT INTO SAMPLE_CSV (NAME, EMAIL, SSN) VALUES (%s, %s, %s)"
-                cursor.execute(insert_sql, (record.NAME, record.EMAIL, record.SSN))
+                insert_sql = f"INSERT INTO SAMPLE_CSV (NAME, EMAIL, SSN) VALUES ('{record.NAME}', '{record.EMAIL}', '{record.SSN}')"
+                cursor.execute(insert_sql)
                 conn.commit()
             except ValidationError as e:
                 for error in e.errors():
@@ -66,8 +80,8 @@ def validate_and_load_data(**kwargs):
                     error_msg = error.get('msg')
                     print(f"Validation Error for {field_name}: {error_msg}")
                     # For invalid SSN, insert into ERROR_LOG table
-                    insert_error_sql = f"INSERT INTO ERROR_LOG (NAME, EMAIL, SSN, ERROR_MESSAGE) VALUES (%s, %s, %s, %s)"
-                    cursor.execute(insert_error_sql, (record.NAME, record.EMAIL, record.SSN, error_msg))
+                    insert_error_sql = f"INSERT INTO ERROR_LOG (NAME, EMAIL, SSN, ERROR_MESSAGE) VALUES ('{record.NAME}', '{record.EMAIL}', '{record.SSN}', '{error_msg}')"
+                    cursor.execute(insert_error_sql)
                     conn.commit()
             except Exception as e:
                 print(f"Error: {str(e)}")
