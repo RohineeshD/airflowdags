@@ -2,12 +2,9 @@ from datetime import datetime
 from airflow import DAG
 from airflow.operators.python_operator import PythonOperator
 import pandas as pd
-import numpy as np
 import requests
 import io
 import logging
-from airflow.hooks.base_hook import BaseHook  # Import BaseHook
-from sqlalchemy import create_engine
 from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
 
 # Airflow DAG configuration
@@ -30,19 +27,23 @@ def download_csv_and_load_to_snowflake():
         # Read the CSV data from the response content into a pandas DataFrame
         csv_data = pd.read_csv(io.StringIO(response.text))
 
-        # Get the Snowflake connection from Airflow using BaseHook
-        # snowflake_conn = BaseHook.get_connection("air_conn")
-        snowflake_hook = SnowflakeHook(snowflake_conn_id="air_conn")
+        # Initialize the SnowflakeHook
+        snowflake_hook = SnowflakeHook(snowflake_conn_id="snowflake_conn")  # Use your Snowflake connection ID here
 
-        # Create a Snowflake connection using SQLAlchemy and the connection URL
-        # snowflake_engine = create_engine(snowflake_conn.get_uri())
-
-        # Snowflake table
+        # Snowflake table name
         snowflake_table = 'is_sql_table'
-        engine = snowflake_hook.get_sqlalchemy_engine()
 
-        # Insert data into the Snowflake table using SQLAlchemy
-        csv_data.to_sql(name=snowflake_table, con=engine, if_exists='replace', index=False)
+        # Create the Snowflake table if it doesn't exist
+        snowflake_hook.run(f"CREATE OR REPLACE TABLE {snowflake_table} (your_table_schema_here)")
+
+        # Define the batch size for insertion
+        batch_size = 1000
+
+        # Split the data into batches and insert into Snowflake
+        for i in range(0, len(csv_data), batch_size):
+            batch = csv_data[i:i+batch_size]
+            engine = snowflake_hook.get_sqlalchemy_engine()
+            batch.to_sql(name=snowflake_table, con=engine, if_exists='append', index=False)
 
         logging.info('CSV data successfully loaded into Snowflake.')
 
@@ -58,8 +59,72 @@ download_and_load_task = PythonOperator(
     dag=dag,
 )
 
-# Set task dependencies 
+# Set task dependencies
 download_and_load_task
+
+
+# from datetime import datetime
+# from airflow import DAG
+# from airflow.operators.python_operator import PythonOperator
+# import pandas as pd
+# import numpy as np
+# import requests
+# import io
+# import logging
+# from airflow.hooks.base_hook import BaseHook  
+# from sqlalchemy import create_engine
+# from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
+
+# # Airflow DAG configuration
+# dag = DAG(
+#     'load_csv_from_url_to_snowflake',
+#     start_date=datetime(2023, 1, 1),
+#     schedule_interval=None,
+#     catchup=False,
+# )
+
+# def download_csv_and_load_to_snowflake():
+#     try:
+#         # URL to the CSV file
+#         csv_url = "https://media.githubusercontent.com/media/datablist/sample-csv-files/main/files/customers/customers-100000.csv"
+
+#         # Attempt to download the CSV file
+#         response = requests.get(csv_url)
+#         response.raise_for_status()
+
+#         # Read the CSV data from the response content into a pandas DataFrame
+#         csv_data = pd.read_csv(io.StringIO(response.text))
+
+        
+#         snowflake_hook = SnowflakeHook(snowflake_conn_id="air_conn")
+
+#         # Create a Snowflake connection using SQLAlchemy and the connection URL
+#         # snowflake_engine = create_engine(snowflake_conn.get_uri())
+
+#         # Snowflake table
+#         snowflake_table = 'is_sql_table'
+        
+#         engine = snowflake_hook.get_sqlalchemy_engine()
+
+#         # Insert data into the Snowflake table using SQLAlchemy
+#         csv_data.to_sql(name=snowflake_table, con=engine, if_exists='replace', index=False)
+
+#         logging.info('CSV data successfully loaded into Snowflake.')
+
+#     except Exception as e:
+#         # Handle the download or insertion error here
+#         logging.error(f'Error: {str(e)}')
+#         raise e
+
+# # Task to download the CSV file and load it into Snowflake
+# download_and_load_task = PythonOperator(
+#     task_id='download_and_load_csv',
+#     python_callable=download_csv_and_load_to_snowflake,
+#     dag=dag,
+# )
+
+# # Set task dependencies 
+# download_and_load_task
 
 
 # from datetime import datetime
