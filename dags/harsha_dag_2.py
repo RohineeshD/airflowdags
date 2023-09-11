@@ -15,7 +15,7 @@ password = 'Rama@342'
 
 snowflake_conn_id = 'air_conn'
 # Snowflake account's URL
-snowflake_account_url = "https://smdjtrh-gc37630.snowflakecomputing.com"
+snowflake_account_url = 'https://smdjtrh-gc37630.snowflakecomputing.com'
 # Snowflake connection URL
 # snowflake_conn_url = f"snowflake://{snowflake_conn_id}?username=harsha&password=Rama@342&account={snowflake_account_url}&warehouse=compute_wh&database={snowflake_database}&schema={snowflake_schema}"
 
