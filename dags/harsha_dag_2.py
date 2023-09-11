@@ -41,7 +41,7 @@ def download_csv_and_load_to_snowflake():
         snowflake_table = 'is_sql_table'
 
         # Insert data into the Snowflake table using SQLAlchemy
-        csv_data.to_sql(name=snowflake_table, con=snowflake_engine, if_exists='replace', index=False)
+        csv_data.to_sql(name=snowflake_table, con=SnowflakeHook, if_exists='replace', index=False)
 
         logging.info('CSV data successfully loaded into Snowflake.')
 
