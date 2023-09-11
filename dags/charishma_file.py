@@ -5,7 +5,6 @@ from datetime import datetime
 import requests
 import snowflake.connector
 import pandas as pd
-from airflow.hooks.base import BaseHook
 
 # Define the DAG
 dag = DAG(
@@ -48,9 +47,8 @@ def validate_and_load_data():
         csv_lines = csv_content.split('\n')
         header = None
 
-        
-        # Establish Snowflake connection using the connection parameters
-       snowflake_connection_params = {
+        #  Snowflake connection using the  parameters
+        snowflake_connection_params = {
             'user': 'CJ',
             'password': 'Cherry@2468',
             'account': 'HZCIYRM-KJ91758',
