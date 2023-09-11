@@ -47,11 +47,13 @@ def validate_and_load_data():
         csv_content = response.text
         csv_lines = csv_content.split('\n')
         header = None
-        
-        
+
         # Load Snowflake credentials from creds.json
         with open('C:/Users/chari/OneDrive/Desktop/creds.json', 'r') as creds_file:
-        snowflake_credentials = json.load(creds_file)
+            snowflake_credentials = json.load(creds_file)
+
+        # Establish Snowflake connection using the loaded credentials
+        conn = snowflake.connector.connect(**snowflake_credentials)
 
         
         # # Establish Snowflake connection using the loaded credentials
