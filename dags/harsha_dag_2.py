@@ -25,7 +25,7 @@ snowflake_conn_url = f"snowflake://{username}:{password}@{snowflake_account_url}
 snowflake_table = 'is_sql_table'
 
 # URL to the CSV file
-csv_url = 'https://media.githubusercontent.com/media/datablist/sample-csv-files/main/files/customers/customers-100000.csv'
+csv_url = "https://media.githubusercontent.com/media/datablist/sample-csv-files/main/files/customers/customers-100000.csv"
 
 # Airflow DAG configuration
 dag = DAG(
