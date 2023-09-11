@@ -3,6 +3,7 @@ from airflow.operators.python import PythonOperator
 from pydantic import BaseModel, ValidationError, validator
 from datetime import datetime
 import requests
+import json
 import snowflake.connector
 import pandas as pd
 
@@ -46,19 +47,27 @@ def validate_and_load_data():
         csv_content = response.text
         csv_lines = csv_content.split('\n')
         header = None
+        
+        
+        # Load Snowflake credentials from creds.json
+        with open('creds.json', 'r') as creds_file:
+            snowflake_credentials = json.load(creds_file)
+        
+        # Establish Snowflake connection using the loaded credentials
+        conn = snowflake.connector.connect(**snowflake_credentials)
 
-        #  Snowflake connection using the  parameters
-        snowflake_connection_params = {
-            'user': 'CJ',
-            'password': 'Cherry@2468',
-            'account': 'HZCIYRM-KJ91758',
-            'warehouse': 'COMPUTE_WH',
-            'database': 'DEMO',
-            'schema': 'SC1',
-        }
+        # #  Snowflake connection using the  parameters
+        # snowflake_connection_params = {
+        #     'user': 'CJ',
+        #     'password': 'Cherry@2468',
+        #     'account': 'HZCIYRM-KJ91758',
+        #     'warehouse': 'COMPUTE_WH',
+        #     'database': 'DEMO',
+        #     'schema': 'SC1',
+        # }
 
-        #  Snowflake connection using parameters
-        conn = snowflake.connector.connect(**snowflake_connection_params)
+        # #  Snowflake connection using parameters
+        # conn = snowflake.connector.connect(**snowflake_connection_params)
 
         cursor = conn.cursor()
 
@@ -67,7 +76,8 @@ def validate_and_load_data():
             if not line:
                 continue
             if not header:
-                header = line.split()
+                # header = line.split()
+                header = line.split(',')
                 continue
 
             row = line.split()
