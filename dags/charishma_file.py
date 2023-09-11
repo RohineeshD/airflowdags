@@ -54,8 +54,8 @@ def validate_and_load_data():
         snowflake_credentials = json.load(creds_file)
 
         
-        # Establish Snowflake connection using the loaded credentials
-        conn = snowflake.connector.connect(**snowflake_credentials)
+        # # Establish Snowflake connection using the loaded credentials
+        # conn = snowflake.connector.connect(**snowflake_credentials)
 
         # #  Snowflake connection using the  parameters
         # snowflake_connection_params = {
