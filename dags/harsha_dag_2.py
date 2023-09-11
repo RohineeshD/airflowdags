@@ -58,7 +58,7 @@ download_and_load_task = PythonOperator(
     dag=dag,
 )
 
-# Set task dependencies (no need for an HTTP sensor)
+# Set task dependencies 
 download_and_load_task
 
 
