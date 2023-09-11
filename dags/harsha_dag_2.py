@@ -23,7 +23,7 @@ def download_csv_and_load_to_snowflake():
 
         # Create the Snowflake connection URL
         user = "harsha"
-        account = "https://smdjtrh-gc37630.snowflakecomputing.com"
+        account = "smdjtrh-gc37630.snowflakecomputing.com"
         warehouse = "compute_wh"
         database = "exusia_db"
         schema = "exusia_schema"
