@@ -12,6 +12,7 @@ snowflake_database = 'exusia_db'
 snowflake_schema = 'exusia_schema'
 username = 'harsha'
 password = 'Rama@342'
+warehouse = 'compute_wh'
 
 snowflake_conn_id = 'air_conn'
 # Snowflake account's URL
@@ -19,7 +20,7 @@ snowflake_account_url = 'https://smdjtrh-gc37630.snowflakecomputing.com'
 # Snowflake connection URL
 # snowflake_conn_url = f"snowflake://{snowflake_conn_id}?username=harsha&password=Rama@342&account={snowflake_account_url}&warehouse=compute_wh&database={snowflake_database}&schema={snowflake_schema}"
 
-snowflake_conn_url = f"snowflake://{username}:{password}@{snowflake_account_url}/?warehouse=COMPUTE_WH&database={snowflake_database}&schema={snowflake_schema}"
+snowflake_conn_url = f"snowflake://{username}:{password}@{snowflake_account_url}/?warehouse={warehouse}&database={snowflake_database}&schema={snowflake_schema}"
 
 # Snowflake connection parameters
 snowflake_table = 'is_sql_table'
