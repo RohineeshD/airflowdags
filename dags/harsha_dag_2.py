@@ -30,10 +30,11 @@ def download_csv_and_load_to_snowflake():
         csv_data = pd.read_csv(io.StringIO(response.text))
 
         # Get the Snowflake connection from Airflow using BaseHook
-        snowflake_conn = BaseHook.get_connection("air_conn")
+        # snowflake_conn = BaseHook.get_connection("air_conn")
+        snowflake_hook = SnowflakeHook(snowflake_conn_id="air_conn")
 
         # Create a Snowflake connection using SQLAlchemy and the connection URL
-        snowflake_engine = create_engine(snowflake_conn.get_uri())
+        # snowflake_engine = create_engine(snowflake_conn.get_uri())
 
         # Snowflake table
         snowflake_table = 'is_sql_table'
