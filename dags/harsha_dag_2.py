@@ -32,7 +32,7 @@ def download_csv_and_load_to_snowflake():
         snowflake_conn = BaseHook.get_connection("air_conn")
 
         # Create a Snowflake connection using SQLAlchemy and the connection URL
-        snowflake_engine = snowflake_conn.extra_dejson
+        snowflake_engine = create_engine(snowflake_conn.get_uri())
 
         # Snowflake table
         snowflake_table = 'is_sql_table'
