@@ -7,7 +7,6 @@ import json
 import snowflake.connector
 import pandas as pd
 import os
-from airflow.providers.snowflake.transfers.s3_to_snowflake import S3ToSnowflakeOperator
 from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
