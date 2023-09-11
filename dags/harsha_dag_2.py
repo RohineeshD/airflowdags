@@ -7,6 +7,7 @@ import requests
 import io
 import logging
 from airflow.hooks.base_hook import BaseHook  # Import BaseHook
+from sqlalchemy import create_engine
 
 # Airflow DAG configuration
 dag = DAG(
