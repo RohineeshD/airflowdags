@@ -28,13 +28,13 @@ def download_csv_and_load_to_snowflake():
         csv_data = pd.read_csv(io.StringIO(response.text))
 
         # Initialize the SnowflakeHook
-        snowflake_hook = SnowflakeHook(snowflake_conn_id="snowflake_conn")  # Use your Snowflake connection ID here
+        snowflake_hook = SnowflakeHook(snowflake_conn_id="air_conn")  
 
         # Snowflake table name
         snowflake_table = 'is_sql_table'
 
-        # Create the Snowflake table if it doesn't exist
-        snowflake_hook.run(f"CREATE OR REPLACE TABLE {snowflake_table} (your_table_schema_here)")
+        # # Create the Snowflake table if it doesn't exist
+        # snowflake_hook.run(f"CREATE OR REPLACE TABLE {snowflake_table} (your_table_schema_here)")
 
         # Define the batch size for insertion
         batch_size = 1000
