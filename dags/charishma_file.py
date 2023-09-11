@@ -48,23 +48,19 @@ def validate_and_load_data():
         csv_lines = csv_content.split('\n')
         header = None
 
-        # Retrieve the Snowflake connection from Airflow environment
-        snowflake_hook = BaseHook.get_connection('snow_sc')
-        
-        # Specify your Snowflake database name and schema name
-        snowflake_database = 'DEMO'
-        snowflake_schema = 'SC1'
         
         # Establish Snowflake connection using the connection parameters
-        conn = snowflake.connector.connect(
-            user=snowflake_hook.login,
-            password=snowflake_hook.password,
-            account=snowflake_hook.host,
-            warehouse=snowflake_hook.extra_dejson.get('warehouse', ''),
-            database=snowflake_database, 
-            schema=snowflake_schema,      
-          
-        )
+       snowflake_connection_params = {
+            'user': 'CJ',
+            'password': 'Cherry@2468',
+            'account': 'HZCIYRM-KJ91758',
+            'warehouse': 'COMPUTE_WH',
+            'database': 'DEMO',
+            'schema': 'SC1',
+        }
+
+        #  Snowflake connection using parameters
+        conn = snowflake.connector.connect(**snowflake_connection_params)
 
         cursor = conn.cursor()
 
