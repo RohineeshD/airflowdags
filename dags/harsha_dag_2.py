@@ -6,6 +6,7 @@ from sqlalchemy import create_engine
 import requests
 import io
 import logging
+from snowflake.sqlalchemy import URL  # Import Snowflake URL
 
 # Airflow DAG configuration
 dag = DAG(
@@ -20,8 +21,20 @@ def download_csv_and_load_to_snowflake():
         # URL to the CSV file
         csv_url = "https://media.githubusercontent.com/media/datablist/sample-csv-files/main/files/customers/customers-100000.csv"
 
-        # Snowflake connection ID
-        snowflake_conn_id = 'air_conn'  # Reference the Snowflake connection ID
+        # Create the Snowflake connection URL
+        user = 'harsha'
+        account = 'https://smdjtrh-gc37630.snowflakecomputing.com'
+        warehouse = 'compute_wh'
+        database = 'exusia_db'
+        schema = 'exusia_schema'
+
+        connection_url = URL(
+            user=user,
+            account=account,
+            warehouse=warehouse,
+            database=database,
+            schema=schema
+        )
 
         # Attempt to download the CSV file
         response = requests.get(csv_url)
@@ -30,8 +43,8 @@ def download_csv_and_load_to_snowflake():
         # Read the CSV data from the response content into a pandas DataFrame
         csv_data = pd.read_csv(io.StringIO(response.text))
 
-        # Create a Snowflake connection using SQLAlchemy
-        snowflake_engine = create_engine(f'snowflake://{snowflake_conn_id}')
+        # Create a Snowflake connection using SQLAlchemy and the connection URL
+        snowflake_engine = create_engine(connection_url)
 
         # Snowflake table
         snowflake_table = 'is_sql_table'
