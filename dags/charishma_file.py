@@ -8,8 +8,8 @@ import snowflake.connector
 import pandas as pd
 import os
 from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+
+
 # Define the DAG
 dag = DAG(
     'csv_dag',
