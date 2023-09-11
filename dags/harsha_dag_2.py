@@ -23,16 +23,16 @@ def download_csv_and_load_to_snowflake():
         # URL to the CSV file
         csv_url = "https://media.githubusercontent.com/media/datablist/sample-csv-files/main/files/customers/customers-100000.csv"
 
-#    engine = create_engine(URL(
-#     account = 'smdjtrh-gc37630.snowflakecomputing.com',
-#     user = 'harsha',
-#     password = 'Rama@342',
-#     database = 'exusia_db',
-#     schema = 'exusia_schema',
-#     warehouse = 'compute_wh',
-#     role='accountadmin',
-#     numpy=True,
-# ))
+   engine = create_engine(URL(
+    account = 'smdjtrh-gc37630.snowflakecomputing.com',
+    user = 'harsha',
+    password = 'Rama@342',
+    database = 'exusia_db',
+    schema = 'exusia_schema',
+    warehouse = 'compute_wh',
+    role='accountadmin',
+    numpy=True,
+))
 #         # Attempt to download the CSV file
         response = requests.get(csv_url)
         response.raise_for_status()
@@ -41,16 +41,16 @@ def download_csv_and_load_to_snowflake():
         csv_data = pd.read_csv(io.StringIO(response.text))
 
         # Create a Snowflake connection using SQLAlchemy and the connection URL
-           engine = create_engine(URL(
-            account = 'smdjtrh-gc37630.snowflakecomputing.com',
-            user = 'harsha',
-            password = 'Rama@342',
-            database = 'exusia_db',
-            schema = 'exusia_schema',
-            warehouse = 'compute_wh',
-            role='accountadmin',
-            numpy=True,
-        ))
+        #    engine = create_engine(URL(
+        #     account = 'smdjtrh-gc37630.snowflakecomputing.com',
+        #     user = 'harsha',
+        #     password = 'Rama@342',
+        #     database = 'exusia_db',
+        #     schema = 'exusia_schema',
+        #     warehouse = 'compute_wh',
+        #     role='accountadmin',
+        #     numpy=True,
+        # ))
    
 
         # Snowflake table
