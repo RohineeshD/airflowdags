@@ -50,7 +50,7 @@ def download_csv_and_load_to_snowflake():
             warehouse = 'compute_wh',
             role='accountadmin',
             numpy=True,
-          ))
+        ))
    
 
         # Snowflake table
