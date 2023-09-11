@@ -6,8 +6,7 @@ import numpy as np
 import requests
 import io
 import logging
-from sqlalchemy import create_engine
-from snowflake.sqlalchemy import URL  # Import Snowflake URL
+from airflow.hooks.base_hook import BaseHook  # Import BaseHook
 
 # Airflow DAG configuration
 dag = DAG(
@@ -29,17 +28,11 @@ def download_csv_and_load_to_snowflake():
         # Read the CSV data from the response content into a pandas DataFrame
         csv_data = pd.read_csv(io.StringIO(response.text))
 
+        # Get the Snowflake connection from Airflow using BaseHook
+        snowflake_conn = BaseHook.get_connection("air_conn")
+
         # Create a Snowflake connection using SQLAlchemy and the connection URL
-        snowflake_engine = create_engine(URL(
-            account='smdjtrh-gc37630',
-            user='harsha',
-            password='Rama@342',
-            database='exusia_db',
-            schema='exusia_schema',
-            warehouse='compute_wh',
-            role='accountadmin',
-            numpy=True,
-        ))
+        snowflake_engine = snowflake_conn.extra_dejson
 
         # Snowflake table
         snowflake_table = 'is_sql_table'
@@ -63,6 +56,73 @@ download_and_load_task = PythonOperator(
 
 # Set task dependencies (no need for an HTTP sensor)
 download_and_load_task
+
+
+# from datetime import datetime
+# from airflow import DAG
+# from airflow.operators.python_operator import PythonOperator
+# import pandas as pd
+# import numpy as np
+# import requests
+# import io
+# import logging
+# from sqlalchemy import create_engine
+# from snowflake.sqlalchemy import URL  # Import Snowflake URL
+
+# # Airflow DAG configuration
+# dag = DAG(
+#     'load_csv_from_url_to_snowflake',
+#     start_date=datetime(2023, 1, 1),
+#     schedule_interval=None,
+#     catchup=False,
+# )
+
+# def download_csv_and_load_to_snowflake():
+#     try:
+#         # URL to the CSV file
+#         csv_url = "https://media.githubusercontent.com/media/datablist/sample-csv-files/main/files/customers/customers-100000.csv"
+
+#         # Attempt to download the CSV file
+#         response = requests.get(csv_url)
+#         response.raise_for_status()
+
+#         # Read the CSV data from the response content into a pandas DataFrame
+#         csv_data = pd.read_csv(io.StringIO(response.text))
+
+#         # Create a Snowflake connection using SQLAlchemy and the connection URL
+#         snowflake_engine = create_engine(URL(
+#             account='smdjtrh-gc37630',
+#             user='harsha',
+#             password='Rama@342',
+#             database='exusia_db',
+#             schema='exusia_schema',
+#             warehouse='compute_wh',
+#             role='accountadmin',
+#             numpy=True,
+#         ))
+
+#         # Snowflake table
+#         snowflake_table = 'is_sql_table'
+
+#         # Insert data into the Snowflake table using SQLAlchemy
+#         csv_data.to_sql(name=snowflake_table, con=snowflake_engine, if_exists='replace', index=False)
+
+#         logging.info('CSV data successfully loaded into Snowflake.')
+
+#     except Exception as e:
+#         # Handle the download or insertion error here
+#         logging.error(f'Error: {str(e)}')
+#         raise e
+
+# # Task to download the CSV file and load it into Snowflake
+# download_and_load_task = PythonOperator(
+#     task_id='download_and_load_csv',
+#     python_callable=download_csv_and_load_to_snowflake,
+#     dag=dag,
+# )
+
+# # Set task dependencies (no need for an HTTP sensor)
+# download_and_load_task
 
 
 
