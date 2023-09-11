@@ -101,6 +101,7 @@ validate_load_task = PythonOperator(
 read_file_task >> validate_load_task
 
 
+
 # data not loading
 # from airflow import DAG
 # from airflow.operators.python import PythonOperator
