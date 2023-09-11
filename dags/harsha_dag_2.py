@@ -8,6 +8,7 @@ import io
 import logging
 from airflow.hooks.base_hook import BaseHook  # Import BaseHook
 from sqlalchemy import create_engine
+from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
 
 # Airflow DAG configuration
 dag = DAG(
