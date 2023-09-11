@@ -36,13 +36,13 @@ class CSVRecord(BaseModel):
     EMAIL: str
     SSN: str
 
-    @validator('SSN')
-    def validate_ssn_length(cls, ssn):
+    @validator('SSN')  #validator function 
+    def validate_ssn_length(cls, ssn):  #CSVRecord class
         if len(ssn) != 4:
             raise ValueError("Invalid SSN length should not be more than 4 digits")
         return ssn
         
-# Function to validate and load data from a CSV URL
+# validate and load data from URL
 def validate_and_load_data(**kwargs):
     csv_url = 'https://raw.githubusercontent.com/jcharishma/my.repo/master/sample_csv.csv'
 
@@ -52,7 +52,7 @@ def validate_and_load_data(**kwargs):
         csv_lines = csv_content.split('\n')
         header = None
 
-        # Use Snowflake Hook to connect to Snowflake
+        #  Snowflake connection 
         snowflake_hook = SnowflakeHook(snowflake_conn_id="snow_sc")
         conn = snowflake_hook.get_conn()
         cursor = conn.cursor()
@@ -79,14 +79,14 @@ def validate_and_load_data(**kwargs):
                     field_name = error.get('loc')[-1]
                     error_msg = error.get('msg')
                     print(f"Validation Error for {field_name}: {error_msg}")
-                    # For invalid SSN, insert into ERROR_LOG table within the try block
+                    # For invalid SSN, insert into ERROR_LOG table
                     insert_error_sql = f"INSERT INTO ERROR_LOG (NAME, EMAIL, SSN, ERROR_MESSAGE) VALUES ('{row[0]}', '{row[1]}', '{row[2]}', '{error_msg}')"
                     cursor.execute(insert_error_sql)
                     conn.commit()
             except Exception as e:
                 print(f"Error: {str(e)}")
 
-        # Close Snowflake connection
+        # Close connection
         cursor.close()
         conn.close()
 
@@ -98,7 +98,7 @@ validate_load_task = PythonOperator(
     dag=dag,
 )
 
-# Set task dependencies
+
 read_file_task >> validate_load_task
 
 
