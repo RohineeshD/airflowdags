@@ -7,6 +7,7 @@ import json
 import snowflake.connector
 import pandas as pd
 import os
+import math
 from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
 
 # Define the DAG
@@ -33,12 +34,12 @@ read_file_task = PythonOperator(
 class CSVRecord(BaseModel):
     NAME: str
     EMAIL: str
-    SSN: str
+    SSN: number
 
     @validator('SSN')
     def validate_ssn(cls, ssn):
-        if ssn is None:
-            raise ValueError("SSN is none")
+        # if ssn is None:
+        #     raise ValueError("SSN is miss")
         
         if len(ssn) != 4:
             raise ValueError("Invalid SSN length; it should be 4 digits")
@@ -73,9 +74,9 @@ def validate_and_load_data(**kwargs):
                 continue
 
             ssn = row[2].strip()
-            if ssn == '' or  ssn.lower() == 'nan' or len(ssn) != 4:
+            if ssn == '' or  math.isnan(ssn): or len(ssn) != 4:
                 # Handle missing or invalid SSN
-                if ssn == '' or  ssn.lower() == 'nan':
+                if ssn == '' or math.isnan(ssn):
                     error_msg = "SSN is missing"
                 else:
                     error_msg = "Invalid SSN length; it should be 4 digits"
