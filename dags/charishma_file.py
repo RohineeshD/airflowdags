@@ -45,6 +45,7 @@ class CSVRecord(BaseModel):
 
         return ssn
 
+
 # validate and load data from URL
 def validate_and_load_data(**kwargs):
     csv_url = 'https://raw.githubusercontent.com/jcharishma/my.repo/master/sample_csv.csv'
@@ -73,13 +74,15 @@ def validate_and_load_data(**kwargs):
                 continue
 
             ssn = row[2].strip()
-            if ssn == '' or len(ssn) != 4:
-                # Handle missing or invalid SSN
+            if ssn == '' or len(ssn) != 4 or ssn.lower() == 'nan':
+                # Handle missing, invalid SSN, or NaN SSN
                 if ssn == '':
                     error_msg = "SSN is missing"
-                else:
+                elif len(ssn) != 4:
                     error_msg = "Invalid SSN length; it should be 4 digits"
-                insert_error_sql = f"INSERT INTO ERROR_LOG (NAME, EMAIL, SSN, ERROR_MESSAGE) VALUES ('{row[0]}', '{row[1]}', '{ssn}', '{error_msg}')"
+                else:
+                    error_msg = "SSN is NaN"
+                insert_error_sql = f"INSERT INTO ERROR_LOG (NAME, EMAIL, SSN, ERROR_MESSAGE) VALUES ('{row[0]}', '{row[1]}', NULL, '{error_msg}')"
                 cursor.execute(insert_error_sql)
                 conn.commit()
             else:
@@ -114,6 +117,7 @@ validate_load_task = PythonOperator(
 
 # Set up task dependencies
 read_file_task >> validate_load_task
+
 
 
 
