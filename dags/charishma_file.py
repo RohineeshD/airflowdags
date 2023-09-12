@@ -76,12 +76,8 @@ def validate_and_load_data(**kwargs):
             ssn = row[2].strip()
         
             if len(ssn) != 4:
-                print(len(ssn), ssn )
+                print(len(ssn), type(ssn) )
                 error_msg = "Invalid SSN length; it should be 4 digits"
-                if ssn.isnull():
-                    ssn = 0 
-                
-                    
                 insert_error_sql = f"INSERT INTO ERROR_LOG (NAME, EMAIL, SSN, ERROR_MESSAGE) VALUES ('{row[0]}', '{row[1]}', '{ssn}', '{error_msg}')"
                 cursor.execute(insert_error_sql)
                 conn.commit()
