@@ -63,7 +63,7 @@ def process_df1(**kwargs):
 
 # Create the DAG
 dag = DAG(
-    'sf_id',
+    'snow_id',
     default_args=default_args,
     schedule_interval=None,
     catchup=False,
