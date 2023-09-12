@@ -38,13 +38,20 @@ class CSVRecord(BaseModel):
 
     @validator('SSN')
     def validate_ssn(cls, ssn):
-        if ssn is None:
-            raise ValueError("SSN is None")
-
         if len(ssn) != 4:
-            raise ValueError("Invalid SSN length; it should be 4 digits")
+                return ssn
+            elif ssn is None:
+                 raise ValueError(“SSN is none”)
+             else:
+                raise ValueError("Invalid SSN length should not be more than 4 digits")
+
+        # if ssn is None:
+        #     raise ValueError("SSN is None")
+
+        # if len(ssn) != 4:
+        #     raise ValueError("Invalid SSN length; it should be 4 digits")
         
-        return ssn
+        # return ssn
         #     else:
         #             raise ValueError("SSN is missing")
         # except Exception as e:
