@@ -9,7 +9,6 @@ import pandas as pd
 import os
 from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
 
-
 # Define the DAG
 dag = DAG(
     'csv_dag',
@@ -38,26 +37,14 @@ class CSVRecord(BaseModel):
 
     @validator('SSN')
     def validate_ssn(cls, ssn):
-        if len(ssn) != 4:
-            return ssn
-        elif ssn is None:
+        if ssn is None:
             raise ValueError("SSN is none")
-        else:
-            raise ValueError("Invalid SSN length should not be more than 4 digits")
-
-        # if ssn is None:
-        #     raise ValueError("SSN is None")
-
-        # if len(ssn) != 4:
-        #     raise ValueError("Invalid SSN length; it should be 4 digits")
         
-        # return ssn
-        #     else:
-        #             raise ValueError("SSN is missing")
-        # except Exception as e:
-        #         print(f"Error: {str(e)}")
-       
-        
+        if len(ssn) != 4:
+            raise ValueError("Invalid SSN length; it should be 4 digits")
+
+        return ssn
+
 # validate and load data from URL
 def validate_and_load_data(**kwargs):
     csv_url = 'https://raw.githubusercontent.com/jcharishma/my.repo/master/sample_csv.csv'
@@ -68,7 +55,7 @@ def validate_and_load_data(**kwargs):
         csv_lines = csv_content.split('\n')
         header = None
 
-        #  Snowflake connection 
+        # Snowflake connection
         snowflake_hook = SnowflakeHook(snowflake_conn_id="snow_sc")
         conn = snowflake_hook.get_conn()
         cursor = conn.cursor()
@@ -95,8 +82,8 @@ def validate_and_load_data(**kwargs):
                     field_name = error.get('loc')[-1]
                     error_msg = error.get('msg')
                     print(f"Validation Error for {field_name}: {error_msg}")
-                    # For invalid SSN, insert into ERROR_LOG table
-                    insert_error_sql = f"INSERT INTO ERROR_LOG (NAME, EMAIL, SSN, ERROR_MESSAGE) VALUES ('{row[0]}', '{row[1]}', '{row[2]}', '{error_msg}')"
+                    # Insert into ERROR_LOG table
+                    insert_error_sql = f"INSERT INTO ERROR_LOG (NAME, EMAIL, SSN, ERROR_MESSAGE) VALUES ('{record.NAME}', '{record.EMAIL}', '{record.SSN}', '{error_msg}')"
                     cursor.execute(insert_error_sql)
                     conn.commit()
             except Exception as e:
@@ -106,7 +93,7 @@ def validate_and_load_data(**kwargs):
         cursor.close()
         conn.close()
 
-
+# Define the task to validate and load data
 validate_load_task = PythonOperator(
     task_id='validate_and_load_data',
     python_callable=validate_and_load_data,
@@ -114,8 +101,130 @@ validate_load_task = PythonOperator(
     dag=dag,
 )
 
-
+# Set up task dependencies
 read_file_task >> validate_load_task
+
+
+
+
+# from airflow import DAG
+# from airflow.operators.python import PythonOperator
+# from pydantic import BaseModel, ValidationError, validator
+# from datetime import datetime
+# import requests
+# import json
+# import snowflake.connector
+# import pandas as pd
+# import os
+# from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
+
+
+# # Define the DAG
+# dag = DAG(
+#     'csv_dag',
+#     start_date=datetime(2023, 1, 1),
+#     schedule_interval=None,
+#     catchup=False,
+# )
+
+# # Task 1: Read and display the CSV file from the URL
+# def read_and_display_csv():
+#     csv_url = 'https://github.com/jcharishma/my.repo/raw/master/sample_csv.csv'
+#     df = pd.read_csv(csv_url)
+#     print(df)
+
+# read_file_task = PythonOperator(
+#     task_id='read_file',
+#     python_callable=read_and_display_csv,
+#     dag=dag,
+# )
+
+# # Pydantic model for CSV records
+# class CSVRecord(BaseModel):
+#     NAME: str
+#     EMAIL: str
+#     SSN: str
+
+#     @validator('SSN')
+#     def validate_ssn(cls, ssn):
+#         if len(ssn) != 4:
+#             return ssn
+#         elif ssn is None:
+#             raise ValueError("SSN is none")
+#         else:
+#             raise ValueError("Invalid SSN length should not be more than 4 digits")
+
+#         # if ssn is None:
+#         #     raise ValueError("SSN is None")
+
+#         # if len(ssn) != 4:
+#         #     raise ValueError("Invalid SSN length; it should be 4 digits")
+        
+#         # return ssn
+#         #     else:
+#         #             raise ValueError("SSN is missing")
+#         # except Exception as e:
+#         #         print(f"Error: {str(e)}")
+       
+        
+# # validate and load data from URL
+# def validate_and_load_data(**kwargs):
+#     csv_url = 'https://raw.githubusercontent.com/jcharishma/my.repo/master/sample_csv.csv'
+
+#     response = requests.get(csv_url)
+#     if response.status_code == 200:
+#         csv_content = response.text
+#         csv_lines = csv_content.split('\n')
+#         header = None
+
+#         #  Snowflake connection 
+#         snowflake_hook = SnowflakeHook(snowflake_conn_id="snow_sc")
+#         conn = snowflake_hook.get_conn()
+#         cursor = conn.cursor()
+
+#         for line in csv_lines:
+#             line = line.strip()
+#             if not line:
+#                 continue
+#             if not header:
+#                 header = line.split(',')
+#                 continue
+
+#             row = line.split(',')
+#             if len(row) != len(header):
+#                 continue
+
+#             try:
+#                 record = CSVRecord(NAME=row[0], EMAIL=row[1], SSN=row[2])
+#                 insert_sql = f"INSERT INTO SAMPLE_CSV (NAME, EMAIL, SSN) VALUES ('{record.NAME}', '{record.EMAIL}', '{record.SSN}')"
+#                 cursor.execute(insert_sql)
+#                 conn.commit()
+#             except ValidationError as e:
+#                 for error in e.errors():
+#                     field_name = error.get('loc')[-1]
+#                     error_msg = error.get('msg')
+#                     print(f"Validation Error for {field_name}: {error_msg}")
+#                     # For invalid SSN, insert into ERROR_LOG table
+#                     insert_error_sql = f"INSERT INTO ERROR_LOG (NAME, EMAIL, SSN, ERROR_MESSAGE) VALUES ('{row[0]}', '{row[1]}', '{row[2]}', '{error_msg}')"
+#                     cursor.execute(insert_error_sql)
+#                     conn.commit()
+#             except Exception as e:
+#                 print(f"Error: {str(e)}")
+
+#         # Close connection
+#         cursor.close()
+#         conn.close()
+
+
+# validate_load_task = PythonOperator(
+#     task_id='validate_and_load_data',
+#     python_callable=validate_and_load_data,
+#     provide_context=True,
+#     dag=dag,
+# )
+
+
+# read_file_task >> validate_load_task
 
 
 
