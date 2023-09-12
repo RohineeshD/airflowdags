@@ -4,6 +4,7 @@ from airflow.operators.python_operator import PythonOperator
 from airflow.utils.dates import days_ago
 from datetime import datetime
 import pandas as pd
+from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
 
 # Default arguments
 default_args = {
@@ -14,7 +15,10 @@ default_args = {
 
 # Function to execute the Snowflake query and store the result in df1
 def execute_column_query(**kwargs):
-    snowflake_conn_id = 'snow_id'  # Use the Snowflake connection ID
+    snowflake_conn_id = 'snow_id'  
+    
+    # Create a SnowflakeHook using the connection ID
+    snowflake_hook = SnowflakeHook(snowflake_conn_id)
     
     # Snowflake query to retrieve column names
     column_query = """
@@ -25,13 +29,13 @@ def execute_column_query(**kwargs):
       AND TABLE_NAME='USERS' 
     ORDER BY ORDINAL_POSITION;
     """
-
+    
     # Execute the query and store the result in df1
-    df1 = pd.read_sql(column_query, snowflake_conn_id)
+    df1 = pd.read_sql(column_query, snowflake_hook.get_conn())
     
     # Store the last query ID in df1
     snowflake_query = "SELECT LAST_QUERY_ID() AS query_id;"
-    df_last_query_id = pd.read_sql(snowflake_query, snowflake_conn_id)
+    df_last_query_id = pd.read_sql(snowflake_query, snowflake_hook.get_conn())
     df1['LAST_QUERY_ID'] = df_last_query_id.iloc[0]['QUERY_ID']
     
     # Push df1 to XCom for later use
@@ -50,7 +54,7 @@ def process_df1(**kwargs):
     # Print the last query ID from df1
     print("Last Query ID:", df1['LAST_QUERY_ID'].iloc[0])
     
-    # Load your uploaded file into a DataFrame (replace 'your_uploaded_file.csv' with the actual file path)
+    # Load your uploaded file into a DataFrame
     df_uploaded = pd.read_csv('https://github.com/jcharishma/my.repo/raw/master/sample_csv.csv')
     
     # Print "Column names from uploaded file" and map columns with the table
