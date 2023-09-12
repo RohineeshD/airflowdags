@@ -42,11 +42,14 @@ class CSVRecord(BaseModel):
             if ssn != None:
                 if len(ssn) != 4:
                     raise ValueError("Invalid SSN length should not be more than 4 digits")
+                    return ssn
+                else:
+                    return ssn   
             else:
                     raise ValueError("SSN is missing")
         except Exception as e:
                 print(f"Error: {str(e)}")
-        return ssn
+       
         
 # validate and load data from URL
 def validate_and_load_data(**kwargs):
