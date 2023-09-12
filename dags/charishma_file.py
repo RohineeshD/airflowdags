@@ -74,7 +74,7 @@ def validate_and_load_data(**kwargs):
                 continue
 
             ssn = row[2].strip()
-            if ssn == '' or  math.isnan(ssn): or len(ssn) != 4:
+            if ssn == '' or  math.isnan(ssn) or len(ssn) != 4:
                 # Handle missing or invalid SSN
                 if ssn == '' or math.isnan(ssn):
                     error_msg = "SSN is missing"
