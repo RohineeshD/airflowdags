@@ -34,7 +34,7 @@ read_file_task = PythonOperator(
 class CSVRecord(BaseModel):
     NAME: str
     EMAIL: str
-    SSN: int
+    SSN: str
 
     @validator('SSN')
     def validate_ssn(cls, ssn):
@@ -74,7 +74,7 @@ def validate_and_load_data(**kwargs):
                 continue
 
             ssn = row[2].strip()
-            
+            print (ssn)
             if ssn == '' or len(ssn) != 4:
                 # Handle missing or invalid SSN
                 ssni=int(ssn)
