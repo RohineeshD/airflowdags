@@ -23,7 +23,7 @@ def execute_column_query(**kwargs):
     # Snowflake query to retrieve column names
     column_query = """
     SELECT COLUMN_NAME 
-    FROM SCHEMA1.DB1.INFORMATION_SCHEMA.COLUMNS 
+    FROM DB1.SCHEMA1.INFORMATION_SCHEMA.COLUMNS 
     WHERE TABLE_CATALOG='DB1' 
       AND TABLE_SCHEMA='SCHEMA1' 
       AND TABLE_NAME='USERS' 
