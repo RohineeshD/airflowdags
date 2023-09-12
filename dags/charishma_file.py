@@ -77,8 +77,8 @@ def validate_and_load_data(**kwargs):
             print (ssn)
             if len(ssn) != 4:
                 # Handle missing or invalid SSN
-                ssni=int(ssn)
-                if math.isnan(ssni): #ssn == '' :
+                # ssni=int(ssn)
+                if len(ssn)==0: #ssn == '' :
                     print('SSN is Nan')
                     error_msg = "SSN is Nan"
                 else:
