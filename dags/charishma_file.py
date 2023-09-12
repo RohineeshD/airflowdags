@@ -75,10 +75,11 @@ def validate_and_load_data(**kwargs):
 
             ssn = row[2].strip()
             print (ssn)
-            if ssn == '' or len(ssn) != 4:
+            if len(ssn) != 4:
                 # Handle missing or invalid SSN
                 ssni=int(ssn)
                 if math.isnan(ssni): #ssn == '' :
+                    print('SSN is Nan')
                     error_msg = "SSN is Nan"
                 else:
                     error_msg = "Invalid SSN length; it should be 4 digits"
