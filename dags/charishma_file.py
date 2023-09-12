@@ -45,8 +45,6 @@ class CSVRecord(BaseModel):
 
         return ssn
 
-
-
 # validate and load data from URL
 def validate_and_load_data(**kwargs):
     csv_url = 'https://raw.githubusercontent.com/jcharishma/my.repo/master/sample_csv.csv'
@@ -116,6 +114,7 @@ validate_load_task = PythonOperator(
 
 # Set up task dependencies
 read_file_task >> validate_load_task
+
 
 
 
