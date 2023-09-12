@@ -33,8 +33,6 @@ def download_csv_and_load_to_snowflake():
         # Snowflake table name
         snowflake_table = 'is_sql_table'
 
-        # # Create the Snowflake table if it doesn't exist
-        # snowflake_hook.run(f"CREATE OR REPLACE TABLE {snowflake_table} (your_table_schema_here)")
 
         # Define the batch size for insertion
         batch_size = 1000
@@ -256,15 +254,15 @@ download_and_load_task
 #                         VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
                         
 #                     """
-#              
+             
 #                     params = tuple(values[1:13])
-#                     
+                    
 #                 else:
 #                     print("Not enough elements in the 'values' list.")
 #                     continue
 #                     print("Skipping row with insufficient columns.")
 
-#        
+       
 
 #             print("Data loaded into Snowflake successfully.")
 #         else:
