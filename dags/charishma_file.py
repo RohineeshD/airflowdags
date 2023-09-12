@@ -36,10 +36,14 @@ class CSVRecord(BaseModel):
     EMAIL: str
     SSN: str
 
-    @validator('SSN')  #validator function 
+    @validator('SSN')  #vailidator function 
     def validate_ssn_length(cls, ssn):  #CSVRecord class
-        if len(ssn) != 4:
-            raise ValueError("Invalid SSN length should not be more than 4 digits")
+        try:
+            if ssn != None:
+                if len(ssn) != 4:
+                    raise ValueError("Invalid SSN length should not be more than 4 digits")
+        except Exception as e:
+                print(f"Error: {str(e)}")
         return ssn
         
 # validate and load data from URL
