@@ -1,126 +1,183 @@
-
-from airflow import DAG
-from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
-from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
-from airflow.operators.python_operator import PythonOperator
-from airflow.operators.python import ShortCircuitOperator
-from airflow.utils.dates import days_ago
 from datetime import datetime
-import requests
+from airflow import DAG
+from airflow.operators.python_operator import PythonOperator
 import pandas as pd
-import os
+import requests
 import io
+import logging
+from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
 
-# Define default_args for the DAG
-default_args = {
-    'owner': 'airflow',
-    'start_date': days_ago(1),
-    'schedule_interval': None,  
-    'catchup': False
-}
-
+# Airflow DAG configuration
 dag = DAG(
-    'load_data_snowflake',
-    default_args=default_args,
-    description='Load CSV data into Snowflake',
-    catchup=False
+    'load_csv_url_to_snowflake',
+    start_date=datetime(2023, 1, 1),
+    schedule_interval=None,
+    catchup=False,
 )
 
-# Define Snowflake connection ID from Airflow's Connection UI
-snowflake_conn_id = 'air_conn'
-
-def get_snowflake_hook(conn_id):
-    return SnowflakeHook(snowflake_conn_id=conn_id)
-
-
-# Define Snowflake target table
-snowflake_table = 'bulk_table'
-
-# Define the CSV URL
-csv_url = 'https://media.githubusercontent.com/media/datablist/sample-csv-files/main/files/customers/customers-100000.csv'
-
-# Function to load CSV data into Snowflake
-def copy_csv_to_snowflake():
+def read_and_load_to_snowflake():
     try:
-        snowflake_hook = get_snowflake_hook(snowflake_conn_id)
+        # URL to the CSV file
+        csv_url = "https://media.githubusercontent.com/media/datablist/sample-csv-files/main/files/customers/customers-100000.csv"
 
-        # Establish a Snowflake connection
-        conn = snowflake_hook.get_conn()
-        cursor = conn.cursor()
-
-
-        # Create a Snowflake internal stage for the CSV file
-        stage_name = 'csv_stage'
-        create_stage_sql = f'''
-        CREATE OR REPLACE STAGE {stage_name}
-        FILE_FORMAT = (
-            TYPE = 'CSV'
-            SKIP_HEADER = 1
-            FIELD_DELIMITER = ','
-            RECORD_DELIMITER = '\n'
-            FIELD_OPTIONALLY_ENCLOSED_BY = '"'
-        );
-        '''
-        cursor.execute(create_stage_sql)
-
-        # Download the CSV file to a local directory
+        # Attempt to download the CSV file using requests.get
         response = requests.get(csv_url)
-        local_file_path = '/tmp/customers-100000.csv'
-        with open(local_file_path, 'wb') as file:
-            file.write(response.content)
+        response.raise_for_status()
 
-        # Upload the CSV file to the Snowflake internal stage
-        put_sql = f'''
-        PUT 'file://{local_file_path}' @{stage_name}
-        '''
-        cursor.execute(put_sql)
-        cursor.close()
-        conn.close()
+        # Read the CSV data from the response content into a pandas DataFrame
+        csv_data = pd.read_csv(io.StringIO(response.text))
 
-        # Snowflake COPY INTO command using the internal stage with error handling
-        snowflake_hook.run( 
-            f'''
-            COPY INTO {snowflake_table}
-            FROM @{stage_name}
-            FILE_FORMAT = (
-                TYPE = 'CSV'
-                SKIP_HEADER = 1
-                FIELD_DELIMITER = ','
-                RECORD_DELIMITER = '\n'
-                FIELD_OPTIONALLY_ENCLOSED_BY = '"'
-            )
-            ON_ERROR = 'CONTINUE';
-            '''
-        )
+        # Initialize the SnowflakeHook
+        snowflake_hook = SnowflakeHook(snowflake_conn_id="air_conn")
 
-        # Drop the Snowflake internal stage after loading
-        snowflake_hook.run(f'DROP STAGE IF EXISTS {stage_name}')
+        # Snowflake table name
+        snowflake_table = 'is_sql_table'
 
-        print("Data loaded successfully")
-        return True
+        # Insert the entire dataset into Snowflake without batching
+        engine = snowflake_hook.get_sqlalchemy_engine()
+        csv_data.to_sql(name=snowflake_table, con=engine, if_exists='replace', index=False)
+
+        logging.info('CSV data successfully loaded into Snowflake.')
+
     except Exception as e:
-        print("Data loading failed -", str(e))
-        return False
+        # Handle the download or insertion error here
+        logging.error(f'Error: {str(e)}')
+        raise e
 
-
-
-# Task to truncate the Snowflake table before loading
-truncate_table_task = SnowflakeOperator(
-    task_id='truncate_snowflake_table_task',
-    sql=f'TRUNCATE TABLE {snowflake_table}',
-    snowflake_conn_id=snowflake_conn_id,
-    dag=dag
+# Task to download the CSV file and load it into Snowflake without batching
+read_and_load_task = PythonOperator(
+    task_id='download_and_load_csv',
+    python_callable=read_and_load_to_snowflake,
+    dag=dag,
 )
 
-# Task to call the load_csv_to_snowflake function
-copy_csv_task = PythonOperator(
-    task_id='load_csv_to_snowflake_task',
-    python_callable=copy_csv_to_snowflake,
-    dag=dag
-)
+# Set task dependencies
+read_and_load_task
 
-# task dependencies
-truncate_table_task >> copy_csv_task
+
+
+# from airflow import DAG
+# from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
+# from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
+# from airflow.operators.python_operator import PythonOperator
+# from airflow.operators.python import ShortCircuitOperator
+# from airflow.utils.dates import days_ago
+# from datetime import datetime
+# import requests
+# import pandas as pd
+# import os
+# import io
+
+# # Define default_args for the DAG
+# default_args = {
+#     'owner': 'airflow',
+#     'start_date': days_ago(1),
+#     'schedule_interval': None,  
+#     'catchup': False
+# }
+
+# dag = DAG(
+#     'load_data_snowflake',
+#     default_args=default_args,
+#     description='Load CSV data into Snowflake',
+#     catchup=False
+# )
+
+# # Define Snowflake connection ID from Airflow's Connection UI
+# snowflake_conn_id = 'air_conn'
+
+# def get_snowflake_hook(conn_id):
+#     return SnowflakeHook(snowflake_conn_id=conn_id)
+
+
+# # Define Snowflake target table
+# snowflake_table = 'bulk_table'
+
+# # Define the CSV URL
+# csv_url = 'https://media.githubusercontent.com/media/datablist/sample-csv-files/main/files/customers/customers-100000.csv'
+
+# # Function to load CSV data into Snowflake
+# def copy_csv_to_snowflake():
+#     try:
+#         snowflake_hook = get_snowflake_hook(snowflake_conn_id)
+
+#         # Establish a Snowflake connection
+#         conn = snowflake_hook.get_conn()
+#         cursor = conn.cursor()
+
+
+#         # Create a Snowflake internal stage for the CSV file
+#         stage_name = 'csv_stage'
+#         create_stage_sql = f'''
+#         CREATE OR REPLACE STAGE {stage_name}
+#         FILE_FORMAT = (
+#             TYPE = 'CSV'
+#             SKIP_HEADER = 1
+#             FIELD_DELIMITER = ','
+#             RECORD_DELIMITER = '\n'
+#             FIELD_OPTIONALLY_ENCLOSED_BY = '"'
+#         );
+#         '''
+#         cursor.execute(create_stage_sql)
+
+#         # Download the CSV file to a local directory
+#         response = requests.get(csv_url)
+#         local_file_path = '/tmp/customers-100000.csv'
+#         with open(local_file_path, 'wb') as file:
+#             file.write(response.content)
+
+#         # Upload the CSV file to the Snowflake internal stage
+#         put_sql = f'''
+#         PUT 'file://{local_file_path}' @{stage_name}
+#         '''
+#         cursor.execute(put_sql)
+#         cursor.close()
+#         conn.close()
+
+#         # Snowflake COPY INTO command using the internal stage with error handling
+#         snowflake_hook.run( 
+#             f'''
+#             COPY INTO {snowflake_table}
+#             FROM @{stage_name}
+#             FILE_FORMAT = (
+#                 TYPE = 'CSV'
+#                 SKIP_HEADER = 1
+#                 FIELD_DELIMITER = ','
+#                 RECORD_DELIMITER = '\n'
+#                 FIELD_OPTIONALLY_ENCLOSED_BY = '"'
+#             )
+#             ON_ERROR = 'CONTINUE';
+#             '''
+#         )
+
+#         # Drop the Snowflake internal stage after loading
+#         snowflake_hook.run(f'DROP STAGE IF EXISTS {stage_name}')
+
+#         print("Data loaded successfully")
+#         return True
+#     except Exception as e:
+#         print("Data loading failed -", str(e))
+#         return False
+
+
+
+# # Task to truncate the Snowflake table before loading
+# truncate_table_task = SnowflakeOperator(
+#     task_id='truncate_snowflake_table_task',
+#     sql=f'TRUNCATE TABLE {snowflake_table}',
+#     snowflake_conn_id=snowflake_conn_id,
+#     dag=dag
+# )
+
+# # Task to call the load_csv_to_snowflake function
+# copy_csv_task = PythonOperator(
+#     task_id='load_csv_to_snowflake_task',
+#     python_callable=copy_csv_to_snowflake,
+#     dag=dag
+# )
+
+# # task dependencies
+# truncate_table_task >> copy_csv_task
 
 
 
