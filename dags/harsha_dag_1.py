@@ -31,7 +31,7 @@ def read_and_load_to_snowflake():
         snowflake_hook = SnowflakeHook(snowflake_conn_id="air_conn")
 
         # Snowflake table name
-        snowflake_table = 'is_sql_table'
+        snowflake_table = 'to_sql_table'
 
         # Insert the entire dataset into Snowflake without batching
         engine = snowflake_hook.get_sqlalchemy_engine()
