@@ -99,15 +99,6 @@ def validate_and_load_data(**kwargs):
                     insert_sql = f"INSERT INTO SAMPLE_CSV (NAME, EMAIL, SSN) VALUES ('{record.NAME}', '{record.EMAIL}', '{record.SSN}')"
                     cursor.execute(insert_sql)
                     conn.commit()
-                except ValidationError as e:
-                    for error in e.errors():
-                        field_name = error.get('loc')[-1]
-                        error_msg = error.get('msg')
-                        print(f"Validation Error for {field_name}: {error_msg}")
-                        # For other validation errors, insert into ERROR_LOG table
-                        insert_error_sql = f"INSERT INTO ERROR_LOG (NAME, EMAIL, SSN, ERROR_MESSAGE) VALUES ('{record.NAME}', '{record.EMAIL}', '{record.SSN}', '{error_msg}')"
-                        cursor.execute(insert_error_sql)
-                        conn.commit()
                 except Exception as e:
                     print(f"Error: {str(e)}")
 
