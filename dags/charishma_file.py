@@ -45,6 +45,8 @@ class CSVRecord(BaseModel):
 
         return ssn
 
+# ... (Previous code)
+
 # validate and load data from URL
 def validate_and_load_data(**kwargs):
     csv_url = 'https://raw.githubusercontent.com/jcharishma/my.repo/master/sample_csv.csv'
@@ -72,22 +74,32 @@ def validate_and_load_data(**kwargs):
             if len(row) != len(header):
                 continue
 
-            try:
-                record = CSVRecord(NAME=row[0], EMAIL=row[1], SSN=row[2])
-                insert_sql = f"INSERT INTO SAMPLE_CSV (NAME, EMAIL, SSN) VALUES ('{record.NAME}', '{record.EMAIL}', '{record.SSN}')"
-                cursor.execute(insert_sql)
+            if row[2].strip() == '' or len(row[2]) != 4:
+                # Handle missing or invalid SSN
+                if row[2].strip() == '':
+                    error_msg = "SSN is missing"
+                else:
+                    error_msg = "Invalid SSN length; it should be 4 digits"
+                insert_error_sql = f"INSERT INTO ERROR_LOG (NAME, EMAIL, SSN, ERROR_MESSAGE) VALUES ('{row[0]}', '{row[1]}', '{row[2]}', '{error_msg}')"
+                cursor.execute(insert_error_sql)
                 conn.commit()
-            except ValidationError as e:
-                for error in e.errors():
-                    field_name = error.get('loc')[-1]
-                    error_msg = error.get('msg')
-                    print(f"Validation Error for {field_name}: {error_msg}")
-                    # Insert into ERROR_LOG table
-                    insert_error_sql = f"INSERT INTO ERROR_LOG (NAME, EMAIL, SSN, ERROR_MESSAGE) VALUES ('{record.NAME}', '{record.EMAIL}', '{record.SSN}', '{error_msg}')"
-                    cursor.execute(insert_error_sql)
+            else:
+                try:
+                    record = CSVRecord(NAME=row[0], EMAIL=row[1], SSN=row[2])
+                    insert_sql = f"INSERT INTO SAMPLE_CSV (NAME, EMAIL, SSN) VALUES ('{record.NAME}', '{record.EMAIL}', '{record.SSN}')"
+                    cursor.execute(insert_sql)
                     conn.commit()
-            except Exception as e:
-                print(f"Error: {str(e)}")
+                except ValidationError as e:
+                    for error in e.errors():
+                        field_name = error.get('loc')[-1]
+                        error_msg = error.get('msg')
+                        print(f"Validation Error for {field_name}: {error_msg}")
+                        # For other validation errors, insert into ERROR_LOG table
+                        insert_error_sql = f"INSERT INTO ERROR_LOG (NAME, EMAIL, SSN, ERROR_MESSAGE) VALUES ('{record.NAME}', '{record.EMAIL}', '{record.SSN}', '{error_msg}')"
+                        cursor.execute(insert_error_sql)
+                        conn.commit()
+                except Exception as e:
+                    print(f"Error: {str(e)}")
 
         # Close connection
         cursor.close()
