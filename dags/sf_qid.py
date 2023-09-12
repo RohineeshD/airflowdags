@@ -75,12 +75,12 @@ dag = DAG(
 )
 
 # Execute Snowflake query and retrieve column names
-snowflake_task = SnowflakeOperator(
+'''snowflake_task = SnowflakeOperator(
     task_id='execute_snowflake_query',
     sql="SELECT LAST_QUERY_ID() AS query_id;",
     snowflake_conn_id='snow_id',
     dag=dag,
-)
+)'''
 
 # Execute the column_query and store the result in df1
 execute_query = PythonOperator(
@@ -99,7 +99,7 @@ process_df1_task = PythonOperator(
 )
 
 # Set task dependencies
-snowflake_task >> execute_query >> process_df1_task
+execute_query >> process_df1_task
 
 if __name__ == "__main__":
     dag.cli()
