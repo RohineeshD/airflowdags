@@ -12,9 +12,9 @@ default_args = {
     'retries': 1,
 }
 
-# Function to execute the Snowflake query and retrieve column names as a DataFrame
+# Function to execute the Snowflake query and store the result in df1
 def execute_column_query(**kwargs):
-    snowflake_conn_id = 'snow_id' 
+    snowflake_conn_id = 'snow_id'  # Use the Snowflake connection ID
     
     # Snowflake query to retrieve column names
     column_query = """
@@ -29,13 +29,28 @@ def execute_column_query(**kwargs):
     # Execute the query and store the result in df1
     df1 = pd.read_sql(column_query, snowflake_conn_id)
     
-    # Pass df1 to the next task
+    # Store the last query ID in df1
+    snowflake_query = "SELECT LAST_QUERY_ID() AS query_id;"
+    df_last_query_id = pd.read_sql(snowflake_query, snowflake_conn_id)
+    df1['LAST_QUERY_ID'] = df_last_query_id.iloc[0]['QUERY_ID']
+    
+    # Push df1 to XCom for later use
     kwargs['ti'].xcom_push(key='df1', value=df1)
 
-# Function to load the uploaded file into a DataFrame and compare columns
-def compare_uploaded_file(**kwargs):
+# Function to process df1 in a loop
+def process_df1(**kwargs):
     ti = kwargs['ti']
     df1 = ti.xcom_pull(key='df1', task_ids='execute_query')  # Retrieve df1 from the previous task
+    
+    # Print "Standard Column names in the Table"
+    print("Standard Column names in the Table")
+    for column in df1['COLUMN_NAME']:
+        print('Columns in table:', column)
+    
+    # Print the last query ID from df1
+    print("Last Query ID:", df1['LAST_QUERY_ID'].iloc[0])
+    
+    # Load your uploaded file into a DataFrame (replace 'your_uploaded_file.csv' with the actual file path)
     df_uploaded = pd.read_csv('https://github.com/jcharishma/my.repo/raw/master/sample_csv.csv')
     
     # Print "Column names from uploaded file" and map columns with the table
@@ -63,7 +78,7 @@ snowflake_task = SnowflakeOperator(
     dag=dag,
 )
 
-# Execute the column_query 
+# Execute the column_query and store the result in df1
 execute_query = PythonOperator(
     task_id='execute_query',
     python_callable=execute_column_query,
@@ -71,19 +86,20 @@ execute_query = PythonOperator(
     dag=dag,
 )
 
-# Compare the uploaded file with the column names from the Snowflake table
-compare_uploaded = PythonOperator(
-    task_id='compare_uploaded_file',
-    python_callable=compare_uploaded_file,
+# Process df1 in a loop
+process_df1_task = PythonOperator(
+    task_id='process_df1',
+    python_callable=process_df1,
     provide_context=True,  # Required to pass 'kwargs'
     dag=dag,
 )
 
 # Set task dependencies
-snowflake_task >> execute_query >> compare_uploaded
+snowflake_task >> execute_query >> process_df1_task
 
 if __name__ == "__main__":
     dag.cli()
+
 
 
 
