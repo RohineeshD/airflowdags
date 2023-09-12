@@ -81,9 +81,11 @@ def validate_and_load_data(**kwargs):
                 if len(ssn)==0: #ssn == '' :
                     print('SSN is Nan')
                     error_msg = "SSN is Nan"
+                    ssn2=0
+                    insert_error_sql = f"INSERT INTO ERROR_LOG (NAME, EMAIL, SSN, ERROR_MESSAGE) VALUES ('{row[0]}', '{row[1]}', '{ssn2}', '{error_msg}')"
                 else:
                     error_msg = "Invalid SSN length; it should be 4 digits"
-                insert_error_sql = f"INSERT INTO ERROR_LOG (NAME, EMAIL, SSN, ERROR_MESSAGE) VALUES ('{row[0]}', '{row[1]}', '{ssn}', '{error_msg}')"
+                    insert_error_sql = f"INSERT INTO ERROR_LOG (NAME, EMAIL, SSN, ERROR_MESSAGE) VALUES ('{row[0]}', '{row[1]}', '{ssn}', '{error_msg}')"
                 cursor.execute(insert_error_sql)
                 conn.commit()
             else:
