@@ -34,7 +34,7 @@ read_file_task = PythonOperator(
 class CSVRecord(BaseModel):
     NAME: str
     EMAIL: str
-    SSN: str
+    SSN: int
 
     @validator('SSN')
     def validate_ssn(cls, ssn):
