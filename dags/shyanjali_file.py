@@ -67,11 +67,13 @@ def upload(valid_rows):
 validate_csv_task = PythonOperator(
     task_id='validate_csv',
     python_callable=fetch_and_validate_csv,
+    provide_context=True,
     dag=dag,
 )
 upload = PythonOperator(
     task_id='upload',
     python_callable=upload,
+    provide_context=True,
     dag=dag,
 )
 validate_csv_task>>upload
