@@ -29,36 +29,36 @@ read_file_task = PythonOperator(
     python_callable=read_and_display_csv,
     dag=dag,
 )
-# Pydantic model for CSV records
-class CSVRecord(BaseModel):
-    NAME: constr(min_length=1) = Field(..., title="Name is required")
-    EMAIL: constr(min_length=1) = Field(..., title="Email is required")
-    SSN: constr(min_length=4, max_length=4) = Field(..., title="SSN is required and should be 4 digits")
-
-    class Config:
-        title = "CSV Record"
-
-    @validator('SSN')
-    def validate_ssn(cls, ssn):
-        return ssn  # SSN is already validated by the constr definition
-
-    class Config:
-        title = "CSV Record"
 # # Pydantic model for CSV records
 # class CSVRecord(BaseModel):
-#     NAME: str
-#     EMAIL: str
-#     SSN: str
+#     NAME: constr(min_length=1) = Field(..., title="Name is required")
+#     EMAIL: constr(min_length=1) = Field(..., title="Email is required")
+#     SSN: constr(min_length=4, max_length=4) = Field(..., title="SSN is required and should be 4 digits")
+
+#     class Config:
+#         title = "CSV Record"
 
 #     @validator('SSN')
 #     def validate_ssn(cls, ssn):
-#         # if ssn is None:
-#         #     raise ValueError("SSN is miss")
-        
-#         if len(ssn) != 4:
-#             raise ValueError("Invalid SSN length; it should be 4 digits")
+#         return ssn  # SSN is already validated by the constr definition
 
-#         return ssn
+#     class Config:
+#         title = "CSV Record"
+# Pydantic model for CSV records
+class CSVRecord(BaseModel):
+    NAME: str
+    EMAIL: str
+    SSN: str
+
+    @validator('SSN')
+    def validate_ssn(cls, ssn):
+        # if ssn is None:
+        #     raise ValueError("SSN is miss")
+        
+        if len(ssn) != 4:
+            raise ValueError("Invalid SSN length; it should be 4 digits")
+
+        return ssn
 
 # validate and load data from URL
 def validate_and_load_data(**kwargs):
