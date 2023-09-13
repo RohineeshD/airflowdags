@@ -9,7 +9,7 @@ from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
 
 # Airflow DAG configuration
 dag = DAG(
-    'load_csv_from_url_to_snowflake',
+    'load_csv_url_to_snowflake',
     start_date=datetime(2023, 1, 1),
     schedule_interval=None,
     catchup=False,
