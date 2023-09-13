@@ -35,7 +35,7 @@ def fetch_and_validate_csv():
 
         # Read CSV data into a DataFrame
         df = pd.read_csv(StringIO(response.text))
-        snowflake_hook = SnowflakeHook(snowflake_conn_id='snow_sc')
+        snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake_li')
         # Replace with your Snowflake schema and table name
         schema = 'PUBLIC'
         table_name = 'SAMPLE_CSV'
