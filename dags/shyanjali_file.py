@@ -1,12 +1,10 @@
-import requests
 import pandas as pd
 from pydantic import BaseModel, ValidationError
-
 from airflow import DAG
-from airflow.models import BaseOperator
+from airflow.operators.python_operator import PythonOperator
 from airflow.utils.dates import days_ago
-from airflow.utils.decorators import apply_defaults
-from airflow.providers.http.operators.http_download import HttpDownloadOperator
+import requests
+from io import StringIO
 # Define your CSV URL
 CSV_URL = 'https://github.com/jcharishma/my.repo/raw/master/sample_csv.csv'
 
@@ -22,60 +20,36 @@ dag = DAG(
     catchup=False,
 )
 
-class CsvDataValidationOperator(BaseOperator):
-    @apply_defaults
-    def __init__(self, csv_url, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.csv_url = csv_url
+# Define Pydantic model for validation
+class CsvRow(BaseModel):
+    NAME: str
+    EMAIL: str
+    SSN: int
 
-    def execute(self, context):
+def fetch_and_validate_csv():
+    try:
         # Fetch data from CSV URL
-        response = requests.get(self.csv_url)
+        response = requests.get(CSV_URL)
         response.raise_for_status()
 
         # Read CSV data into a DataFrame
-        try:
-            df = pd.read_csv(pd.compat.StringIO(response.text))
-        except pd.errors.EmptyDataError:
-            self.log.error(f"CSV at {self.csv_url} is empty.")
-            return
-
-        # Define Pydantic model for validation
-        class CsvRow(BaseModel):
-            NAME: str
-            EMAIL: str
-            SSN: int
+        df = pd.read_csv(StringIO(response.text))
 
         # Iterate through rows and validate each one
         for index, row in df.iterrows():
-            try:
-                CsvRow(**row.to_dict())
-            except ValidationError as e:
-                self.log.error(f"Validation error in row {index}: {e}")
+            CsvRow(**row.to_dict())
+        
+        print(f"CSV at {CSV_URL} has been validated successfully.")
+    except Exception as e:
+        print(f"Error: {str(e)}")
 
-        self.log.info(f"CSV at {self.csv_url} has been validated successfully.")
-
-# Download CSV from URL
-download_csv = HttpDownloadOperator(
-    task_id='download_csv',
-    method='GET',
-    endpoint=CSV_URL,
-    save_to='/tmp/downloaded.csv',  # Save the downloaded CSV to a temporary file
-    dag=dag,
-)
-
-# Validate CSV data
-validate_csv = CsvDataValidationOperator(
+validate_csv_task = PythonOperator(
     task_id='validate_csv',
-    csv_url='/tmp/downloaded.csv',  # Use the downloaded CSV file
+    python_callable=fetch_and_validate_csv,
     dag=dag,
 )
 
-download_csv >> validate_csv
-
-
-
-
+validate_csv_task
 
 # from airflow import DAG
 # from airflow.hooks.base_hook import BaseHook
