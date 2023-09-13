@@ -26,6 +26,11 @@ class CsvRow(BaseModel):
     NAME: str
     EMAIL: str
     SSN: int
+    @validator('SSN')
+    def validate_id(cls, SSN):
+        if not (1000 <= SSN <= 9999):
+            raise ValueError('ID must be a 4-digit integer')
+        return SSN
 
 def fetch_and_validate_csv():
     valid_rows=[]
