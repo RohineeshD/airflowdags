@@ -48,7 +48,7 @@ def fetch_and_validate_csv():
     
         print(f"CSV at {CSV_URL} has been validated successfully.")
         
-        
+        print(valid_rows)
     except Exception as e:
         print(f"Error: {str(e)}")
        
