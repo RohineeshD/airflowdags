@@ -1,26 +1,41 @@
-from airflow import DAG
-from airflow.operators.python import PythonOperator
-from pydantic import BaseModel, ValidationError, validator
-from datetime import datetime
-import requests
-import json
-import snowflake.connector
 import pandas as pd
-import os
-import math
+from pydantic import BaseModel, ValidationError, validator
+from airflow import DAG
+from airflow.operators.python_operator import PythonOperator
+from airflow.utils.dates import days_ago
+import requests
+from io import StringIO
 from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
+# Define your CSV URL
+CSV_URL = 'https://github.com/jcharishma/my.repo/raw/master/sample_csv.csv'
 
-# Define the DAG
+default_args = {
+    'owner': 'airflow',
+    'start_date': days_ago(1),
+}
+
 dag = DAG(
     'csv_dag',
-    start_date=datetime(2023, 1, 1),
-    schedule_interval=None,
+    default_args=default_args,
+    schedule_interval=None, 
     catchup=False,
 )
 
+# Define Pydantic model for validation
+class CsvRow(BaseModel):
+    NAME: str
+    EMAIL: str
+    SSN: int
+    @validator('SSN')
+    def validate_id(cls, SSN):
+        if not (1000 <= SSN <= 9999):
+            raise ValueError('Invalid SSN length; it should be 4 digits')
+        return SSN
+
+
 # Task 1: Read and display the CSV file from the URL
 def read_and_display_csv():
-    csv_url = 'https://github.com/jcharishma/my.repo/raw/master/sample_csv.csv'
+    csv_url = {CSV_URL}
     df = pd.read_csv(csv_url)
     print(df)
 
@@ -29,111 +44,165 @@ read_file_task = PythonOperator(
     python_callable=read_and_display_csv,
     dag=dag,
 )
-# # Pydantic model for CSV records
-# class CSVRecord(BaseModel):
-#     NAME: constr(min_length=1) = Field(..., title="Name is required")
-#     EMAIL: constr(min_length=1) = Field(..., title="Email is required")
-#     SSN: constr(min_length=4, max_length=4) = Field(..., title="SSN is required and should be 4 digits")
+def fetch_and_validate_csv():
+    valid_rows=[]
+    try:
+        # Fetch data from CSV URL
+        response = requests.get(CSV_URL)
+        response.raise_for_status()
 
-#     class Config:
-#         title = "CSV Record"
-
-#     @validator('SSN')
-#     def validate_ssn(cls, ssn):
-#         return ssn  # SSN is already validated by the constr definition
-
-#     class Config:
-#         title = "CSV Record"
-# Pydantic model for CSV records
-class CSVRecord(BaseModel):
-    NAME: str
-    EMAIL: str
-    SSN: str
-
-    @validator('SSN')
-    def validate_ssn(cls, ssn):
-        # if ssn is None:
-        #     raise ValueError("SSN is miss")
+        # Read CSV data into a DataFrame
+        df = pd.read_csv(StringIO(response.text))
+        # Iterate through rows and validate each one
         
-        if len(ssn) != 4:
-            raise ValueError("Invalid SSN length; it should be 4 digits")
-
-        return ssn
-
-# validate and load data from URL
-def validate_and_load_data(**kwargs):
-    csv_url = 'https://raw.githubusercontent.com/jcharishma/my.repo/master/sample_csv.csv'
-
-    response = requests.get(csv_url)
-    if response.status_code == 200:
-        csv_content = response.text
-        csv_lines = csv_content.split('\n')
-        header = None
-
-        # Snowflake connection
-        snowflake_hook = SnowflakeHook(snowflake_conn_id="snow_sc")
-        conn = snowflake_hook.get_conn()
-        cursor = conn.cursor()
-
-        for line in csv_lines:
-            line = line.strip()
-            if not line:
-                continue
-            if not header:
-                header = line.split(',')
-                continue
-
-            row = line.split(',')
-            if len(row) != len(header):
-                continue
-
-            ssn = row[2].strip()
+        for index, row in df.iterrows():
+            
+            validated_row=CsvRow(**row.to_dict())
+            print(validated_row)
+            valid_rows.append((validated_row.NAME, validated_row.EMAIL, validated_row.SSN))
+            
+           
+        print(f"CSV at {CSV_URL} has been validated successfully.")
         
-            if len(ssn) != 4:
-                print(len(ssn), type(ssn))
-                if len(ssn)==0:
-                    ssn ="0"
-                    error_msg = "SSN IS NULL"
-                else:
-                    error_msg = "Invalid SSN length; it should be 4 digits"
-                insert_error_sql = f"INSERT INTO ERROR_LOG (NAME, EMAIL, SSN, ERROR_MESSAGE) VALUES ('{row[0]}', '{row[1]}', '{ssn}', '{error_msg}')"
-                cursor.execute(insert_error_sql)
-                conn.commit()
-                # elif len(ssn) < 4 and len(ssn) > 0  :
-                #     error_msg = "Invalid SSN length; it should be 4 digits"
-                #     insert_error_sql = f"INSERT INTO ERROR_LOG (NAME, EMAIL, SSN, ERROR_MESSAGE) VALUES ('{row[0]}', '{row[1]}', '{ssn}', '{error_msg}')"
-                #     cursor.execute(insert_error_sql)
-                #     conn.commit()
-                # else:
-                #     print('SSN is Nan')
-                #     error_msg = "SSN is Nan"
-                #     ssn2=0
-                #     insert_error_sql = f"INSERT INTO ERROR_LOG (NAME, EMAIL, SSN, ERROR_MESSAGE) VALUES ('{row[0]}', '{row[1]}', '{ssn2}', '{error_msg}')"
-                #     cursor.execute(insert_error_sql)
-                #     conn.commit()
-            else:
-                try:
-                    record = CSVRecord(NAME=row[0], EMAIL=row[1], SSN=ssn)
-                    insert_sql = f"INSERT INTO SAMPLE_CSV (NAME, EMAIL, SSN) VALUES ('{record.NAME}', '{record.EMAIL}', '{record.SSN}')"
-                    cursor.execute(insert_sql)
-                    conn.commit()
-                except Exception as e:
-                    print(f"Error: {str(e)}")
+        print(valid_rows)
+    except Exception as e:
+        print(f"Error: {str(e)}")
+       
+        
+    snowflake_hook = SnowflakeHook(snowflake_conn_id='snow_sc')
+    # Replace with your Snowflake schema and table name
+    schema = 'SC1'
+    table_name = 'SAMPLE_CSV'
+    connection = snowflake_hook.get_conn()
+    snowflake_hook.insert_rows(table_name, valid_rows)
+    connection.close()
+    
 
-        # Close connection
-        cursor.close()
-        conn.close()
 
-# Define the task to validate and load data
+
+
 validate_load_task = PythonOperator(
-    task_id='validate_and_load_data',
-    python_callable=validate_and_load_data,
+    task_id='validate_load_task',
+    python_callable=fetch_and_validate_csv,
     provide_context=True,
     dag=dag,
 )
 
 # Set up task dependencies
 read_file_task >> validate_load_task
+
+
+
+# from airflow import DAG
+# from airflow.operators.python import PythonOperator
+# from pydantic import BaseModel, ValidationError, validator
+# from datetime import datetime
+# import requests
+# import json
+# import snowflake.connector
+# import pandas as pd
+# import os
+# import math
+# from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
+
+# # Define the DAG
+# dag = DAG(
+#     'csv_dag',
+#     start_date=datetime(2023, 1, 1),
+#     schedule_interval=None,
+#     catchup=False,
+# )
+
+# # Task 1: Read and display the CSV file from the URL
+# def read_and_display_csv():
+#     csv_url = 'https://github.com/jcharishma/my.repo/raw/master/sample_csv.csv'
+#     df = pd.read_csv(csv_url)
+#     print(df)
+
+# read_file_task = PythonOperator(
+#     task_id='read_file',
+#     python_callable=read_and_display_csv,
+#     dag=dag,
+# )
+
+# class CSVRecord(BaseModel):
+#     NAME: str
+#     EMAIL: str
+#     SSN: str
+
+#     @validator('SSN')
+#     def validate_ssn(cls, ssn):
+#         # if ssn is None:
+#         #     raise ValueError("SSN is miss")
+        
+#         if len(ssn) != 4:
+#             raise ValueError("Invalid SSN length; it should be 4 digits")
+
+#         return ssn
+
+# # validate and load data from URL
+# def validate_and_load_data(**kwargs):
+#     csv_url = 'https://raw.githubusercontent.com/jcharishma/my.repo/master/sample_csv.csv'
+
+#     response = requests.get(csv_url)
+#     if response.status_code == 200:
+#         csv_content = response.text
+#         csv_lines = csv_content.split('\n')
+#         header = None
+
+#         # Snowflake connection
+#         snowflake_hook = SnowflakeHook(snowflake_conn_id="snow_sc")
+#         conn = snowflake_hook.get_conn()
+#         cursor = conn.cursor()
+
+#         for line in csv_lines:
+#             line = line.strip()
+#             if not line:
+#                 continue
+#             if not header:
+#                 header = line.split(',')
+#                 continue
+
+#             row = line.split(',')
+#             if len(row) != len(header):
+#                 continue
+
+#             ssn = row[2].strip()
+        
+#             if len(ssn) != 4:
+#                 print(len(ssn), type(ssn))
+#                 if len(ssn)==0:
+#                     ssn ="0"
+#                     error_msg = "SSN IS NULL"
+#                 else:
+#                     error_msg = "Invalid SSN length; it should be 4 digits"
+#                 insert_error_sql = f"INSERT INTO ERROR_LOG (NAME, EMAIL, SSN, ERROR_MESSAGE) VALUES ('{row[0]}', '{row[1]}', '{ssn}', '{error_msg}')"
+#                 cursor.execute(insert_error_sql)
+#                 conn.commit()
+               
+#             else:
+#                 try:
+#                     record = CSVRecord(NAME=row[0], EMAIL=row[1], SSN=ssn)
+#                     insert_sql = f"INSERT INTO SAMPLE_CSV (NAME, EMAIL, SSN) VALUES ('{record.NAME}', '{record.EMAIL}', '{record.SSN}')"
+#                     cursor.execute(insert_sql)
+#                     conn.commit()
+#                 except Exception as e:
+#                     print(f"Error: {str(e)}")
+
+#         # Close connection
+#         cursor.close()
+#         conn.close()
+
+# # Define the task to validate and load data
+# validate_load_task = PythonOperator(
+#     task_id='validate_and_load_data',
+#     python_callable=validate_and_load_data,
+#     provide_context=True,
+#     dag=dag,
+# )
+
+# # Set up task dependencies
+# read_file_task >> validate_load_task
 
 
 
