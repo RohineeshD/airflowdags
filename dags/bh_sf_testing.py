@@ -27,20 +27,18 @@ def m1():
     cur = conn.cursor();
     df1=cur.execute("select COLUMN_NAME from information_schema.columns where TABLE_CATALOG='DB1' and TABLE_SCHEMA='SCHEMA1' and table_name='USERS' order by ORDINAL_POSITION;")
     df2 = cur.execute('SELECT * FROM TABLE(RESULT_SCAN(LAST_QUERY_ID()));')
-    
-    choices=df2.fecthall();
-    cur.close();
 
     print("Standard Column names in the Table")
     # st.write(choices)
-    for i in choices:
+    for i in df2:
         print('Columns in table:', i)
 
     print("Column names from uploaded file")
-    for i in choices:
+    for i in df2:
         print('Mapp Columns with table:', df.columns)
 
-
+    cur.close();
+            
 with DAG(dag_id='bh_sf_testing',
         default_args=default_args,
         schedule_interval='@once', 
