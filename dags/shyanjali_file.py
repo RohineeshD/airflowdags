@@ -30,7 +30,7 @@ class CsvDataValidationOperator(BaseOperator):
         class CsvRow(BaseModel):
             name: str
             email: str
-            id: int
+            ssn: int
         
         # Iterate through rows and validate each one
         for index, row in df.iterrows():
@@ -43,7 +43,7 @@ class CsvDataValidationOperator(BaseOperator):
         self.log.info(f"CSV at {self.csv_url} has been validated successfully.")
 
 # Define your CSV URL
-CSV_URL = 'https://example.com/path/to/your/csv.csv'
+CSV_URL = 'https://github.com/jcharishma/my.repo/raw/master/sample_csv.csv'
 
 default_args = {
     'owner': 'airflow',
