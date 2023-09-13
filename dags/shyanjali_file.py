@@ -41,10 +41,13 @@ def fetch_and_validate_csv():
         table_name = 'SAMPLE_CSV'
         connection = snowflake_hook.get_conn()
         # Iterate through rows and validate each one
+        valid_rows = []
         for index, row in df.iterrows():
             
             validates_rows=CsvRow(**row.to_dict())
-            snowflake_hook.insert_rows(table_name, validates_rows)
+            valid_rows.append((validated_row.name, validated_row.email, validated_row.ssn))
+            
+        snowflake_hook.insert_rows(table_name, valid_rows)
         
         print(f"CSV at {CSV_URL} has been validated successfully.")
         connection.close()
