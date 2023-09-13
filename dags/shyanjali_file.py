@@ -34,10 +34,10 @@ def fetch_and_validate_csv():
 
         # Read CSV data into a DataFrame
         df = pd.read_csv(StringIO(response.text))
-        
+        print(df)
         # Iterate through rows and validate each one
         for index, row in df.iterrows():
-            print(row)
+    
             CsvRow(**row.to_dict())
         
         print(f"CSV at {CSV_URL} has been validated successfully.")
