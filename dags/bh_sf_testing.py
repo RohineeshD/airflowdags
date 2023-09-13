@@ -16,6 +16,11 @@ import pandas as pd
 import snowflake.connector as snow
 from snowflake.connector.pandas_tools import write_pandas
 
+default_args = {
+        'owner' : 'airflow',
+        'start_date' :days_ago(2)
+    }
+
 def m1():
     sf_hook = SnowflakeHook(snowflake_conn_id='snow_id')
     conn = sf_hook.get_conn()
