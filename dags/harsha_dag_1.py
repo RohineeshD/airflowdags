@@ -35,7 +35,7 @@ def read_and_load_to_snowflake():
 
         # Insert the entire dataset into Snowflake without batching
         engine = snowflake_hook.get_sqlalchemy_engine()
-        csv_data.to_sql(name=snowflake_table, con=engine, if_exists='replace', index=False)
+        csv_data.to_sql(name=snowflake_table, con=engine, if_exists='fail', index=False)
 
         logging.info('CSV data successfully loaded into Snowflake.')
 
