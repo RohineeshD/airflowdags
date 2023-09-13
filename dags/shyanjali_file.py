@@ -70,7 +70,7 @@ def upload(**kwargs):
 
 validate_csv = PythonOperator(
     task_id='validate_csv',
-    python_callable=validate_csv,
+    python_callable=fetch_and_validate_csv,
     provide_context=True,
     dag=dag,
 )
