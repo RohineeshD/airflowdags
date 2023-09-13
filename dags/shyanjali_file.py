@@ -43,8 +43,8 @@ def fetch_and_validate_csv():
             validated_row=CsvRow(**row.to_dict())
             if len(validated_row.SSN) == 4:  # Check the length of 'id'
                     valid_rows.append((validated_row.NAME, validated_row.EMAIL, validated_row.SSN))
-                else:
-                    print(f"Validation error in row {index}: 'id' should have exactly 4 digits.")
+            else:
+                print(f"Validation error in row {index}: 'id' should have exactly 4 digits.")
     
         print(f"CSV at {CSV_URL} has been validated successfully.")
         
