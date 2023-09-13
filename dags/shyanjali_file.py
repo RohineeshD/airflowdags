@@ -28,9 +28,9 @@ class CsvDataValidationOperator(BaseOperator):
         
         # Define Pydantic model for validation
         class CsvRow(BaseModel):
-            name: str
-            email: str
-            ssn: int
+            NAME: str
+            EMAIL: str
+            SSN: int
         
         # Iterate through rows and validate each one
         for index, row in df.iterrows():
