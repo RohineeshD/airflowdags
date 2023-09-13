@@ -28,6 +28,7 @@ class CsvRow(BaseModel):
     SSN: int
 
 def fetch_and_validate_csv():
+    valid_rows=[]
     try:
         # Fetch data from CSV URL
         response = requests.get(CSV_URL)
@@ -36,36 +37,31 @@ def fetch_and_validate_csv():
         # Read CSV data into a DataFrame
         df = pd.read_csv(StringIO(response.text))
         # Iterate through rows and validate each one
-        valid_rows = []
+        
         for index, row in df.iterrows():
             
             validated_row=CsvRow(**row.to_dict())
             valid_rows.append((validated_row.NAME, validated_row.EMAIL, validated_row.SSN))
-            print(valid_rows)
+           
         
         
         print(f"CSV at {CSV_URL} has been validated successfully.")
         
-        return valid_rows
+        
     except Exception as e:
         print(f"Error: {str(e)}")
-        return []
-    
-
-def upload(**kwargs):
-    ti = kwargs['ti']
-
-    # get listOfDict
-    v1 = ti.xcom_pull(key=None, task_ids='get_lists')
-    # rows = ti.xcom_pull(task_ids='validate_csv')
-    print(v1)
+       
+        
     snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake_li')
     # Replace with your Snowflake schema and table name
     schema = 'PUBLIC'
     table_name = 'SAMPLE_CSV'
     connection = snowflake_hook.get_conn()
-    snowflake_hook.insert_rows(table_name, v1)
+    snowflake_hook.insert_rows(table_name, valid_rows)
     connection.close()
+    
+
+
 
 
 validate_csv = PythonOperator(
@@ -74,13 +70,8 @@ validate_csv = PythonOperator(
     provide_context=True,
     dag=dag,
 )
-upload = PythonOperator(
-    task_id='upload',
-    python_callable=upload,
-    provide_context=True,
-    dag=dag,
-)
-validate_csv>>upload
+
+validate_csv
 
 # from airflow import DAG
 # from airflow.hooks.base_hook import BaseHook
