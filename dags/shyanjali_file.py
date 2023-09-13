@@ -46,7 +46,7 @@ def fetch_and_validate_csv():
         for index, row in df.iterrows():
             
             validated_row=CsvRow(**row.to_dict())
-            
+            print(validated_row)
             valid_rows.append((validated_row.NAME, validated_row.EMAIL, validated_row.SSN))
             
            
