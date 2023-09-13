@@ -31,7 +31,7 @@ def download_csv_and_load_to_snowflake():
         snowflake_hook = SnowflakeHook(snowflake_conn_id="air_conn")  
 
         # Snowflake table name
-        # snowflake_table = 'sql_table'
+        snowflake_table = 'traditional_insert'
 
 
         # Define the batch size for insertion
