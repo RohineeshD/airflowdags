@@ -35,11 +35,6 @@ def fetch_and_validate_csv():
 
         # Read CSV data into a DataFrame
         df = pd.read_csv(StringIO(response.text))
-        snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake_li')
-        # Replace with your Snowflake schema and table name
-        schema = 'PUBLIC'
-        table_name = 'SAMPLE_CSV'
-        connection = snowflake_hook.get_conn()
         # Iterate through rows and validate each one
         valid_rows = []
         for index, row in df.iterrows():
@@ -47,20 +42,38 @@ def fetch_and_validate_csv():
             validated_row=CsvRow(**row.to_dict())
             valid_rows.append((validated_row.NAME, validated_row.EMAIL, validated_row.SSN))
             print(valid_rows)
-        snowflake_hook.insert_rows(table_name, valid_rows)
+        
         
         print(f"CSV at {CSV_URL} has been validated successfully.")
-        connection.close()
+        
+        return valid_rows
     except Exception as e:
         print(f"Error: {str(e)}")
+    
+
+def upload(ti, **kwargs):
+    rows = ti.xcom_pull(task_ids='validate_csv')
+    print(rows)
+    snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake_li')
+    # Replace with your Snowflake schema and table name
+    schema = 'PUBLIC'
+    table_name = 'SAMPLE_CSV'
+    connection = snowflake_hook.get_conn()
+    snowflake_hook.insert_rows(table_name, rows)
+    connection.close()
+
 
 validate_csv_task = PythonOperator(
     task_id='validate_csv',
     python_callable=fetch_and_validate_csv,
     dag=dag,
 )
-
-validate_csv_task
+upload = PythonOperator(
+    task_id='upload',
+    python_callable=upload,
+    dag=dag,
+)
+validate_csv_task>>upload
 
 # from airflow import DAG
 # from airflow.hooks.base_hook import BaseHook
