@@ -49,18 +49,19 @@ def fetch_and_validate_csv():
         return valid_rows
     except Exception as e:
         print(f"Error: {str(e)}")
+        return []
     
 
-def upload(ti, **kwargs):
-    rows = ti.xcom_pull(task_ids='validate_csv')
-    print(rows)
-    # snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake_li')
-    # # Replace with your Snowflake schema and table name
-    # schema = 'PUBLIC'
-    # table_name = 'SAMPLE_CSV'
-    # connection = snowflake_hook.get_conn()
-    # snowflake_hook.insert_rows(table_name, rows)
-    # connection.close()
+def upload(valid_rows):
+    # rows = ti.xcom_pull(task_ids='validate_csv')
+    print(valid_rows)
+    snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake_li')
+    # Replace with your Snowflake schema and table name
+    schema = 'PUBLIC'
+    table_name = 'SAMPLE_CSV'
+    connection = snowflake_hook.get_conn()
+    snowflake_hook.insert_rows(table_name, valid_rows)
+    connection.close()
 
 
 validate_csv_task = PythonOperator(
