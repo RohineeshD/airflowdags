@@ -44,7 +44,7 @@ def fetch_and_validate_csv():
         valid_rows = []
         for index, row in df.iterrows():
             
-            validates_rows=CsvRow(**row.to_dict())
+            validated_row=CsvRow(**row.to_dict())
             valid_rows.append((validated_row.name, validated_row.email, validated_row.ssn))
             
         snowflake_hook.insert_rows(table_name, valid_rows)
