@@ -52,21 +52,25 @@ def fetch_and_validate_csv():
         return []
     
 
-def upload(valid_rows):
+def upload(**kwargs):
+    ti = kwargs['ti']
+
+    # get listOfDict
+    v1 = ti.xcom_pull(key=None, task_ids='get_lists')
     # rows = ti.xcom_pull(task_ids='validate_csv')
-    print(valid_rows)
+    print(v1)
     snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake_li')
     # Replace with your Snowflake schema and table name
     schema = 'PUBLIC'
     table_name = 'SAMPLE_CSV'
     connection = snowflake_hook.get_conn()
-    snowflake_hook.insert_rows(table_name, valid_rows)
+    snowflake_hook.insert_rows(table_name, v1)
     connection.close()
 
 
-validate_csv_task = PythonOperator(
+validate_csv = PythonOperator(
     task_id='validate_csv',
-    python_callable=fetch_and_validate_csv,
+    python_callable=validate_csv,
     provide_context=True,
     dag=dag,
 )
