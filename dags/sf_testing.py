@@ -11,7 +11,10 @@ from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
 from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
 from airflow.operators.python_operator import PythonOperator
 from airflow.utils.dates import days_ago
-
+from airflow.models import Variable
+import pandas as pd
+import snowflake.connector as snow
+from snowflake.connector.pandas_tools import write_pandas
 
 def m1():
     sf_hook = SnowflakeHook(snowflake_conn_id='snow_id')
