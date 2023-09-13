@@ -31,7 +31,7 @@ def download_csv_and_load_to_snowflake():
         snowflake_hook = SnowflakeHook(snowflake_conn_id="air_conn")  
 
         # Snowflake table name
-        snowflake_table = 'to_sql_table'
+        # snowflake_table = 'sql_table'
 
 
         # Define the batch size for insertion
@@ -41,7 +41,7 @@ def download_csv_and_load_to_snowflake():
         for i in range(0, len(csv_data), batch_size):
             batch = csv_data[i:i+batch_size]
             engine = snowflake_hook.get_sqlalchemy_engine()
-            batch.to_sql(name=snowflake_table, con=engine, if_exists='replace', index=False)
+            batch.to_sql(name=sql_table, con=engine, if_exists='fail', index=False)
 
         logging.info('CSV data successfully loaded into Snowflake.')
 
