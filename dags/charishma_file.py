@@ -35,7 +35,7 @@ class CsvRow(BaseModel):
 
 # Task 1: Read and display the CSV file from the URL
 def read_and_display_csv():
-    csv_url = {CSV_URL}
+    csv_url = 'https://github.com/jcharishma/my.repo/raw/master/sample_csv.csv'
     df = pd.read_csv(csv_url)
     print(df)
 
