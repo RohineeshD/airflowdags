@@ -5,6 +5,7 @@ from airflow.operators.python_operator import PythonOperator
 from airflow.utils.dates import days_ago
 import requests
 from io import StringIO
+from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
 # Define your CSV URL
 CSV_URL = 'https://github.com/jcharishma/my.repo/raw/master/sample_csv.csv'
 
@@ -34,13 +35,19 @@ def fetch_and_validate_csv():
 
         # Read CSV data into a DataFrame
         df = pd.read_csv(StringIO(response.text))
-    
+        snowflake_hook = SnowflakeHook(snowflake_conn_id='snow_sc')
+        # Replace with your Snowflake schema and table name
+        schema = 'PUBLIC'
+        table_name = 'SAMPLE_CSV'
+        connection = snowflake_hook.get_conn()
         # Iterate through rows and validate each one
         for index, row in df.iterrows():
-            print(row)
-            CsvRow(**row.to_dict())
+            
+            validates_rows=CsvRow(**row.to_dict())
+            snowflake_hook.insert_rows(table_name, validates_rows)
         
         print(f"CSV at {CSV_URL} has been validated successfully.")
+        connection.close()
     except Exception as e:
         print(f"Error: {str(e)}")
 
