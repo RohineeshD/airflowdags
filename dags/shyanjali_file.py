@@ -80,7 +80,7 @@ upload = PythonOperator(
     provide_context=True,
     dag=dag,
 )
-validate_csv_task>>upload
+validate_csv>>upload
 
 # from airflow import DAG
 # from airflow.hooks.base_hook import BaseHook
