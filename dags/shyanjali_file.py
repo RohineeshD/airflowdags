@@ -1,5 +1,5 @@
 import pandas as pd
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel, ValidationError, validator
 from airflow import DAG
 from airflow.operators.python_operator import PythonOperator
 from airflow.utils.dates import days_ago
