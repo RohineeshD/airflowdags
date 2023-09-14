@@ -34,7 +34,6 @@ def create_snowflake_task(table_name, start_skip, end_skip):
         FROM '{CSV_URL}'
         FILE_FORMAT = (TYPE = 'CSV' FIELD_OPTIONALLY_ENCLOSED_BY = '"' SKIP_HEADER = 1)
         
-        MAX_FILE_SIZE = 20000000;
     '''
 
     return SnowflakeOperator(
