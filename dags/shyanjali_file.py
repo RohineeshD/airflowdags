@@ -35,7 +35,7 @@ class CsvRow(BaseModel):
 
 def fetch_and_validate_csv():
     valid_rows=[]
-    snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake_li')
+    
     # Replace with your Snowflake schema and table name
     try:
         # Fetch data from CSV URL
@@ -62,12 +62,13 @@ def fetch_and_validate_csv():
         # Add a new column to the DataFrame if not already present
         if 'error' not in df.columns:
             df['error'] = ""
-
+            
+        snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake_li')
         schema = 'PUBLIC'
         table_name = 'SAMPLE_CSV_ERROR'
         connection = snowflake_hook.get_conn()
         snowflake_hook.insert_rows(table_name, df)
-
+        connection.close()
         # Write the updated DataFrame to a new CSV file
         # df.to_csv('sample_csv_error.csv', index=False)
 
@@ -78,7 +79,7 @@ def fetch_and_validate_csv():
         print(f"Error: {str(e)}")
        
         
-    
+    snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake_li')
     schema = 'PUBLIC'
     table_name = 'SAMPLE_CSV'
     connection = snowflake_hook.get_conn()
