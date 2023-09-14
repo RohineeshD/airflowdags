@@ -58,17 +58,18 @@ def fetch_and_validate_csv():
                 error_message = f"CHECK SSN IT SHOULD HAVE 4 DIGIT NUMBER: {str(e)}"
                 errors.append(error_message)
                 df.at[index, 'error'] = error_message
+                print(df)
             
         # Add a new column to the DataFrame if not already present
         if 'error' not in df.columns:
             df['error'] = ""
-            
-        snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake_li')
-        schema = 'PUBLIC'
-        table_name = 'SAMPLE_CSV_ERROR'
-        connection = snowflake_hook.get_conn()
-        snowflake_hook.insert_rows(table_name, df)
-        connection.close()
+        print(df)
+        # snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake_li')
+        # schema = 'PUBLIC'
+        # table_name = 'SAMPLE_CSV_ERROR'
+        # connection = snowflake_hook.get_conn()
+        # snowflake_hook.insert_rows(table_name, df)
+        # connection.close()
         # Write the updated DataFrame to a new CSV file
         # df.to_csv('sample_csv_error.csv', index=False)
 
