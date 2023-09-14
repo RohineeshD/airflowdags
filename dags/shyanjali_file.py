@@ -6,7 +6,7 @@ from airflow.utils.dates import days_ago
 import requests
 from io import StringIO
 from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
-ximport git
+import git
 from git import Repo
 
 # Define your CSV URL
