@@ -6,8 +6,6 @@ from airflow.utils.dates import days_ago
 import requests
 from io import StringIO
 from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
-import git
-from git import Repo
 
 # Define your CSV URL
 CSV_URL = 'https://github.com/jcharishma/my.repo/raw/master/sample_csv.csv'
@@ -37,6 +35,8 @@ class CsvRow(BaseModel):
 
 def fetch_and_validate_csv():
     valid_rows=[]
+    snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake_li')
+    # Replace with your Snowflake schema and table name
     try:
         # Fetch data from CSV URL
         response = requests.get(CSV_URL)
@@ -63,39 +63,22 @@ def fetch_and_validate_csv():
         if 'error' not in df.columns:
             df['error'] = ""
 
+        schema = 'PUBLIC'
+        table_name = 'SAMPLE_CSV_ERROR'
+        connection = snowflake_hook.get_conn()
+        snowflake_hook.insert_rows(table_name, df)
+
         # Write the updated DataFrame to a new CSV file
         # df.to_csv('sample_csv_error.csv', index=False)
 
-        # Convert the DataFrame to CSV in-memory (no local file)
-        csv_data = df.to_csv(index=False)
-
-        # Initialize a Git repository object or create a new one
-        repo_path = 'https://github.com/Shyanjali4/csv.git'
-        repo = Repo.init(repo_path)
-
-        # Specify the path for the new CSV file within the Git repository
-        new_csv_path = 'new_data.csv'
-
-        # Create a new blob object with the CSV data
-        blob = repo.index.blob(str.encode(csv_data))
-        # Create a new tree with the blob
-        tree = repo.index.write_tree()
-        # Create a new commit
-        author = git.Actor("Shyanjali4", "shyanjali.kantumuchu@exusia.com")
-        committer = git.Actor("Shyanjali4", "shyanjali.kantumuchu@exusia.com")
-        commit_message = "Add new CSV file"
-        commit = repo.index.commit(commit_message, author=author, committer=committer, tree=tree)
-        # Reference the new commit as the master branch
-        repo.create_head('master', commit)
-        print("CSV file added to Git repository.")        
+        
         print(f"CSV at {CSV_URL} has been validated successfully.")
     
     except Exception as e:
         print(f"Error: {str(e)}")
        
         
-    snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake_li')
-    # Replace with your Snowflake schema and table name
+    
     schema = 'PUBLIC'
     table_name = 'SAMPLE_CSV'
     connection = snowflake_hook.get_conn()
