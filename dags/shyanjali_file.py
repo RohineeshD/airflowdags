@@ -51,8 +51,6 @@ def fetch_and_validate_csv():
                 validated_row=CsvRow(**row.to_dict())
                 print(validated_row)
                 valid_rows.append((validated_row.NAME, validated_row.EMAIL, validated_row.SSN))
-            # except Exception as e:
-            #     status = f"CHECK SSN IT SHOULD HAVE 4 DIGIT NUMBER: {str(e)}"
             except ValidationError as e:
                 # Record validation errors and add them to the "error" column
                 error_message = f"CHECK SSN IT SHOULD HAVE 4 DIGIT NUMBER: {str(e)}"
@@ -97,6 +95,13 @@ validate_csv = PythonOperator(
 
 validate_csv
 
+
+
+
+
+
+
+# --------------------------------------------------
 # from airflow import DAG
 # from airflow.hooks.base_hook import BaseHook
 # from airflow.operators.python_operator import PythonOperator
