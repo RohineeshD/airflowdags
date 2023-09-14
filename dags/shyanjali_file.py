@@ -81,12 +81,12 @@ def fetch_and_validate_csv():
         print(f"Error: {str(e)}")
        
         
-    # snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake_li')
-    # schema = 'PUBLIC'
-    # table_name = 'SAMPLE_CSV'
-    # connection = snowflake_hook.get_conn()
-    # snowflake_hook.insert_rows(table_name, valid_rows)
-    # connection.close()
+    snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake_li')
+    schema = 'PUBLIC'
+    table_name = 'SAMPLE_CSV'
+    connection = snowflake_hook.get_conn()
+    snowflake_hook.insert_rows(table_name, valid_rows)
+    connection.close()
     
 validate_csv = PythonOperator(
     task_id='validate_csv',
