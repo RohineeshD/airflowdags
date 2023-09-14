@@ -21,10 +21,9 @@ default_args = {
 }
 
 dag = DAG(
-    'load_data_into_snowflake',
+    'split_and_load_into_snowflake',
     default_args=default_args,
-    description='Load data into Snowflake tables from URL',
-    schedule_interval=None,  # Set the desired schedule interval or None for manual execution
+    schedule_interval=None,  
     catchup=False,
 )
 
@@ -50,10 +49,10 @@ def create_snowflake_task(table_name, start_skip, end_skip):
 
 # Define tasks to load data into five tables with specified record ranges
 table1_task = create_snowflake_task('table_1', 0, 19999)
-table2_task = create_snowflake_task('table_1', 20000, 39999)
-table3_task = create_snowflake_task('table_1', 40000, 59999)
-table4_task = create_snowflake_task('table_1', 60000, 79999)
-table5_task = create_snowflake_task('table_1', 80000, None)
+table2_task = create_snowflake_task('table_2', 20000, 39999)
+table3_task = create_snowflake_task('table_3', 40000, 59999)
+table4_task = create_snowflake_task('table_4', 60000, 79999)
+table5_task = create_snowflake_task('table_5', 80000, None)
 
 # Set task dependencies as needed
 table1_task >> table2_task
