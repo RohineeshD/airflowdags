@@ -37,9 +37,13 @@ snowflake_hook = SnowflakeHook(snowflake_conn_id=SNOWFLAKE_CONN_ID)
 
 # Define a function to create a Snowflake task for loading data with a specific record range
 def create_snowflake_task(table_name, start_record, end_record):
-    # Read data into a DataFrame from the CSV URL
-    df = pd.read_csv(CSV_URL, delimiter=',', quotechar='"', skiprows=1, nrows=end_record-start_record+1)
-    
+    if end_record is None:
+        # Read all remaining records from the CSV URL
+        df = pd.read_csv(CSV_URL, delimiter=',', quotechar='"', skiprows=start_record+1)
+    else:
+        # Read the specified range of records from the CSV URL
+        df = pd.read_csv(CSV_URL, delimiter=',', quotechar='"', skiprows=start_record+1, nrows=end_record-start_record+1)
+
     # Generate the SQL query to load data into Snowflake
     sql = f'''
         COPY INTO {table_name}
@@ -69,6 +73,7 @@ table1_task >> table2_task
 table2_task >> table3_task
 table3_task >> table4_task
 table4_task >> table5_task
+
 
 
 # from airflow import DAG
