@@ -10,7 +10,7 @@ SNOWFLAKE_DATABASE = 'exusia_db'
 SNOWFLAKE_SCHEMA = 'exusia_schema'
 
 # Define the URL of the CSV file
-CSV_URL = 'https://media.githubusercontent.com/media/datablist/sample-csv-files/main/files/customers/customers-100000.csv'
+CSV_URL = "https://media.githubusercontent.com/media/datablist/sample-csv-files/main/files/customers/customers-100000.csv"
 
 # Define the DAG and default_args
 default_args = {
