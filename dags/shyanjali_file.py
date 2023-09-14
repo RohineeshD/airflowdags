@@ -61,7 +61,37 @@ def fetch_and_validate_csv():
             df['error'] = ""
 
         # Write the updated DataFrame to a new CSV file
-        df.to_csv('sample_csv_error.csv', index=False)
+        # df.to_csv('sample_csv_error.csv', index=False)
+
+        # Convert the DataFrame to CSV in-memory (no local file)
+        csv_data = df.to_csv(index=False)
+
+        # Initialize a Git repository object or create a new one
+        repo_path = '/path/to/your/git/repository'
+        repo = Repo.init(repo_path)
+
+        # Specify the path for the new CSV file within the Git repository
+        new_csv_path = 'new_data.csv'
+
+        # Create a new blob object with the CSV data
+        blob = repo.index.blob(str.encode(csv_data))
+
+        # Create a new tree with the blob
+        tree = repo.index.write_tree()
+
+        # Create a new commit
+        author = git.Actor("Your Name", "your.email@example.com")
+        committer = git.Actor("Your Name", "your.email@example.com")
+        commit_message = "Add new CSV file"
+        commit = repo.index.commit(commit_message, author=author, committer=committer, tree=tree)
+
+        # Reference the new commit as the master branch
+        repo.create_head('master', commit)
+
+        print("CSV file added to Git repository.")
+
+
+
         
         print(f"CSV at {CSV_URL} has been validated successfully.")
     
