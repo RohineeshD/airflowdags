@@ -83,6 +83,7 @@ def fetch_and_validate_csv():
         # If there are NaN values, replace them with 0
         if has_nan:
             df.fillna(0, inplace=True)
+        print(df)
         snowflake_hook = SnowflakeHook(snowflake_conn_id='snow_sc')
         schema = 'SC1'
         table_name = 'ERROR_LOG'
@@ -95,12 +96,12 @@ def fetch_and_validate_csv():
         print(f"Error: {str(e)}")
        
         
-    snowflake_hook = SnowflakeHook(snowflake_conn_id='snow_sc')
-    schema = 'SC1'
-    table_name = 'SAMPLE_CSV'
-    connection = snowflake_hook.get_conn()
-    snowflake_hook.insert_rows(table_name, valid_rows)
-    connection.close()
+    # snowflake_hook = SnowflakeHook(snowflake_conn_id='snow_sc')
+    # schema = 'SC1'
+    # table_name = 'SAMPLE_CSV'
+    # connection = snowflake_hook.get_conn()
+    # snowflake_hook.insert_rows(table_name, valid_rows)
+    # connection.close()
 
 
 validate_load_task = PythonOperator(
