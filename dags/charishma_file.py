@@ -71,10 +71,10 @@ def fetch_and_validate_csv():
                 # Record validation errors and add them to the "error" column
                 error_message = f"CHECK SSN IT SHOULD HAVE 4 DIGIT NUMBER: {str(e)}"
                 errors.append(error_message)
-                df.at[index, 'error'] = error_message
+                df.at[index, 'error_log'] = error_message
         # Add a new column to the DataFrame if not already present
-        if 'error' not in df.columns:
-            df['error'] = "--"
+        if 'error_log' not in df.columns:
+            df['error_log'] = "--"
         
         print(df)
         # Check for NaN values in the entire DataFrame
