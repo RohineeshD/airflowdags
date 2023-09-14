@@ -3,6 +3,8 @@ from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
 from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
 from datetime import datetime, timedelta
 import pandas as pd
+import requests
+from io import StringIO
 
 # Define Snowflake connection ID
 SNOWFLAKE_CONN_ID = 'air_conn'
@@ -35,14 +37,12 @@ dag = DAG(
 # Create a SnowflakeHook for connecting to Snowflake
 snowflake_hook = SnowflakeHook(snowflake_conn_id=SNOWFLAKE_CONN_ID)
 
-# Define a function to create a Snowflake task for loading data with a specific record range
+# Define a function to read data from URL and create a Snowflake task for loading data
 def create_snowflake_task(table_name, start_record, end_record):
-    if end_record is None:
-        # Read all remaining records from the CSV URL
-        df = pd.read_csv(CSV_URL, delimiter=',', quotechar='"', skiprows=start_record+1)
-    else:
-        # Read the specified range of records from the CSV URL
-        df = pd.read_csv(CSV_URL, delimiter=',', quotechar='"', skiprows=start_record+1, nrows=end_record-start_record+1)
+    # Read data from the CSV URL using requests
+    response = requests.get(CSV_URL)
+    content = response.content.decode('utf-8')
+    df = pd.read_csv(StringIO(content), delimiter=',', quotechar='"', skiprows=1, nrows=end_record-start_record+1)
 
     # Generate the SQL query to load data into Snowflake
     sql = f'''
@@ -73,6 +73,7 @@ table1_task >> table2_task
 table2_task >> table3_task
 table3_task >> table4_task
 table4_task >> table5_task
+
 
 
 
