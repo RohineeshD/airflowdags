@@ -67,6 +67,8 @@ def fetch_and_validate_csv():
         # If there are NaN values, replace them with 0
         if has_nan:
             df.fillna(0, inplace=True)
+
+        # df.to_csv('/tmp/data.csv', index=False)
         snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake_li')
         schema = 'PUBLIC'
         table_name = 'SAMPLE_CSV_ERROR'
