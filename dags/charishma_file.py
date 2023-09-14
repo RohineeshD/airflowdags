@@ -81,6 +81,7 @@ def fetch_and_validate_csv():
         if has_nan:
             df.fillna(0, inplace=True)
         snowflake_hook = SnowflakeHook(snowflake_conn_id='snow_sc')
+        schema = 'SC1'
         table_name = 'ERROR_LOG'
         connection = snowflake_hook.get_conn()
         snowflake_hook.insert_rows(table_name, df.values.tolist())
