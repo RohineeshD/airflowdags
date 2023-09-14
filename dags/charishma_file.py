@@ -92,53 +92,6 @@ def fetch_and_validate_csv():
     
     except Exception as e:
         print(f"Error: {str(e)}")
-# def fetch_and_validate_csv():
-#     valid_rows=[]
-    
- 
-#     try:
-#         # Fetch data from CSV URL
-#         response = requests.get(CSV_URL)
-#         response.raise_for_status()
-
-#         # Read CSV data into a DataFrame
-#         df = pd.read_csv(StringIO(response.text))
-#         # Iterate through rows and validate each one
-#         errors = []
-#         for index, row in df.iterrows():
-#             try:
-#                 validated_row=CsvRow(**row.to_dict())
-#                 print(validated_row)
-#                 valid_rows.append((validated_row.NAME, validated_row.EMAIL, validated_row.SSN))
-#             # except Exception as e:
-#             #     status = f"CHECK SSN IT SHOULD HAVE 4 DIGIT NUMBER: {str(e)}"
-#             except ValidationError as e:
-#                 # Record validation errors and add them to the "error" column
-#                 error_message = f"CHECK SSN IT SHOULD HAVE 4 DIGIT NUMBER: {str(e)}"
-#                 errors.append(error_message)
-#                 df.at[index, 'error_log'] = error_message
-#         # Add a new column to the DataFrame if not already present
-#         if 'error_log' not in df.columns:
-#             df['error_log'] = "--"
-        
-#         print(df)
-#         # Check for NaN values in the entire DataFrame
-#         has_nan = df.isnull().values.any()
-        
-#         # If there are NaN values, replace them with 0
-#         if has_nan:
-#             df.fillna(0, inplace=True)
-#         print(df)
-#         snowflake_hook = SnowflakeHook(snowflake_conn_id='snow_sc')
-#         schema = 'SC1'
-#         table_name = 'ERROR_LOG'
-#         connection = snowflake_hook.get_conn()
-#         snowflake_hook.insert_rows(table_name, df.values.tolist())
-#         connection.close()
-#         print(f"CSV at {CSV_URL} has been validated successfully.")
-    
-#     except Exception as e:
-#         print(f"Error: {str(e)}")
        
         
     snowflake_hook = SnowflakeHook(snowflake_conn_id='snow_sc')
@@ -158,6 +111,8 @@ validate_load_task = PythonOperator(
 
 # Set up task dependencies
 read_file_task >> validate_load_task
+
+
 # def fetch_and_validate_csv():
 #     valid_rows = []
 #     errors = []
