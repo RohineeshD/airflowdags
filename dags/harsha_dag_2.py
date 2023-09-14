@@ -42,7 +42,13 @@ def create_snowflake_task(table_name, start_record, end_record):
     # Read data from the CSV URL using requests
     response = requests.get(CSV_URL)
     content = response.content.decode('utf-8')
-    df = pd.read_csv(StringIO(content), delimiter=',', quotechar='"', skiprows=1, nrows=end_record-start_record+1)
+    
+    if end_record is None:
+        # Read all remaining records from the CSV content
+        df = pd.read_csv(StringIO(content), delimiter=',', quotechar='"', skiprows=start_record+1)
+    else:
+        # Read the specified range of records from the CSV content
+        df = pd.read_csv(StringIO(content), delimiter=',', quotechar='"', skiprows=start_record+1, nrows=end_record-start_record+1)
 
     # Generate the SQL query to load data into Snowflake
     sql = f'''
