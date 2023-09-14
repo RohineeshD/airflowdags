@@ -33,18 +33,28 @@ class CsvRow(BaseModel):
         if not (1000 <= SSN <= 9999):
             raise ValueError('Invalid SSN length; it should be 4 digits')
         return SSN
-
 # Task 1: Read and display the CSV file from the URL
-def read_and_display_csv():
-    csv_url = 'https://github.com/jcharishma/my.repo/raw/master/sample_csv.csv'
+def read_and_display_csv(csv_url):
     df = pd.read_csv(csv_url)
     print(df)
 
 read_file_task = PythonOperator(
     task_id='read_file',
     python_callable=read_and_display_csv,
+    op_args=[CSV_URL],  # Pass CSV_URL as an argument
     dag=dag,
 )
+# # Task 1: Read and display the CSV file from the URL
+# def read_and_display_csv():
+#     csv_url = 'https://github.com/jcharishma/my.repo/raw/master/sample_csv.csv'
+#     df = pd.read_csv(csv_url)
+#     print(df)
+
+# read_file_task = PythonOperator(
+#     task_id='read_file',
+#     python_callable=read_and_display_csv,
+#     dag=dag,
+# )
 
 # Task 2: Load data to tables and log errors
 def fetch_and_validate_csv():
