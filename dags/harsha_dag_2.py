@@ -33,7 +33,7 @@ def create_snowflake_task(table_name, start_skip, end_skip):
         COPY INTO {table_name}
         FROM '{CSV_URL}'
         FILE_FORMAT = (TYPE = 'CSV' FIELD_OPTIONALLY_ENCLOSED_BY = '"' SKIP_HEADER = 1)
-        SKIP = {start_skip}
+        
         MAX_FILE_SIZE = 20000000;
     '''
 
