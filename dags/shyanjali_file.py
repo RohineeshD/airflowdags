@@ -60,7 +60,7 @@ def fetch_and_validate_csv():
                 df.at[index, 'error'] = error_message
         # Add a new column to the DataFrame if not already present
         if 'error' not in df.columns:
-            df['error'] = ""
+            df['error'] = "--"
         
         print(df)
         snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake_li')
