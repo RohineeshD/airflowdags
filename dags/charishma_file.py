@@ -68,7 +68,7 @@ def fetch_and_validate_csv():
             #     status = f"CHECK SSN IT SHOULD HAVE 4 DIGIT NUMBER: {str(e)}"
             except ValidationError as e:
                 # Record validation errors and add them to the "error" column
-                error_message = f"CHECK SSN IT SHOULD HAVE 4 DIGIT NUMBER: {str(e)}"
+                error_message = f"Invalid SSN length; it should be 4 digits: {str(e)}"
                 errors.append(error_message)
                 df.at[index, 'error'] = error_message
         # Add a new column to the DataFrame if not already present
