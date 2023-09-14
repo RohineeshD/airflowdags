@@ -63,12 +63,12 @@ def fetch_and_validate_csv():
             df['error'] = ""
         
         print(df)
-        # snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake_li')
-        # schema = 'PUBLIC'
-        # table_name = 'SAMPLE_CSV_ERROR'
-        # connection = snowflake_hook.get_conn()
-        # snowflake_hook.insert_rows(table_name, df)
-        # connection.close()
+        snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake_li')
+        schema = 'PUBLIC'
+        table_name = 'SAMPLE_CSV_ERROR'
+        connection = snowflake_hook.get_conn()
+        snowflake_hook.insert_rows(table_name, df.values.tolist())
+        connection.close()
         # Write the updated DataFrame to a new CSV file
         # df.to_csv('sample_csv_error.csv', index=False)
 
