@@ -1,6 +1,8 @@
 from airflow import DAG
 from airflow.providers.snowflake.transfers.snowflake_to_snowflake import SnowflakeToSnowflakeOperator
 from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
+from airflow.providers.snowflake.operators.snowflake import SnowflakeToSnowflakeOperator
+from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
 from datetime import datetime
 from datetime import timedelta
 
