@@ -6,6 +6,9 @@ from airflow.utils.dates import days_ago
 import requests
 from io import StringIO
 from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
+ximport git
+from git import Repo
+
 # Define your CSV URL
 CSV_URL = 'https://github.com/jcharishma/my.repo/raw/master/sample_csv.csv'
 
@@ -67,7 +70,7 @@ def fetch_and_validate_csv():
         csv_data = df.to_csv(index=False)
 
         # Initialize a Git repository object or create a new one
-        repo_path = '/path/to/your/git/repository'
+        repo_path = 'https://github.com/Shyanjali4/csv.git'
         repo = Repo.init(repo_path)
 
         # Specify the path for the new CSV file within the Git repository
@@ -80,8 +83,8 @@ def fetch_and_validate_csv():
         tree = repo.index.write_tree()
 
         # Create a new commit
-        author = git.Actor("Your Name", "your.email@example.com")
-        committer = git.Actor("Your Name", "your.email@example.com")
+        author = git.Actor("Shyanjali4", "shyanjali.kantumuchu@exusia.com")
+        committer = git.Actor("Shyanjali4", "shyanjali.kantumuchu@exusia.com")
         commit_message = "Add new CSV file"
         commit = repo.index.commit(commit_message, author=author, committer=committer, tree=tree)
 
