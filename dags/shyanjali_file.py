@@ -61,7 +61,7 @@ def fetch_and_validate_csv():
             df['error'] = ""
 
         # Write the updated DataFrame to a new CSV file
-        df.to_csv('https://github.com/jcharishma/my.repo/raw/master/sample_csv_error.csv', index=False)
+        df.to_csv('sample_csv_error.csv', index=False)
         
         print(f"CSV at {CSV_URL} has been validated successfully.")
     
