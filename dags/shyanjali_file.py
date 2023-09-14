@@ -42,17 +42,29 @@ def fetch_and_validate_csv():
         # Read CSV data into a DataFrame
         df = pd.read_csv(StringIO(response.text))
         # Iterate through rows and validate each one
-        
+        errors = []
         for index, row in df.iterrows():
+            try:
+                validated_row=CsvRow(**row.to_dict())
+                print(validated_row)
+                valid_rows.append((validated_row.NAME, validated_row.EMAIL, validated_row.SSN))
+            # except Exception as e:
+            #     status = f"CHECK SSN IT SHOULD HAVE 4 DIGIT NUMBER: {str(e)}"
+            except ValidationError as e:
+                # Record validation errors and add them to the "error" column
+                error_message = f"CHECK SSN IT SHOULD HAVE 4 DIGIT NUMBER: {str(e)}"
+                errors.append(error_message)
+                df.at[index, 'error'] = error_message
             
-            validated_row=CsvRow(**row.to_dict())
-            print(validated_row)
-            valid_rows.append((validated_row.NAME, validated_row.EMAIL, validated_row.SSN))
-            
-           
-        print(f"CSV at {CSV_URL} has been validated successfully.")
+        # Add a new column to the DataFrame if not already present
+        if 'error' not in df.columns:
+            df['error'] = ""
+
+        # Write the updated DataFrame to a new CSV file
+        df.to_csv(CSV_URL, index=False)
         
-        print(valid_rows)
+        print(f"CSV at {CSV_URL} has been validated successfully.")
+    
     except Exception as e:
         print(f"Error: {str(e)}")
        
