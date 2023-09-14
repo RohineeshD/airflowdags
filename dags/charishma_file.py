@@ -6,6 +6,7 @@ from airflow.utils.dates import days_ago
 import requests
 from io import StringIO
 from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
+
 # Define your CSV URL
 CSV_URL = 'https://github.com/jcharishma/my.repo/raw/master/sample_csv.csv'
 
@@ -26,12 +27,12 @@ class CsvRow(BaseModel):
     NAME: str
     EMAIL: str
     SSN: int
+    
     @validator('SSN')
     def validate_id(cls, SSN):
         if not (1000 <= SSN <= 9999):
             raise ValueError('Invalid SSN length; it should be 4 digits')
         return SSN
-
 
 # Task 1: Read and display the CSV file from the URL
 def read_and_display_csv():
@@ -44,10 +45,11 @@ read_file_task = PythonOperator(
     python_callable=read_and_display_csv,
     dag=dag,
 )
-# Task 2: load data to tables
+
+# Task 2: Load data to tables and log errors
 def fetch_and_validate_csv():
-    valid_rows=[]
-    
+    valid_rows = []
+    errors = []
     
     try:
         # Fetch data from CSV URL
@@ -56,50 +58,51 @@ def fetch_and_validate_csv():
 
         # Read CSV data into a DataFrame
         df = pd.read_csv(StringIO(response.text))
+        
         # Iterate through rows and validate each one
-        errors = []
         for index, row in df.iterrows():
             try:
-                validated_row=CsvRow(**row.to_dict())
-                print(validated_row)
+                validated_row = CsvRow(**row.to_dict())
                 valid_rows.append((validated_row.NAME, validated_row.EMAIL, validated_row.SSN))
-        
             except ValidationError as e:
                 # Record validation errors and add them to the "error" column
-                error_message = f"SSN  SHOULD HAVE 4 DIGIT NUMBER: {str(e)}"
+                error_message = f"SSN SHOULD HAVE 4 DIGIT NUMBER: {str(e)}"
                 errors.append(error_message)
                 df.at[index, 'error'] = error_message
-       
+        
         if 'error' not in df.columns:
             df['error'] = "--"
         
         print(df)
+        
         # Check for NaN values in the entire DataFrame
         has_nan = df.isnull().values.any()
         
         # If there are NaN values, replace them with 0
         if has_nan:
             df.fillna(0, inplace=True)
+        
         snowflake_hook = SnowflakeHook(snowflake_conn_id='snow_sc')
         schema = 'SC1'
-        table_name = 'ERROR_LOG'
+        
+        # Insert errors into the ERROR_LOG table
+        if errors:
+            error_df = pd.DataFrame({'error_message': errors})
+            table_name = 'ERROR_LOG'
+            connection = snowflake_hook.get_conn()
+            snowflake_hook.insert_rows(table_name, error_df.values.tolist())
+            connection.close()
+        
+        # Insert valid data into the SAMPLE_CSV table
+        table_name = 'SAMPLE_CSV'
         connection = snowflake_hook.get_conn()
-        snowflake_hook.insert_rows(table_name, df.values.tolist())
+        snowflake_hook.insert_rows(table_name, valid_rows)
         connection.close()
+        
         print(f"CSV at {CSV_URL} has been validated successfully.")
     
     except Exception as e:
         print(f"Error: {str(e)}")
-       
-        
-    snowflake_hook = SnowflakeHook(snowflake_conn_id='snow_sc')
-    # Replace with your Snowflake schema and table name
-    schema = 'SC1'
-    table_name = 'SAMPLE_CSV'
-    connection = snowflake_hook.get_conn()
-    snowflake_hook.insert_rows(table_name, valid_rows)
-    connection.close()
-    
 
 validate_load_task = PythonOperator(
     task_id='validate_load_task',
@@ -110,6 +113,120 @@ validate_load_task = PythonOperator(
 
 # Set up task dependencies
 read_file_task >> validate_load_task
+
+
+# import pandas as pd
+# from pydantic import BaseModel, ValidationError, validator
+# from airflow import DAG
+# from airflow.operators.python_operator import PythonOperator
+# from airflow.utils.dates import days_ago
+# import requests
+# from io import StringIO
+# from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
+# # Define your CSV URL
+# CSV_URL = 'https://github.com/jcharishma/my.repo/raw/master/sample_csv.csv'
+
+# default_args = {
+#     'owner': 'airflow',
+#     'start_date': days_ago(1),
+# }
+
+# dag = DAG(
+#     'csv_dag',
+#     default_args=default_args,
+#     schedule_interval=None, 
+#     catchup=False,
+# )
+
+# # Define Pydantic model for validation
+# class CsvRow(BaseModel):
+#     NAME: str
+#     EMAIL: str
+#     SSN: int
+#     @validator('SSN')
+#     def validate_id(cls, SSN):
+#         if not (1000 <= SSN <= 9999):
+#             raise ValueError('Invalid SSN length; it should be 4 digits')
+#         return SSN
+
+
+# # Task 1: Read and display the CSV file from the URL
+# def read_and_display_csv():
+#     csv_url = 'https://github.com/jcharishma/my.repo/raw/master/sample_csv.csv'
+#     df = pd.read_csv(csv_url)
+#     print(df)
+
+# read_file_task = PythonOperator(
+#     task_id='read_file',
+#     python_callable=read_and_display_csv,
+#     dag=dag,
+# )
+# # Task 2: load data to tables
+# def fetch_and_validate_csv():
+#     valid_rows=[]
+    
+    
+#     try:
+#         # Fetch data from CSV URL
+#         response = requests.get(CSV_URL)
+#         response.raise_for_status()
+
+#         # Read CSV data into a DataFrame
+#         df = pd.read_csv(StringIO(response.text))
+#         # Iterate through rows and validate each one
+#         errors = []
+#         for index, row in df.iterrows():
+#             try:
+#                 validated_row=CsvRow(**row.to_dict())
+#                 print(validated_row)
+#                 valid_rows.append((validated_row.NAME, validated_row.EMAIL, validated_row.SSN))
+        
+#             except ValidationError as e:
+#                 # Record validation errors and add them to the "error" column
+#                 error_message = f"SSN  SHOULD HAVE 4 DIGIT NUMBER: {str(e)}"
+#                 errors.append(error_message)
+#                 df.at[index, 'error'] = error_message
+       
+#         if 'error' not in df.columns:
+#             df['error'] = "--"
+        
+#         print(df)
+#         # Check for NaN values in the entire DataFrame
+#         has_nan = df.isnull().values.any()
+        
+#         # If there are NaN values, replace them with 0
+#         if has_nan:
+#             df.fillna(0, inplace=True)
+#         snowflake_hook = SnowflakeHook(snowflake_conn_id='snow_sc')
+#         schema = 'SC1'
+#         table_name = 'ERROR_LOG'
+#         connection = snowflake_hook.get_conn()
+#         snowflake_hook.insert_rows(table_name, df.values.tolist())
+#         connection.close()
+#         print(f"CSV at {CSV_URL} has been validated successfully.")
+    
+#     except Exception as e:
+#         print(f"Error: {str(e)}")
+       
+        
+#     snowflake_hook = SnowflakeHook(snowflake_conn_id='snow_sc')
+#     # Replace with your Snowflake schema and table name
+#     schema = 'SC1'
+#     table_name = 'SAMPLE_CSV'
+#     connection = snowflake_hook.get_conn()
+#     snowflake_hook.insert_rows(table_name, valid_rows)
+#     connection.close()
+    
+
+# validate_load_task = PythonOperator(
+#     task_id='validate_load_task',
+#     python_callable=fetch_and_validate_csv,
+#     provide_context=True,
+#     dag=dag,
+# )
+
+# # Set up task dependencies
+# read_file_task >> validate_load_task
 
 
 
