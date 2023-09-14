@@ -78,24 +78,16 @@ def fetch_and_validate_csv():
 
         # Create a new blob object with the CSV data
         blob = repo.index.blob(str.encode(csv_data))
-
         # Create a new tree with the blob
         tree = repo.index.write_tree()
-
         # Create a new commit
         author = git.Actor("Shyanjali4", "shyanjali.kantumuchu@exusia.com")
         committer = git.Actor("Shyanjali4", "shyanjali.kantumuchu@exusia.com")
         commit_message = "Add new CSV file"
         commit = repo.index.commit(commit_message, author=author, committer=committer, tree=tree)
-
         # Reference the new commit as the master branch
         repo.create_head('master', commit)
-
-        print("CSV file added to Git repository.")
-
-
-
-        
+        print("CSV file added to Git repository.")        
         print(f"CSV at {CSV_URL} has been validated successfully.")
     
     except Exception as e:
@@ -110,10 +102,6 @@ def fetch_and_validate_csv():
     snowflake_hook.insert_rows(table_name, valid_rows)
     connection.close()
     
-
-
-
-
 validate_csv = PythonOperator(
     task_id='validate_csv',
     python_callable=fetch_and_validate_csv,
