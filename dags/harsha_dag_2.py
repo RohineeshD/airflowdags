@@ -1,17 +1,13 @@
 from airflow import DAG
-from airflow.providers.snowflake.transfers.snowflake_to_snowflake import SnowflakeToSnowflakeOperator
-from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
-from airflow.providers.snowflake.operators.snowflake import SnowflakeToSnowflakeOperator
-from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
-from datetime import datetime
-from datetime import timedelta
+from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
+from datetime import datetime, timedelta
 
-# Define Snowflake connection ID (no need to use it for SnowflakeHook)
+# Define Snowflake connection ID
 SNOWFLAKE_CONN_ID = 'air_conn'
 
 # Define Snowflake database and schema
 SNOWFLAKE_DATABASE = 'exusia_db'
-SNOWFLAKE_SCHEMA = 'exusia_db'
+SNOWFLAKE_SCHEMA = 'exusia_schema'
 
 # Define the URL of the CSV file
 CSV_URL = 'https://media.githubusercontent.com/media/datablist/sample-csv-files/main/files/customers/customers-100000.csv'
@@ -25,19 +21,15 @@ default_args = {
 }
 
 dag = DAG(
-    'split_data_into_snowflake',
+    'load_data_into_snowflake',
     default_args=default_args,
     description='Load data into Snowflake tables from URL',
-    schedule_interval=None,  
+    schedule_interval=None,  # Set the desired schedule interval or None for manual execution
     catchup=False,
 )
 
 # Define a function to create a Snowflake task for loading data
 def create_snowflake_task(table_name, start_skip, end_skip):
-    # Use SnowflakeHook to connect to Snowflake
-    snowflake_hook = SnowflakeHook(snowflake_conn_id=SNOWFLAKE_CONN_ID)
-
-    # Construct the SQL statement for data loading
     sql = f'''
         COPY INTO {table_name}
         FROM '{CSV_URL}'
@@ -46,25 +38,32 @@ def create_snowflake_task(table_name, start_skip, end_skip):
         MAX_FILE_SIZE = 20000000;
     '''
 
-    return SnowflakeToSnowflakeOperator(
+    return SnowflakeOperator(
         task_id=f'load_{table_name}',
         sql=sql,
-        snowflake_conn=snowflake_hook.get_conn(), 
+        snowflake_conn_id=SNOWFLAKE_CONN_ID,
+        autocommit=True,  
+        database=SNOWFLAKE_DATABASE,
+        schema=SNOWFLAKE_SCHEMA,
         dag=dag,
     )
 
 # Define tasks to load data into five tables with specified record ranges
 table1_task = create_snowflake_task('table_1', 0, 19999)
-table2_task = create_snowflake_task('table_2', 20000, 39999)
-table3_task = create_snowflake_task('table_3', 40000, 59999)
-table4_task = create_snowflake_task('table_4', 60000, 79999)
-table5_task = create_snowflake_task('table_5', 80000, None)
+table2_task = create_snowflake_task('table_1', 20000, 39999)
+table3_task = create_snowflake_task('table_1', 40000, 59999)
+table4_task = create_snowflake_task('table_1', 60000, 79999)
+table5_task = create_snowflake_task('table_1', 80000, None)
 
 # Set task dependencies as needed
 table1_task >> table2_task
 table2_task >> table3_task
 table3_task >> table4_task
 table4_task >> table5_task
+
+if __name__ == "__main__":
+    dag.cli()
+
 
 
 
