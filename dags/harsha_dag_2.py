@@ -1,6 +1,8 @@
 from airflow import DAG
 from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
+from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
 from datetime import datetime, timedelta
+import pandas as pd
 
 # Define Snowflake connection ID
 SNOWFLAKE_CONN_ID = 'air_conn'
@@ -27,13 +29,19 @@ dag = DAG(
     catchup=False,
 )
 
+# Create a SnowflakeHook for connecting to Snowflake
+snowflake_hook = SnowflakeHook(snowflake_conn_id=SNOWFLAKE_CONN_ID)
+
 # Define a function to create a Snowflake task for loading data
-def create_snowflake_task(table_name, start_skip, end_skip):
+def create_snowflake_task(table_name):
+    # Read data into a DataFrame from the CSV URL
+    df = pd.read_csv(CSV_URL, delimiter=',', quotechar='"', skiprows=1)
+
+    # Generate the SQL query to load data into Snowflake
     sql = f'''
         COPY INTO {table_name}
-        FROM '{CSV_URL}'
-        FILE_FORMAT = (TYPE = 'CSV' FIELD_OPTIONALLY_ENCLOSED_BY = '"' SKIP_HEADER = 1)
-        
+        FROM VALUES {",".join(["('" + "','".join(map(str, row)) + "')" for row in df.values])}
+        FILE_FORMAT = (TYPE = 'CSV' SKIP_HEADER = 1)
     '''
 
     return SnowflakeOperator(
@@ -46,12 +54,12 @@ def create_snowflake_task(table_name, start_skip, end_skip):
         dag=dag,
     )
 
-# Define tasks to load data into five tables with specified record ranges
-table1_task = create_snowflake_task('table_1', 0, 19999)
-table2_task = create_snowflake_task('table_2', 20000, 39999)
-table3_task = create_snowflake_task('table_3', 40000, 59999)
-table4_task = create_snowflake_task('table_4', 60000, 79999)
-table5_task = create_snowflake_task('table_5', 80000, None)
+# Define tasks to load data into five tables
+table1_task = create_snowflake_task('table_1')
+table2_task = create_snowflake_task('table_2')
+table3_task = create_snowflake_task('table_3')
+table4_task = create_snowflake_task('table_4')
+table5_task = create_snowflake_task('table_5')
 
 # Set task dependencies as needed
 table1_task >> table2_task
@@ -59,8 +67,70 @@ table2_task >> table3_task
 table3_task >> table4_task
 table4_task >> table5_task
 
-if __name__ == "__main__":
-    dag.cli()
+
+# from airflow import DAG
+# from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
+# from datetime import datetime, timedelta
+
+# # Define Snowflake connection ID
+# SNOWFLAKE_CONN_ID = 'air_conn'
+
+# # Define Snowflake database and schema
+# SNOWFLAKE_DATABASE = 'exusia_db'
+# SNOWFLAKE_SCHEMA = 'exusia_schema'
+
+# # Define the URL of the CSV file
+# CSV_URL = "https://media.githubusercontent.com/media/datablist/sample-csv-files/main/files/customers/customers-100000.csv"
+
+# # Define the DAG and default_args
+# default_args = {
+#     'owner': 'airflow',
+#     'start_date': datetime(2023, 9, 13),
+#     'retries': 1,
+#     'retry_delay': timedelta(minutes=5),
+# }
+
+# dag = DAG(
+#     'split_and_load_into_snowflake',
+#     default_args=default_args,
+#     schedule_interval=None,  
+#     catchup=False,
+# )
+
+# # Define a function to create a Snowflake task for loading data
+# def create_snowflake_task(table_name, start_skip, end_skip):
+#     sql = f'''
+#         COPY INTO {table_name}
+#         FROM '{CSV_URL}'
+#         FILE_FORMAT = (TYPE = 'CSV' FIELD_OPTIONALLY_ENCLOSED_BY = '"' SKIP_HEADER = 1)
+        
+#     '''
+
+#     return SnowflakeOperator(
+#         task_id=f'load_{table_name}',
+#         sql=sql,
+#         snowflake_conn_id=SNOWFLAKE_CONN_ID,
+#         autocommit=True,  
+#         database=SNOWFLAKE_DATABASE,
+#         schema=SNOWFLAKE_SCHEMA,
+#         dag=dag,
+#     )
+
+# # Define tasks to load data into five tables with specified record ranges
+# table1_task = create_snowflake_task('table_1', 0, 19999)
+# table2_task = create_snowflake_task('table_2', 20000, 39999)
+# table3_task = create_snowflake_task('table_3', 40000, 59999)
+# table4_task = create_snowflake_task('table_4', 60000, 79999)
+# table5_task = create_snowflake_task('table_5', 80000, None)
+
+# # Set task dependencies as needed
+# table1_task >> table2_task
+# table2_task >> table3_task
+# table3_task >> table4_task
+# table4_task >> table5_task
+
+# if __name__ == "__main__":
+#     dag.cli()
 
 
 
