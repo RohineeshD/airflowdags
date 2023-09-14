@@ -44,8 +44,11 @@ read_file_task = PythonOperator(
     python_callable=read_and_display_csv,
     dag=dag,
 )
+# Task 2: load data to tables
 def fetch_and_validate_csv():
     valid_rows=[]
+    
+    
     try:
         # Fetch data from CSV URL
         response = requests.get(CSV_URL)
@@ -54,17 +57,36 @@ def fetch_and_validate_csv():
         # Read CSV data into a DataFrame
         df = pd.read_csv(StringIO(response.text))
         # Iterate through rows and validate each one
-        
+        errors = []
         for index, row in df.iterrows():
-            
-            validated_row=CsvRow(**row.to_dict())
-            print(validated_row)
-            valid_rows.append((validated_row.NAME, validated_row.EMAIL, validated_row.SSN))
-            
-           
-        print(f"CSV at {CSV_URL} has been validated successfully.")
+            try:
+                validated_row=CsvRow(**row.to_dict())
+                print(validated_row)
+                valid_rows.append((validated_row.NAME, validated_row.EMAIL, validated_row.SSN))
         
-        print(valid_rows)
+            except ValidationError as e:
+                # Record validation errors and add them to the "error" column
+                error_message = f"SSN  SHOULD HAVE 4 DIGIT NUMBER: {str(e)}"
+                errors.append(error_message)
+                df.at[index, 'error'] = error_message
+       
+        if 'error' not in df.columns:
+            df['error'] = "--"
+        
+        print(df)
+        # Check for NaN values in the entire DataFrame
+        has_nan = df.isnull().values.any()
+        
+        # If there are NaN values, replace them with 0
+        if has_nan:
+            df.fillna(0, inplace=True)
+        snowflake_hook = SnowflakeHook(snowflake_conn_id='snow_sc')
+        table_name = 'ERROR_LOG'
+        connection = snowflake_hook.get_conn()
+        snowflake_hook.insert_rows(table_name, df.values.tolist())
+        connection.close()
+        print(f"CSV at {CSV_URL} has been validated successfully.")
+    
     except Exception as e:
         print(f"Error: {str(e)}")
        
@@ -77,9 +99,6 @@ def fetch_and_validate_csv():
     snowflake_hook.insert_rows(table_name, valid_rows)
     connection.close()
     
-
-
-
 
 validate_load_task = PythonOperator(
     task_id='validate_load_task',
