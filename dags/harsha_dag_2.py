@@ -14,6 +14,9 @@ SNOWFLAKE_SCHEMA = 'exusia_schema'
 # Define the URL of the CSV file
 CSV_URL = "https://media.githubusercontent.com/media/datablist/sample-csv-files/main/files/customers/customers-100000.csv"
 
+# Define the number of records to load into each table
+RECORDS_PER_TABLE = 20000
+
 # Define the DAG and default_args
 default_args = {
     'owner': 'airflow',
@@ -32,11 +35,11 @@ dag = DAG(
 # Create a SnowflakeHook for connecting to Snowflake
 snowflake_hook = SnowflakeHook(snowflake_conn_id=SNOWFLAKE_CONN_ID)
 
-# Define a function to create a Snowflake task for loading data
-def create_snowflake_task(table_name):
+# Define a function to create a Snowflake task for loading data with a specific record range
+def create_snowflake_task(table_name, start_record, end_record):
     # Read data into a DataFrame from the CSV URL
-    df = pd.read_csv(CSV_URL, delimiter=',', quotechar='"', skiprows=1)
-
+    df = pd.read_csv(CSV_URL, delimiter=',', quotechar='"', skiprows=1, nrows=end_record-start_record+1)
+    
     # Generate the SQL query to load data into Snowflake
     sql = f'''
         COPY INTO {table_name}
@@ -54,12 +57,12 @@ def create_snowflake_task(table_name):
         dag=dag,
     )
 
-# Define tasks to load data into five tables
-table1_task = create_snowflake_task('table_1')
-table2_task = create_snowflake_task('table_2')
-table3_task = create_snowflake_task('table_3')
-table4_task = create_snowflake_task('table_4')
-table5_task = create_snowflake_task('table_5')
+# Define tasks to load data into five tables with specified record ranges
+table1_task = create_snowflake_task('table_1', 0, RECORDS_PER_TABLE-1)
+table2_task = create_snowflake_task('table_2', RECORDS_PER_TABLE, 2*RECORDS_PER_TABLE-1)
+table3_task = create_snowflake_task('table_3', 2*RECORDS_PER_TABLE, 3*RECORDS_PER_TABLE-1)
+table4_task = create_snowflake_task('table_4', 3*RECORDS_PER_TABLE, 4*RECORDS_PER_TABLE-1)
+table5_task = create_snowflake_task('table_5', 4*RECORDS_PER_TABLE, None)
 
 # Set task dependencies as needed
 table1_task >> table2_task
