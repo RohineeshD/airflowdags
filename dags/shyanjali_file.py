@@ -115,7 +115,7 @@ def send_email_task(**kwargs):
     smtp_password = connection.password
     sender_email = 'shyanjali.kantumuchu@exusia.com'
 
-    recipient_email = ['shyanjali.kantumuchu@exusia.com']
+    recipient_email = ['shyanjali.kantumuchu@exusia.com','charishma.jetty@exusia.com']
 
     # Email details
     email_subject = "ERROR IN CSV UPLOADED"
@@ -141,7 +141,7 @@ def send_email_task(**kwargs):
         <h1>Airflow Status Notification</h1>
         <div class="status-box">
             <p>Hello,</p>
-            <p>Check the file that you have uploaded. The errors are given to the csv attached.</p>
+            <p>Check the file that you have uploaded. The errors are given to the CSV attached.</p>
             <p>Please find the attached CSV file.</p>
         </div>
     </body>
