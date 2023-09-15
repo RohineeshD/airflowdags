@@ -4,7 +4,7 @@ from datetime import datetime
 import pandas as pd
 
 # Define your DAG
-combined_dag = DAG('combined_dag', start_date=datetime(2023, 1, 1), schedule_interval=None)
+dag = DAG('df_transfer_dag', start_date=datetime(2023, 1, 1), schedule_interval=None)
 
 #  produce the CSV file link in DAG1
 def produce_csv_link_dag1():
@@ -28,14 +28,14 @@ def process_csv_file_dag2(**kwargs):
 execute_produce_csv_link_dag1 = PythonOperator(
     task_id='execute_produce_csv_link_dag1',
     python_callable=produce_csv_link_dag1,
-    dag=combined_dag,
+    dag=dag,
 )
 
 execute_process_csv_file_dag2 = PythonOperator(
     task_id='execute_process_csv_file_dag2',
     python_callable=process_csv_file_dag2,
     provide_context=True,
-    dag=combined_dag,
+    dag=dag,
 )
 
 # Set up the dependencies
