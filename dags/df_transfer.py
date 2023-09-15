@@ -15,7 +15,7 @@ def data_transfer_dag():
 dag = DAG('data_dag', start_date=datetime(2023, 1, 1))
 
 transfer_task = PythonOperator(
-    task_id='data_dag',
+    task_id='data_transfer_dag',
     python_callable=transfer_df_dags,
     dag=dag,
 )
