@@ -5,6 +5,7 @@ from datetime import datetime
 from airflow.utils.dates import days_ago
 import pandas as pd
 import logging
+import requests
 
 # Define your first DAG
 dag1 = DAG('produce_csv_link_dag1', start_date=days_ago(1), schedule_interval=None)
@@ -44,26 +45,23 @@ def process_csv_file(**kwargs):
         logging.info(f"Processing CSV file from link: {csv_link}")
         
         # Check if the CSV link is accessible
-        import requests
         response = requests.get(csv_link)
         if response.status_code == 200:
             logging.info("CSV link is accessible.")
+            
+            # Use pandas to read the CSV file
+            df = pd.read_csv(csv_link, encoding='utf-8')
+            
+            # Filter out rows with missing values in any column
+            df = df.dropna()
+            
+            # Log the first few rows of the filtered DataFrame
+            logging.info("CSV Data:")
+            logging.info(df.head())  # Log the first few rows of the DataFrame
         else:
             logging.error("CSV link is not accessible.")
-            return
-        
-        # Use pandas to read the CSV file
-        df = pd.read_csv(csv_link, encoding='utf-8')
-        
-        # Filter out rows with missing values in any column
-        df = df.dropna()
-        
-        # Log the first few rows of the filtered DataFrame
-        logging.info("CSV Data:")
-        logging.info(df.head())  # Log the first few rows of the DataFrame
     else:
         logging.error("CSV link is None. Check if the previous task executed successfully.")
-
 
 # Use PythonOperator to execute the function
 process_csv_file_task = PythonOperator(
@@ -72,6 +70,7 @@ process_csv_file_task = PythonOperator(
     provide_context=True,
     dag=dag2,
 )
+
 
 # from airflow import DAG
 # from airflow.operators.python_operator import PythonOperator
