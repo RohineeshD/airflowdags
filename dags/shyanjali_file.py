@@ -120,7 +120,32 @@ def send_email_task(**kwargs):
     # Email details
     email_subject = "ERROR IN CSV UPLOADED"
     # status =  email_content
-
+        email_body = f"""
+    <html>
+    <head>
+        <style>
+            /* Define styles for the box */
+            .status-box {{
+                border: 2px solid #007bff;
+                padding: 10px;
+                background-color: #f0faff;
+            }}
+    
+            /* Define styles for the heading */
+            h1 {{
+                color: #007bff;
+            }}
+        </style>
+    </head>
+    <body>
+        <h1>Airflow Status Notification</h1>
+        <div class="status-box">
+            <p>Hello,</p>
+            <p>Please Check the file that you have uploaded. The errors are given to the csv attached.</p>
+        </div>
+    </body>
+    </html>
+    """
     for r_email in recipient_email:
         # Create the email message
         message = MIMEMultipart()
@@ -128,6 +153,7 @@ def send_email_task(**kwargs):
         message['To'] = r_email
         message['Subject'] = email_subject
         # Add text to the email (optional)
+        message.attach(MIMEText(email_body, 'html'))
         message.attach(MIMEText('Please find the attached CSV file.', 'plain'))
     
         # Attach the CSV file
