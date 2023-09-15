@@ -8,6 +8,7 @@ from io import StringIO
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from email.mime.application import MIMEApplication
 from airflow.hooks.base_hook import BaseHook
 from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
 
