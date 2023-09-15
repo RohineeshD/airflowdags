@@ -125,14 +125,14 @@ def send_email_task(**kwargs):
         message['To'] = r_email
         message['Subject'] = email_subject
         # Add text to the email (optional)
-        msg.attach(MIMEText('Please find the attached CSV file.', 'plain'))
+        message.attach(MIMEText('Please find the attached CSV file.', 'plain'))
     
         # Attach the CSV file
         csv_file_path = '/tmp/data.csv'
         with open(csv_file_path, 'rb') as file:
             csv_attachment = MIMEApplication(file.read(), Name=os.path.basename(csv_file_path))
         csv_attachment['Content-Disposition'] = f'attachment; filename="{os.path.basename(csv_file_path)}"'
-        msg.attach(csv_attachment)
+        message.attach(csv_attachment)
     
         # Send the email
         try:
