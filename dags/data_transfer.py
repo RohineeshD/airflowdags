@@ -31,7 +31,7 @@ trigger_process_csv_file = TriggerDagRunOperator(
 produce_csv_link_task >> trigger_process_csv_file
 
 # Define your second DAG
-dag2 = DAG('process_csv_file_dag', start_date=datetime(2023, 1, 1), schedule_interval=None)
+dag2 = DAG('produce_csv_link', start_date=datetime(2023, 1, 1), schedule_interval=None)
 
 # Python function to process the CSV file
 def process_csv_file(**kwargs):
