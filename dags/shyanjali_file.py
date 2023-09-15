@@ -70,12 +70,13 @@ def fetch_and_validate_csv():
         
         
         # Check for NaN values in the entire DataFrame
-        has_nan = df.isnull().values.any()
+        # has_nan = df.isnull().values.any()
         
         # If there are NaN values, replace them with 0
-        if has_nan:
-            df.fillna(0, inplace=True)
-            
+        # if has_nan:
+        #     df.fillna(0, inplace=True)
+        df['error'].fillna(value='--', inplace=True)
+        df['SSN'].fillna(value=0, inplace=True)
         # df.to_csv('/tmp/data.csv', index=False)
         csv_file_path = "/tmp/data.csv"
         df.to_csv(csv_file_path, index=False)
