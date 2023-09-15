@@ -74,13 +74,13 @@ def fetch_and_validate_csv():
 
         # df.to_csv('/tmp/data.csv', index=False)
         
-        snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake_li')
-        schema = 'PUBLIC'
-        table_name = 'SAMPLE_CSV_ERROR'
-        connection = snowflake_hook.get_conn()
-        snowflake_hook.insert_rows(table_name, df.values.tolist())
-        connection.close()
-        print(f"CSV at {CSV_URL} has been validated successfully.")
+        # snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake_li')
+        # schema = 'PUBLIC'
+        # table_name = 'SAMPLE_CSV_ERROR'
+        # connection = snowflake_hook.get_conn()
+        # snowflake_hook.insert_rows(table_name, df.values.tolist())
+        # connection.close()
+        # print(f"CSV at {CSV_URL} has been validated successfully.")
     
     except Exception as e:
         print(f"Error: {str(e)}")
