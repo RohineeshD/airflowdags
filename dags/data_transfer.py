@@ -4,7 +4,7 @@ from datetime import datetime
 import pandas as pd
 
 # Define your first DAG
-dag1 = DAG('produce_csv_link_dag', start_date=datetime(2023, 1, 1), schedule_interval=None)
+dag1 = DAG('produce_csv_link_dag1', start_date=datetime(2023, 1, 1), schedule_interval=None)
 
 # Python function to produce the CSV file link
 def produce_csv_link():
@@ -13,27 +13,29 @@ def produce_csv_link():
 
 # Use PythonOperator to execute the function
 produce_csv_link_task = PythonOperator(
-    task_id='produce_csv_link',
+    task_id='produce_csv_link_task',
     python_callable=produce_csv_link,
     dag=dag1,
 )
 
 # Define your second DAG
-dag2 = DAG('process_csv_file_dag', start_date=datetime(2023, 1, 1), schedule_interval=None)
+dag2 = DAG('process_csv_file_dag2', start_date=datetime(2023, 1, 1), schedule_interval=None)
 
 # Python function to process the CSV file
 def process_csv_file(**kwargs):
     ti = kwargs['ti']
-    csv_link = ti.xcom_pull(task_ids='produce_csv_link', key=None)
+    csv_link = ti.xcom_pull(task_ids='produce_csv_link_task', key='return_value')
     
-    # Use pandas to read the CSV file
-    df = pd.read_csv(csv_link, encoding='utf-8')
-
-    print(df.head())
+    if csv_link is not None:
+        # Use pandas to read the CSV file
+        df = pd.read_csv(csv_link, encoding='utf-8')
+        print(df.head())
+    else:
+        print("CSV link is None. Check XCom value from 'produce_csv_link_task'.")
 
 # Use PythonOperator to execute the function
 process_csv_file_task = PythonOperator(
-    task_id='process_csv_file',
+    task_id='process_csv_file_task',
     python_callable=process_csv_file,
     provide_context=True,
     dag=dag2,
@@ -41,6 +43,52 @@ process_csv_file_task = PythonOperator(
 
 # Set up the dependency
 produce_csv_link_task >> process_csv_file_task
+
+
+
+# from airflow import DAG
+# from airflow.operators.python_operator import PythonOperator
+# from datetime import datetime
+# import pandas as pd
+
+# # Define your first DAG
+# dag1 = DAG('produce_csv_link_dag', start_date=datetime(2023, 1, 1), schedule_interval=None)
+
+# # Python function to produce the CSV file link
+# def produce_csv_link():
+#     csv_link = "https://raw.githubusercontent.com/jcharishma/my.repo/master/sample_csv.csv"
+#     return csv_link
+
+# # Use PythonOperator to execute the function
+# produce_csv_link_task = PythonOperator(
+#     task_id='produce_csv_link',
+#     python_callable=produce_csv_link,
+#     dag=dag1,
+# )
+
+# # Define your second DAG
+# dag2 = DAG('process_csv_file_dag', start_date=datetime(2023, 1, 1), schedule_interval=None)
+
+# # Python function to process the CSV file
+# def process_csv_file(**kwargs):
+#     ti = kwargs['ti']
+#     csv_link = ti.xcom_pull(task_ids='produce_csv_link', key=None)
+    
+#     # Use pandas to read the CSV file
+#     df = pd.read_csv(csv_link, encoding='utf-8')
+
+#     print(df.head())
+
+# # Use PythonOperator to execute the function
+# process_csv_file_task = PythonOperator(
+#     task_id='process_csv_file',
+#     python_callable=process_csv_file,
+#     provide_context=True,
+#     dag=dag2,
+# )
+
+# # Set up the dependency
+# produce_csv_link_task >> process_csv_file_task
 
 
 
