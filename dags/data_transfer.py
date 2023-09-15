@@ -1,7 +1,6 @@
 from airflow import DAG
 from airflow.operators.python_operator import PythonOperator
 from datetime import datetime
-import pandas as pd
 
 # Define your DAG
 dag1 = DAG('produce_csv_link_dag', start_date=datetime(2023, 1, 1), schedule_interval=None)
@@ -17,6 +16,7 @@ produce_csv_link_task = PythonOperator(
     python_callable=produce_csv_link,
     dag=dag1,
 )
+
 
 
 
