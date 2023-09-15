@@ -39,7 +39,8 @@ dag2 = DAG('process_csv_file_dag1', start_date=datetime(2023, 1, 1), schedule_in
 # Python function to process the CSV file
 def process_csv_file(**kwargs):
     ti = kwargs['ti']
-    csv_link = ti.xcom_pull(task_ids='produce_csv_link_task1', key='return_value')
+    csv_link = ti.xcom_pull(task_ids='produce_csv_link_task1', key='None')
+#     csv_link = ti.xcom_pull(task_ids='produce_csv_link_dag1', key=None)
     
     if csv_link is not None:
         # Use pandas to read the CSV file
