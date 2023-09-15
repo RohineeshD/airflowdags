@@ -36,12 +36,15 @@ dag2 = DAG('process_csv_file_dag1', start_date=datetime(2023, 1, 1), schedule_in
 # Python function to process the CSV file
 def process_csv_file(**kwargs):
     ti = kwargs['ti']
-    csv_link = ti.xcom_pull(task_ids='produce_csv_link_task1', key=None)
+    csv_link = ti.xcom_pull(task_ids='produce_csv_link_task1', key='return_value')
     
-    # Use pandas to read the CSV file
-    df = pd.read_csv(csv_link, encoding='utf-8')
+    if csv_link is not None:
+        # Use pandas to read the CSV file
+        df = pd.read_csv(csv_link, encoding='utf-8')
+        print(df.head())
+    else:
+        print("CSV link is None. Check if the previous task executed successfully.")
 
-    print(df.head())
 
 # Use PythonOperator to execute the function
 process_csv_file_task = PythonOperator(
