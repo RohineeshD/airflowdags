@@ -120,7 +120,7 @@ def send_email_task(**kwargs):
     # Email details
     email_subject = "ERROR IN CSV UPLOADED"
     # status =  email_content
-        email_body = f"""
+    email_body = f"""
     <html>
     <head>
         <style>
