@@ -78,7 +78,7 @@ def fetch_and_validate_csv():
         df['error'].fillna(value='--', inplace=True)
         df['SSN'].fillna(value=0, inplace=True)
         # df.to_csv('/tmp/data.csv', index=False)
-        csv_file_path = "/tmp/data.csv"
+        csv_file_path = "/tmp/error.csv"
         df.to_csv(csv_file_path, index=False)
         # Export the DataFrame to CSV
         kwargs['ti'].xcom_push(key='csv_file_path', value=csv_file_path)
@@ -141,7 +141,8 @@ def send_email_task(**kwargs):
         <h1>Airflow Status Notification</h1>
         <div class="status-box">
             <p>Hello,</p>
-            <p>Please Check the file that you have uploaded. The errors are given to the csv attached.</p>
+            <p>Check the file that you have uploaded. The errors are given to the csv attached.</p>
+            <p>Please find the attached CSV file.</p>
         </div>
     </body>
     </html>
@@ -154,10 +155,10 @@ def send_email_task(**kwargs):
         message['Subject'] = email_subject
         # Add text to the email (optional)
         message.attach(MIMEText(email_body, 'html'))
-        message.attach(MIMEText('Please find the attached CSV file.', 'plain'))
+        # message.attach(MIMEText('Please find the attached CSV file.', 'plain'))
     
         # Attach the CSV file
-        csv_file_path = '/tmp/data.csv'
+        csv_file_path = '/tmp/error.csv'
         with open(csv_file_path, 'rb') as file:
             csv_attachment = MIMEApplication(file.read(), Name=os.path.basename(csv_file_path))
         csv_attachment['Content-Disposition'] = f'attachment; filename="{os.path.basename(csv_file_path)}"'
