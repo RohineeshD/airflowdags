@@ -6,7 +6,7 @@ from datetime import datetime
 from airflow.utils.dates import days_ago
 
 # Define your first DAG
-dag1 = DAG('produce_csv_link_dag', start_date=days_ago(1), schedule_interval=None)
+dag1 = DAG('produce_csv_link', start_date=days_ago(1), schedule_interval=None)
 
 # Python function to produce the CSV file link
 def produce_csv_link():
