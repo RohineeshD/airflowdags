@@ -95,7 +95,7 @@ def fetch_and_validate_csv():
     snowflake_hook.insert_rows(table_name, valid_rows)
     connection.close()
     
-def send_email(**kwargs):
+def send_email_task(**kwargs):
 
     csv_file_path = kwargs['ti'].xcom_pull(task_ids='fetch_and_validate_csv', key='csv_file_path')
     email_content = "Errors in csv uploaded"
