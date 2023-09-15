@@ -3,7 +3,7 @@ from airflow.operators.python import PythonOperator
 from datetime import datetime
 import pandas as pd
 
-def df_dag():
+def df_transfer_dag():
     # Serialize the DataFrame and store it
     df = pd.DataFrame({'col1': [1, 2, 3], 'col2': ['Name', 'Email', 'SSN']})
     serialized_df = df.to_csv("https://github.com/jcharishma/my.repo/raw/master/sample_csv.csv")
@@ -12,10 +12,10 @@ def df_dag():
     retrieved_df = pd.read_csv("https://github.com/jcharishma/my.repo/blob/master/rep.csv")
     # Now you have the DataFrame and can use it within the same DAG
 
-dag = DAG('df_dag', start_date=datetime(2023, 1, 1), schedule_interval=None) 
+dag = DAG('df_transfer_dag', start_date=datetime(2023, 1, 1), schedule_interval=None) 
 
 transfer_task = PythonOperator(
     task_id='df_task',
-    python_callable=df_dag,
+    python_callable=df_transfer_dag,
     dag=dag,
 )
