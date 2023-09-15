@@ -1,61 +1,55 @@
+import pandas as pd
 from airflow import DAG
 from airflow.operators.python_operator import PythonOperator
-from airflow.operators.sensors import ExternalTaskSensor
+from airflow.operators.dagrun_operator import TriggerDagRunOperator
 from datetime import datetime
-import pandas as pd
+from airflow.utils.dates import days_ago
 
 # Define your first DAG
-def produce_csv_link_dag():
-    dag = DAG('produce_csv_link_dag', start_date=datetime(2023, 1, 1), schedule_interval=None)
+dag1 = DAG('produce_csv_link_dag', start_date=days_ago(1), schedule_interval=None)
 
-    # Python function to produce the CSV file link
-    def produce_csv_link():
-        csv_link = "https://raw.githubusercontent.com/jcharishma/my.repo/master/sample_csv.csv"
-        return csv_link
+# Python function to produce the CSV file link
+def produce_csv_link():
+    csv_link = "https://raw.githubusercontent.com/jcharishma/my.repo/master/sample_csv.csv"
+    return csv_link
 
-    # Use PythonOperator to execute the function
-    produce_csv_link_task = PythonOperator(
-        task_id='produce_csv_link',
-        python_callable=produce_csv_link,
-        dag=dag,
-    )
+# Use PythonOperator to execute the function
+produce_csv_link_task = PythonOperator(
+    task_id='produce_csv_link',
+    python_callable=produce_csv_link,
+    dag=dag1,
+)
 
-    return dag
+# Define the trigger
+trigger_process_csv_file = TriggerDagRunOperator(
+    task_id='trigger_process_csv_file',
+    trigger_dag_id="process_csv_file_dag",  # Specify the DAG to trigger
+    dag=dag1,
+)
+
+# Set up the dependency
+produce_csv_link_task >> trigger_process_csv_file
 
 # Define your second DAG
-def process_csv_file_dag():
-    dag = DAG('process_csv_file_dag', start_date=datetime(2023, 1, 1), schedule_interval=None)
+dag2 = DAG('process_csv_file_dag', start_date=datetime(2023, 1, 1), schedule_interval=None)
 
-    # Python function to process the CSV file
-    def process_csv_file(**kwargs):
-        ti = kwargs['ti']
-        csv_link = ti.xcom_pull(task_ids='produce_csv_link', key=None)
-        
-        # Use pandas to read the CSV file
-        df = pd.read_csv(csv_link, encoding='utf-8')
+# Python function to process the CSV file
+def process_csv_file(**kwargs):
+    ti = kwargs['ti']
+    csv_link = ti.xcom_pull(task_ids='produce_csv_link', key=None)
+    
+    # Use pandas to read the CSV file
+    df = pd.read_csv(csv_link, encoding='utf-8')
 
-        print(df.head())
+    print(df.head())
 
-    # Use PythonOperator to execute the function
-    process_csv_file_task = PythonOperator(
-        task_id='process_csv_file',
-        python_callable=process_csv_file,
-        provide_context=True,
-        dag=dag,
-    )
-
-    # Set up the dependency using ExternalTaskSensor
-    wait_for_produce_csv_task = ExternalTaskSensor(
-        task_id='wait_for_produce_csv_task',
-        external_dag_id='produce_csv_link_dag',  # DAG ID of the first DAG
-        external_task_id='produce_csv_link',  # Task ID of the task in the first DAG
-        dag=dag,
-    )
-
-    # Set the order of execution
-    wait_for_produce_csv_task >> process_csv_file_task
-
-    return dag
+# Use PythonOperator to execute the function
+process_csv_file_task = PythonOperator(
+    task_id='process_csv_file',
+    python_callable=process_csv_file,
+    provide_context=True,
+    dag=dag2,
+)
 
 
 
