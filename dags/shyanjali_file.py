@@ -67,14 +67,7 @@ def fetch_and_validate_csv():
         # Add a new column to the DataFrame if not already present
         if 'error' not in df.columns:
             df['error'] = "--"
-        
-        
-        # Check for NaN values in the entire DataFrame
-        # has_nan = df.isnull().values.any()
-        
-        # If there are NaN values, replace them with 0
-        # if has_nan:
-        #     df.fillna(0, inplace=True)
+            
         df['error'].fillna(value='--', inplace=True)
         df['SSN'].fillna(value=0, inplace=True)
         # df.to_csv('/tmp/data.csv', index=False)
@@ -82,27 +75,32 @@ def fetch_and_validate_csv():
         df.to_csv(csv_file_path, index=False)
         # Export the DataFrame to CSV
         kwargs['ti'].xcom_push(key='csv_file_path', value=csv_file_path)
-        snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake_li')
-        schema = 'PUBLIC'
-        table_name = 'SAMPLE_CSV_ERROR'
-        connection = snowflake_hook.get_conn()
-        snowflake_hook.insert_rows(table_name, df.values.tolist())
-        connection.close()
+        
+        # snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake_li')
+        # schema = 'PUBLIC'
+        
+        # connection.close()
+        
         print(f"CSV at {CSV_URL} has been validated successfully.")
         
     
     except Exception as e:
+        
         print(f"Error: {str(e)}")
         
     snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake_li')
     schema = 'PUBLIC'
+    
     table_name = 'SAMPLE_CSV'
     connection = snowflake_hook.get_conn()
     snowflake_hook.insert_rows(table_name, valid_rows)
+    
+    table_name = 'SAMPLE_CSV_ERROR'
+    connection = snowflake_hook.get_conn()
+    snowflake_hook.insert_rows(table_name, df.values.tolist())
     connection.close()
     
 def send_email_task(**kwargs):
-
     csv_file_path = kwargs['ti'].xcom_pull(task_ids='fetch_and_validate_csv', key='csv_file_path')
     email_content = "Errors in csv uploaded"
     # Use BaseHook to get the connection
