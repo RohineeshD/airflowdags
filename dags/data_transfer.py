@@ -15,7 +15,7 @@ def produce_csv_link_dag1():
 def process_csv_file_dag2(**kwargs):
     # Retrieve the CSV file link produced by DAG1
     ti = kwargs['ti']
-    csv_link = ti.xcom_pull(task_ids='execute_produce_csv_link_dag1', key=None)
+    csv_link = ti.xcom_pull(task_ids='produce_csv_link_dag1', key=None)
     
     # Use pandas to read the CSV file
     # df = pd.read_csv(csv_link)
