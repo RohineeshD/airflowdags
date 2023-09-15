@@ -74,7 +74,10 @@ def fetch_and_validate_csv():
         if has_nan:
             df.fillna(0, inplace=True)
             
-        df.to_csv('/tmp/data.csv', index=False)
+        # df.to_csv('/tmp/data.csv', index=False)
+        csv_file_path = "/tmp/data.csv"
+        df.to_csv(csv_file_path, index=False)
+        # Export the DataFrame to CSV
         kwargs['ti'].xcom_push(key='csv_file_path', value=csv_file_path)
         snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake_li')
         schema = 'PUBLIC'
@@ -100,7 +103,7 @@ def send_email_task(**kwargs):
     csv_file_path = kwargs['ti'].xcom_pull(task_ids='fetch_and_validate_csv', key='csv_file_path')
     email_content = "Errors in csv uploaded"
     # Use BaseHook to get the connection
-    connection = BaseHook.get_connection(connection_id)
+    connection = BaseHook.get_connection('EMAIL_LI')
 
     # Access connection details
     smtp_server = connection.host
