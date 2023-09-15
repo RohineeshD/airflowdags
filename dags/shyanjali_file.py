@@ -85,15 +85,17 @@ def fetch_and_validate_csv():
     
     except Exception as e:
         print(f"Error: {str(e)}")
+    
+    return df
        
         
-    snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake_li')
-    schema = 'PUBLIC'
-    table_name = 'SAMPLE_CSV'
-    connection = snowflake_hook.get_conn()
-    snowflake_hook.insert_rows(table_name, valid_rows)
-    connection.close()
-    return df
+    # snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake_li')
+    # schema = 'PUBLIC'
+    # table_name = 'SAMPLE_CSV'
+    # connection = snowflake_hook.get_conn()
+    # snowflake_hook.insert_rows(table_name, valid_rows)
+    # connection.close()
+    
 
 def send_email(**kwargs):
 
