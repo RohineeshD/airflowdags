@@ -8,7 +8,7 @@ dag = DAG('df_transfer_dag', start_date=datetime(2023, 1, 1), schedule_interval=
 
 #  produce the CSV file link in DAG1
 def produce_csv_link_dag1():
-    csv_link = "https://github.com/jcharishma/my.repo/edit/master/sample_csv.csv"
+    csv_link = "https://raw.githubusercontent.com/jcharishma/my.repo/master/sample_csv.csv"
     return csv_link
 
 # Python function to process the CSV file  in DAG2
@@ -18,10 +18,9 @@ def process_csv_file_dag2(**kwargs):
     csv_link = ti.xcom_pull(task_ids='execute_produce_csv_link_dag1', key=None)
     
     # Use pandas to read the CSV file
-    df = pd.read_csv(csv_link)
-    
-    # Perform tasks with the dataframe
-    # For example, let's print the first few rows
+    # df = pd.read_csv(csv_link)
+    df = pd.read_csv(csv_link, encoding='utf-8')
+
     print(df.head())
 
 # Use PythonOperator to execute the functions in DAG1 and DAG2
