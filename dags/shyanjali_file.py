@@ -5,6 +5,10 @@ from airflow.operators.python_operator import PythonOperator
 from airflow.utils.dates import days_ago
 import requests
 from io import StringIO
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from airflow.hooks.base_hook import BaseHook
 from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
 
 # Define your CSV URL
@@ -69,6 +73,7 @@ def fetch_and_validate_csv():
             df.fillna(0, inplace=True)
 
         # df.to_csv('/tmp/data.csv', index=False)
+        
         snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake_li')
         schema = 'PUBLIC'
         table_name = 'SAMPLE_CSV_ERROR'
@@ -87,6 +92,58 @@ def fetch_and_validate_csv():
     connection = snowflake_hook.get_conn()
     snowflake_hook.insert_rows(table_name, valid_rows)
     connection.close()
+    return df
+
+def send_email(**kwargs):
+
+    ti = context['ti']
+    received_dataframe = ti.xcom_pull(task_ids='create_dataframe_task')
+    received_dataframe.to_csv('/tmp/data.csv', index=False)
+    email_content = "Errors in csv uploaded"
+    # Use BaseHook to get the connection
+    connection = BaseHook.get_connection(connection_id)
+
+    # Access connection details
+    smtp_server = connection.host
+    smtp_port = connection.port
+    smtp_username = connection.login
+    smtp_password = connection.password
+    sender_email = 'shyanjali.kantumuchu@exusia.com'
+
+    recipient_email = ['shyanjali.kantumuchu@exusia.com']
+
+    # Email details
+    email_subject = subject
+    # status =  email_content
+
+    for r_email in recipient_email:
+        # Create the email message
+        message = MIMEMultipart()
+        message['From'] = sender_email
+        message['To'] = r_email
+        message['Subject'] = email_subject
+        # Add text to the email (optional)
+        msg.attach(MIMEText('Please find the attached CSV file.', 'plain'))
+    
+        # Attach the CSV file
+        csv_file_path = '/tmp/data.csv'
+        with open(csv_file_path, 'rb') as file:
+            csv_attachment = MIMEApplication(file.read(), Name=os.path.basename(csv_file_path))
+        csv_attachment['Content-Disposition'] = f'attachment; filename="{os.path.basename(csv_file_path)}"'
+        msg.attach(csv_attachment)
+    
+        # Send the email
+        try:
+            server = smtplib.SMTP(smtp_server, smtp_port)
+            server.starttls()
+            server.login(smtp_username, smtp_password)
+            server.sendmail(sender_email, recipient_email, message.as_string())
+            server.quit()
+            print("Email sent successfully!")
+        except Exception as e:
+            print(f"Failed to send email: {str(e)}")
+
+    
     
 validate_csv = PythonOperator(
     task_id='validate_csv',
@@ -95,7 +152,13 @@ validate_csv = PythonOperator(
     dag=dag,
 )
 
-validate_csv
+send_email_task = PythonOperator(
+    task_id='send_email_task',
+    python_callable=send_email,
+    dag=dag,
+)
+
+validate_csv>>send_email_task
 
 
 
@@ -172,6 +235,7 @@ validate_csv
 #     smtp_username = connection.login
 #     smtp_password = connection.password
 #     sender_email = 'shyanjali.kantumuchu@exusia.com'
+
 #     recipient_email = ['shyanjali.kantumuchu@exusia.com','harsha.vardhan@exusia.com']
 
 #     # Email details
@@ -213,6 +277,15 @@ validate_csv
 #         message['To'] = r_email
 #         message['Subject'] = email_subject
 #         message.attach(MIMEText(email_body, 'html'))
+# Add text to the email (optional)
+        # msg.attach(MIMEText('Please find the attached CSV file.', 'plain'))
+    
+        # # Attach the CSV file
+        # csv_file_path = '/path/to/your/csv/file.csv'
+        # with open(csv_file_path, 'rb') as file:
+        #     csv_attachment = MIMEApplication(file.read(), Name=os.path.basename(csv_file_path))
+        # csv_attachment['Content-Disposition'] = f'attachment; filename="{os.path.basename(csv_file_path)}"'
+        # msg.attach(csv_attachment)
     
 #         # Send the email
 #         try:
