@@ -38,17 +38,18 @@ class CsvRow(BaseModel):
         return SSN
 
 def fetch_and_validate_csv():
-    valid_rows=[]
     
+    response = requests.get(CSV_URL)
+    response.raise_for_status()
+
+    # Read CSV data into a DataFrame
+    df = pd.read_csv(StringIO(response.text))
+    # print(df)
+    valid_rows=[]
     # Replace with your Snowflake schema and table name
     try:
         # Fetch data from CSV URL
-        response = requests.get(CSV_URL)
-        response.raise_for_status()
-
-        # Read CSV data into a DataFrame
-        df = pd.read_csv(StringIO(response.text))
-        print(df)
+        
         # Iterate through rows and validate each one
         errors = []
         for index, row in df.iterrows():
@@ -65,7 +66,7 @@ def fetch_and_validate_csv():
         if 'error' not in df.columns:
             df['error'] = "--"
         
-        print(df)
+        
         # Check for NaN values in the entire DataFrame
         has_nan = df.isnull().values.any()
         
@@ -73,7 +74,7 @@ def fetch_and_validate_csv():
         if has_nan:
             df.fillna(0, inplace=True)
             
-        # df.to_csv('/tmp/data.csv', index=False)
+        df.to_csv('/tmp/data.csv', index=False)
         
         snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake_li')
         schema = 'PUBLIC'
@@ -82,7 +83,7 @@ def fetch_and_validate_csv():
         snowflake_hook.insert_rows(table_name, df.values.tolist())
         connection.close()
         print(f"CSV at {CSV_URL} has been validated successfully.")
-        return df
+        
     
     except Exception as e:
         print(f"Error: {str(e)}")
@@ -98,7 +99,7 @@ def fetch_and_validate_csv():
     connection.close()
     
     
-
+    return df
 # def send_email(**kwargs):
 
 #     ti = context['ti']
