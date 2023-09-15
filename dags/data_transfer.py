@@ -56,32 +56,6 @@ def process_csv_file(**kwargs):
     else:
         logging.error("CSV link is None. Check if the previous task executed successfully.")
 
-# def process_csv_file(**kwargs):
-#     ti = kwargs['ti']
-#     csv_link = ti.xcom_pull(task_ids='produce_csv_link_task1', key='return_value')
-    
-#     if csv_link is not None:
-#         logging.info(f"Processing CSV file from link: {csv_link}")
-#         # Use pandas to read the CSV file
-#         df = pd.read_csv(csv_link, encoding='utf-8')
-#         logging.info(f"Read {len(df)} rows from the CSV file.")
-#         logging.info(df.head())  # Log the first few rows of the DataFrame
-#     else:
-#         logging.error("CSV link is None. Check if the previous task executed successfully.")
-
-
-
-# def process_csv_file(**kwargs):
-#     ti = kwargs['ti']
-#     csv_link = ti.xcom_pull(task_ids='produce_csv_link_task1', key='return_value')
-    
-#     if csv_link is not None:
-#         # Use pandas to read the CSV file
-#         df = pd.read_csv(csv_link, encoding='utf-8')
-#         print(df.head())
-#     else:
-#         print("CSV link is None. Check if the previous task executed successfully.")
-
 
 # Use PythonOperator to execute the function
 process_csv_file_task = PythonOperator(
