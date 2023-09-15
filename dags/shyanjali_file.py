@@ -72,8 +72,8 @@ def fetch_and_validate_csv():
         # If there are NaN values, replace them with 0
         if has_nan:
             df.fillna(0, inplace=True)
-
-        df.to_csv('/tmp/data.csv', index=False)
+            
+        # df.to_csv('/tmp/data.csv', index=False)
         
         snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake_li')
         schema = 'PUBLIC'
@@ -82,6 +82,7 @@ def fetch_and_validate_csv():
         snowflake_hook.insert_rows(table_name, df.values.tolist())
         connection.close()
         print(f"CSV at {CSV_URL} has been validated successfully.")
+        return df
     
     except Exception as e:
         print(f"Error: {str(e)}")
@@ -95,7 +96,7 @@ def fetch_and_validate_csv():
     connection = snowflake_hook.get_conn()
     snowflake_hook.insert_rows(table_name, valid_rows)
     connection.close()
-    return df
+    
     
 
 # def send_email(**kwargs):
