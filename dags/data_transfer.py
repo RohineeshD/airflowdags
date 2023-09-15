@@ -24,21 +24,21 @@ def process_csv_file_dag2(**kwargs):
     print(df.head())
 
 # Use PythonOperator to execute the functions in DAG1 and DAG2
-execute_produce_csv_link_dag1 = PythonOperator(
-    task_id='execute_produce_csv_link_dag1',
+produce_csv_link_dag1 = PythonOperator(
+    task_id='produce_csv_link_dag1',
     python_callable=produce_csv_link_dag1,
     dag=dag,
 )
 
-execute_process_csv_file_dag2 = PythonOperator(
-    task_id='execute_process_csv_file_dag2',
+process_csv_file_dag2 = PythonOperator(
+    task_id='process_csv_file_dag2',
     python_callable=process_csv_file_dag2,
     provide_context=True,
     dag=dag,
 )
 
 # Set up the dependencies
-execute_produce_csv_link_dag1 >> execute_process_csv_file_dag2
+produce_csv_link_dag1 >> process_csv_file_dag2
 
 
 
