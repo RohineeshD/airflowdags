@@ -1,9 +1,11 @@
-import pandas as pd
+
 from airflow import DAG
 from airflow.operators.python_operator import PythonOperator
 from airflow.operators.dagrun_operator import TriggerDagRunOperator
 from datetime import datetime
 from airflow.utils.dates import days_ago
+import pandas as pd
+import logging
 
 # Define your first DAG
 dag1 = DAG('produce_csv_link_dag1', start_date=days_ago(1), schedule_interval=None)
@@ -33,6 +35,7 @@ produce_csv_link_task >> trigger_process_csv_file
 # Define your second DAG
 dag2 = DAG('process_csv_file_dag1', start_date=datetime(2023, 1, 1), schedule_interval=None)
 
+
 # Python function to process the CSV file
 def process_csv_file(**kwargs):
     ti = kwargs['ti']
@@ -41,9 +44,20 @@ def process_csv_file(**kwargs):
     if csv_link is not None:
         # Use pandas to read the CSV file
         df = pd.read_csv(csv_link, encoding='utf-8')
-        print(df.head())
+        logging.info(df.head())  # Use logging.info to log the DataFrame
     else:
-        print("CSV link is None. Check if the previous task executed successfully.")
+        logging.error("CSV link is None. Check if the previous task executed successfully.")
+
+# def process_csv_file(**kwargs):
+#     ti = kwargs['ti']
+#     csv_link = ti.xcom_pull(task_ids='produce_csv_link_task1', key='return_value')
+    
+#     if csv_link is not None:
+#         # Use pandas to read the CSV file
+#         df = pd.read_csv(csv_link, encoding='utf-8')
+#         print(df.head())
+#     else:
+#         print("CSV link is None. Check if the previous task executed successfully.")
 
 
 # Use PythonOperator to execute the function
