@@ -144,21 +144,20 @@ def send_email(**kwargs):
 
     
     
-validate_csv = PythonOperator(
-    task_id='validate_csv',
+fetch_and_validate_csv = PythonOperator(
+    task_id='fetch_and_validate_csv',
     python_callable=fetch_and_validate_csv,
     provide_context=True,
     dag=dag,
 )
 
-# send_email_task = PythonOperator(
-#     task_id='send_email_task',
-#     python_callable=send_email,
-#     dag=dag,
-# )
+send_email_task = PythonOperator(
+    task_id='send_email_task',
+    python_callable=send_email_task,
+    dag=dag,
+)
 
-validate_csv
-# >>send_email_task
+fetch_and_validate_csv >>send_email_task
 
 
 
