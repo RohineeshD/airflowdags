@@ -55,13 +55,14 @@ def process_csv_file(**kwargs):
             # Filter out rows with missing values in any column
             df = df.dropna()
             
-            # Log the first few rows of the filtered DataFrame
+            # Log the DataFrame details
             logging.info("CSV Data:")
-            logging.info(df.head())  # Log the first few rows of the DataFrame
+            logging.info(df.to_string(index=False))  # Convert DataFrame to string and log
         else:
             logging.error("CSV link is not accessible.")
     else:
         logging.error("CSV link is None. Check if the previous task executed successfully.")
+
 
 # Use PythonOperator to execute the function
 process_csv_file_task = PythonOperator(
