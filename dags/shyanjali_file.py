@@ -11,6 +11,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.application import MIMEApplication
 from airflow.hooks.base_hook import BaseHook
 from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
+import os
 
 # Define your CSV URL
 CSV_URL = 'https://github.com/jcharishma/my.repo/raw/master/sample_csv.csv'
