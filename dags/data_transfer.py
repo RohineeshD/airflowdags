@@ -22,8 +22,8 @@ produce_csv_link_task = PythonOperator(
 
 # Define the trigger
 trigger_process_csv_file = TriggerDagRunOperator(
-    task_id='trigger_process_csv_file',
-    trigger_dag_id="process_csv_file_dag",  # Specify the DAG to trigger
+    task_id='produce_csv_link',
+    trigger_dag_id="produce_csv_link",  # Specify the DAG to trigger
     dag=dag1,
 )
 
@@ -45,7 +45,7 @@ def process_csv_file(**kwargs):
 
 # Use PythonOperator to execute the function
 process_csv_file_task = PythonOperator(
-    task_id='process_csv_file',
+    task_id='produce_csv_link',
     python_callable=process_csv_file,
     provide_context=True,
     dag=dag2,
