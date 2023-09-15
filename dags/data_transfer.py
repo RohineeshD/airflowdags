@@ -6,7 +6,7 @@ from datetime import datetime
 from airflow.utils.dates import days_ago
 
 # Define your first DAG
-dag1 = DAG('produce_csv_link', start_date=days_ago(1), schedule_interval=None)
+dag1 = DAG('produce_csv_link_dag1', start_date=days_ago(1), schedule_interval=None)
 
 # Python function to produce the CSV file link
 def produce_csv_link():
@@ -15,15 +15,15 @@ def produce_csv_link():
 
 # Use PythonOperator to execute the function
 produce_csv_link_task = PythonOperator(
-    task_id='produce_csv_link',
+    task_id='produce_csv_link_task1',
     python_callable=produce_csv_link,
     dag=dag1,
 )
 
-# Define the trigger
+# Define the trigger for the second DAG
 trigger_process_csv_file = TriggerDagRunOperator(
-    task_id='produce_csv_link',
-    trigger_dag_id="produce_csv_link",  # Specify the DAG to trigger
+    task_id='trigger_process_csv_file_task1',
+    trigger_dag_id="process_csv_file_dag1",  # Specify the DAG to trigger
     dag=dag1,
 )
 
@@ -31,12 +31,12 @@ trigger_process_csv_file = TriggerDagRunOperator(
 produce_csv_link_task >> trigger_process_csv_file
 
 # Define your second DAG
-dag2 = DAG('produce_csv_link', start_date=datetime(2023, 1, 1), schedule_interval=None)
+dag2 = DAG('process_csv_file_dag1', start_date=datetime(2023, 1, 1), schedule_interval=None)
 
 # Python function to process the CSV file
 def process_csv_file(**kwargs):
     ti = kwargs['ti']
-    csv_link = ti.xcom_pull(task_ids='produce_csv_link', key=None)
+    csv_link = ti.xcom_pull(task_ids='produce_csv_link_task1', key=None)
     
     # Use pandas to read the CSV file
     df = pd.read_csv(csv_link, encoding='utf-8')
@@ -45,7 +45,7 @@ def process_csv_file(**kwargs):
 
 # Use PythonOperator to execute the function
 process_csv_file_task = PythonOperator(
-    task_id='produce_csv_link',
+    task_id='process_csv_file_task1',
     python_callable=process_csv_file,
     provide_context=True,
     dag=dag2,
