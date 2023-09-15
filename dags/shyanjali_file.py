@@ -115,7 +115,7 @@ def send_email_task(**kwargs):
     recipient_email = ['shyanjali.kantumuchu@exusia.com']
 
     # Email details
-    email_subject = subject
+    email_subject = "ERROR IN CSV UPLOADED"
     # status =  email_content
 
     for r_email in recipient_email:
