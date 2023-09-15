@@ -23,7 +23,7 @@ produce_csv_link_task = PythonOperator(
 
 
 # Set up the dependency
-produce_csv_link_task >> process_csv_file_task
+# produce_csv_link_task >> process_csv_file_task
 
 # from airflow import DAG
 # from airflow.operators.python_operator import PythonOperator
