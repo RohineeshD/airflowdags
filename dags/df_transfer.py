@@ -5,7 +5,7 @@ import pandas as pd
 
 def df_transfer_dag():
     # Serialize the DataFrame and store it
-    df = pd.DataFrame({'col1': [1, 2, 3], 'col2': ['A', 'B', 'C']})
+    df = pd.DataFrame({'col1': [1, 2, 3], 'col2': ['Name', 'Email', 'SSN']})
     serialized_df = df.to_csv("https://github.com/jcharishma/my.repo/raw/master/sample_csv.csv")
 
     # Deserialize the DataFrame from the shared location
