@@ -38,7 +38,7 @@ dag = DAG(
 
 # Define a PythonOperator to check for file arrival
 def check_file_arrival():
-    directory = 'C:/Users/User/Desktop/load'  
+    directory = 'C:\Users\User\Desktop\load'  
     
     # List all files in the directory for debugging
     files_in_directory = os.listdir(directory)
