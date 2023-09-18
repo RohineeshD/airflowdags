@@ -1,5 +1,7 @@
 from airflow import DAG
 from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
+from airflow.operators.python_operator import PythonOperator
+
 from airflow.utils.dates import days_ago
 import os
 
