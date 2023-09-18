@@ -21,14 +21,14 @@ def load_csv_file(**kwargs):
     df = pd.read_csv(StringIO(response.text))
     print(df)
     kwargs['ti'].xcom_push(key='csv', value=df)  # Push the CSV data to XCom
-    return True
+    return df
     # return df
 
 def validate_csv_data(**kwargs):
     csv_data = kwargs['ti'].xcom_pull(key='csv', task_ids='load_csv_file')
 
     # Convert the CSV data to a DataFrame
-    df = pd.read_csv(StringIO(csv_data))
+    df = pd.read_csv((csv_data))
     print(df)
     # if "name" in df.columns:
     #     return True
