@@ -1,24 +1,24 @@
-# monitor_file_arrival.py
-from watchdog.observers import Observer
-from watchdog.events import FileSystemEventHandler
-import subprocess
+# # monitor_file_arrival.py
+# from watchdog.observers import Observer
+# from watchdog.events import FileSystemEventHandler
+# import subprocess
 
-class FileArrivalHandler(FileSystemEventHandler):
-    def on_created(self, event):
-        if not event.is_directory:
-            # Trigger the Airflow DAG when a new file arrives
-            subprocess.call(["airflow", "trigger_dag", "load_local_file_to_snowflake"])
+# class FileArrivalHandler(FileSystemEventHandler):
+#     def on_created(self, event):
+#         if not event.is_directory:
+#             # Trigger the Airflow DAG when a new file arrives
+#             subprocess.call(["airflow", "trigger_dag", "load_local_file_to_snowflake"])
 
-def start_file_monitoring():
-    path = "C:/Users/User/Desktop"  
-    event_handler = FileArrivalHandler()
-    observer = Observer()
-    observer.schedule(event_handler, path, recursive=False)
-    observer.start()
-    observer.join()
+# def start_file_monitoring():
+#     path = "C:/Users/User/Desktop"  
+#     event_handler = FileArrivalHandler()
+#     observer = Observer()
+#     observer.schedule(event_handler, path, recursive=False)
+#     observer.start()
+#     observer.join()
 
-if __name__ == "__main__":
-    start_file_monitoring()
+# if __name__ == "__main__":
+#     start_file_monitoring()
 
 # load_local_file_to_snowflake_dag.py
 from airflow import DAG
