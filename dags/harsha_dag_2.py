@@ -29,7 +29,7 @@ def upload_file_to_snowflake(**kwargs):
     snowflake_table = kwargs.get('snowflake_table')
 
     # Get the Snowflake connection
-    snowflake_hook = SnowflakeHook(snowflake_conn_id='your_snowflake_conn_id')
+    snowflake_hook = SnowflakeHook(snowflake_conn_id='air_conn')
 
     # List all files in the directory
     files = os.listdir(directory_path)
