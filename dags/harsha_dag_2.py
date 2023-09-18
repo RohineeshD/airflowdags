@@ -1,7 +1,8 @@
 from airflow import DAG
-from airflow.operators.dummy_operator import DummyOperator
-from your_custom_operators import FileArrivalAndSnowflakeLoadOperator
+from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
 from airflow.utils.dates import days_ago
+from airflow.hooks.snowflake_hook import SnowflakeHook
+import os
 
 # Define your DAG
 dag = DAG(
@@ -16,27 +17,49 @@ dag = DAG(
     catchup=False,
 )
 
-# Define your Snowflake connection ID
-snowflake_conn_id = 'air_conn'
-
 # Define your directory path where new files arrive
-directory_path = 'C:/Users/User/Desktop/load'
+directory_path = r'C:\Users\User\Desktop\load'  # Use 'r' before the path to handle backslashes
 
 # Define your Snowflake table name
 snowflake_table = 'automate_table'
 
-start = DummyOperator(task_id='start', dag=dag)
+# Create a task that uploads the local file to Snowflake
+def upload_file_to_snowflake(**kwargs):
+    directory_path = kwargs.get('directory_path')
+    snowflake_table = kwargs.get('snowflake_table')
 
-# Create the custom operator
-file_arrival_task = FileArrivalAndSnowflakeLoadOperator(
-    task_id='file_arrival_task',
-    directory_path=directory_path,
-    snowflake_conn_id=snowflake_conn_id,
-    snowflake_table=snowflake_table,
+    # Get the Snowflake connection
+    snowflake_hook = SnowflakeHook(snowflake_conn_id='your_snowflake_conn_id')
+
+    # List all files in the directory
+    files = os.listdir(directory_path)
+
+    for file in files:
+        file_path = os.path.join(directory_path, file)
+
+        # Use SnowflakeOperator to load the file into Snowflake
+        load_task = SnowflakeOperator(
+            task_id=f'load_file_{file}',
+            sql=f'''
+                COPY INTO {snowflake_table} FROM '{file_path}'
+                FILE_FORMAT = (TYPE = 'your_file_format')
+            ''',
+            snowflake_conn_id='your_snowflake_conn_id',
+            autocommit=True,  # Set to True to execute immediately
+            dag=dag,
+        )
+
+        load_task.execute(context=kwargs)
+
+# Create the task that triggers the file uploads
+upload_task = PythonOperator(
+    task_id='upload_files_to_snowflake',
+    python_callable=upload_file_to_snowflake,
+    op_args={'directory_path': directory_path, 'snowflake_table': snowflake_table},
+    provide_context=True,
     dag=dag,
 )
 
-start >> file_arrival_task
 
 
 # # monitor_file_arrival.py
