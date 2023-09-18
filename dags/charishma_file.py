@@ -1,10 +1,10 @@
 from airflow import DAG
 from airflow.operators.python import PythonOperator, BranchPythonOperator
-from airflow.providers.http.operators.http_download_file import HttpDownloadFileOperator
 from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
 from airflow.utils.dates import days_ago
 import pandas as pd
 import requests
+from datetime import timedelta
 
 # Define your DAG with appropriate configurations
 dag = DAG(
@@ -18,10 +18,10 @@ dag = DAG(
     },
 )
 
-# Task 1: Start the process with file upload
+# Task 1: Start the process by directly loading data from the URL into the existing CSV_TABLE
 url = "https://github.com/jcharishma/my.repo/raw/master/sample_csv.csv"
 
-def upload_file(**kwargs):
+def load_csv_from_url_to_snowflake(**kwargs):
     try:
         response = requests.get(url)
         csv_content = response.text
@@ -32,17 +32,27 @@ def upload_file(**kwargs):
         table_name = 'CSV_TABLE'
         
         connection = snowflake_hook.get_conn()
-        snowflake_hook.insert_rows(table_name, df.values.tolist(), schema=schema)
+        cursor = connection.cursor()
+        
+        # Insert data into the existing CSV_TABLE
+        insert_sql = f"""
+       INSERT INTO SC1.CSV_TABLE (NAME, EMAIL, SSN)
+      VALUES (?, ?, ?);"""
+        
+        cursor.executemany(insert_sql, df.values.tolist())
+        
+        connection.commit()
         connection.close()
         
+        print("CSV data loaded successfully into Snowflake!")
         return 'success'
     except Exception as e:
         print(f"Failed to load CSV data into Snowflake: {str(e)}")
         return 'failure'
 
-upload_file_task = PythonOperator(
-    task_id='upload_file_to_snowflake',
-    python_callable=upload_file,
+load_from_url_to_snowflake_task = PythonOperator(
+    task_id='load_csv_from_url_to_snowflake',
+    python_callable=load_csv_from_url_to_snowflake,
     provide_context=True,
     dag=dag,
 )
@@ -50,7 +60,7 @@ upload_file_task = PythonOperator(
 # Task 2: Define a BranchPythonOperator to check success or failure
 def decide_branch(**kwargs):
     ti = kwargs['ti']
-    result = ti.xcom_pull(task_ids='upload_file_to_snowflake')
+    result = ti.xcom_pull(task_ids='load_csv_from_url_to_snowflake')
     return 'success_task' if result == 'success' else 'failure_task'
 
 branch_task = BranchPythonOperator(
@@ -82,7 +92,7 @@ failure_print_task = PythonOperator(
 )
 
 # Set up task dependencies
-upload_file_task >> branch_task
+load_from_url_to_snowflake_task >> branch_task
 branch_task >> success_print_task
 branch_task >> failure_print_task
 
