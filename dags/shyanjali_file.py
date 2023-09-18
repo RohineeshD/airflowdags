@@ -19,6 +19,7 @@ def load_csv_file(**kwargs):
     
     # Read CSV data into a DataFrame
     df = pd.read_csv(StringIO(response.text))
+    print(df)
     kwargs['ti'].xcom_push(key='csv', value=df)  # Push the CSV data to XCom
     return True
     # return df
