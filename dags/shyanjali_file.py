@@ -17,7 +17,7 @@ def load_csv_file(**kwargs):
     response = requests.get(url)
     response.raise_for_status()
     
-    df = pd.read_csv(file_path)
+    df = pd.read_csv(url)
     kwargs['ti'].xcom_push(key='loaded_df', value=df)
     # return df
 
