@@ -46,19 +46,19 @@ with DAG(
     )
 
 # Create a TaskGroup to group Task 2 (load_csv_file) and Task 3 (validate_csv_data)
-    # with TaskGroup('csv_processing_group') as csv_processing_group:
+    with TaskGroup('csv_processing_group') as csv_processing_group:
         
-    task_2 = PythonOperator(
-        task_id='load_csv_file',
-        python_callable=load_csv_file,
-    )
-    
+        task_2 = PythonOperator(
+            task_id='load_csv_file',
+            python_callable=load_csv_file,
+        )
         
-    task_3 = PythonOperator(
-        task_id='validate_csv_data',
-        python_callable=validate_csv_data,
-        provide_context=True  # This allows passing the output of task_2 to task_3
-    )
+            
+        task_3 = PythonOperator(
+            task_id='validate_csv_data',
+            python_callable=validate_csv_data,
+            provide_context=True  # This allows passing the output of task_2 to task_3
+        )
     
     # Task 4: End Task (You can replace this with your specific task)
     end_task = PythonOperator(
@@ -68,7 +68,7 @@ with DAG(
     )
 
 # Define task dependencies
-    start_task >> task_2>> task_3 >> end_task
+    start_task >> csv_processing_group >> end_task
 
 
 
