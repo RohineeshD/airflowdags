@@ -8,30 +8,31 @@ from datetime import datetime
 def start_task():
     # Perform any necessary initialization
     pass
-
 def load_file_and_validate(**kwargs):
+    print("Starting Task 2")
     # Load the file (replace 'file_path' with the actual file path)
-    file_path = "https://github.com/jcharishma/my.repo/raw/master/sample_csv.csv"
+    file_path = 'https://github.com/jcharishma/my.repo/raw/master/sample_csv.csv'
     df = pd.read_csv(file_path)
-    print(df)
-    # Pass the loaded file as output to the downstream tasks
-    kwargs['ti'].xcom_push(key='loaded_file', value=df)
-    return df
 
-def validate_csv(ti):
-    dt = ti.xcom_pull(task_ids=['load_file_and_validate'])
-    print(dt)
-    # ti = kwargs['ti']
-    # loaded_file = ti.xcom_pull(task_ids='load_file_and_validate', key='loaded_file')
-    # print(loaded_file)
+    # Push the loaded file to XCom
+    kwargs['ti'].xcom_push(key='loaded_file', value=df)
+    print("Loaded file and pushed to XCom")
+
+def validate_csv(**kwargs):
+    print("Starting Task 3")
+    ti = kwargs['ti']
+
+    # Pull the loaded file from XCom
+    loaded_file = ti.xcom_pull(task_ids='load_file_and_validate', key='loaded_file')
+
     # Perform validation logic on the loaded CSV file (e.g., check for required columns, data quality, etc.)
     # Replace this with your actual validation logic
-    # if loaded_file is not None:
-    #     validation_passed = True
-    # else:
-    #     validation_passed = False
+    if loaded_file is not None:
+        validation_passed = True
+    else:
+        validation_passed = False
 
-    # print(f"CSV Validation Result: {validation_passed}")
+    print(f"CSV Validation Result: {validation_passed}")
 
 def end_task():
     # Perform any necessary cleanup or finalization
@@ -41,8 +42,7 @@ def end_task():
 with DAG(
     'shyanjali_dag',
     schedule_interval=None,  # Set your desired schedule interval
-    start_date=datetime(2023, 9, 18),  # Set your desired start date
-    catchup=False,
+    start_date=datetime(2023, 9, 16),  # Set your desired start date
 ) as f:
 
     # Define tasks
