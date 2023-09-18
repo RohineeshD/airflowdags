@@ -34,7 +34,7 @@ with DAG(
     # Task 1: Start
     start_task = DummyOperator(
         task_id='start_task',
-        dag=dag,
+        
     )
     
     # TaskGroup for Task 2 and Task 3
@@ -44,7 +44,7 @@ with DAG(
         calculate_sum_task = PythonOperator(
             task_id='task_2',
             python_callable=calculate_sum_of_even_numbers,
-            dag=dag,
+         
         )
     
         # Task 3: Print the result
@@ -52,13 +52,13 @@ with DAG(
             task_id='task_3',
             python_callable=print_result,
             op_args=[calculate_sum_task.output],  # Pass the output from Task 2 to Task 3
-            dag=dag,
+           
         )
     
     # Task 4: End
     end_task = DummyOperator(
         task_id='end_task',
-        dag=dag,
+        
     )
     
     # Define task dependencies
