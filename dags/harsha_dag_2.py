@@ -1,8 +1,6 @@
 from airflow import DAG
-from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
+from airflow.providers.snowflake.transfers.s3_to_snowflake import SnowflakeFileTransferOperator
 from airflow.utils.dates import days_ago
-from airflow.operators.python_operator import PythonOperator
-import os
 
 # Define your DAG
 dag = DAG(
@@ -17,90 +15,144 @@ dag = DAG(
     catchup=False,
 )
 
-# Define your directory path where new files arrive
-directory_path = r'C:\Users\User\Desktop\load'  # Use 'r' before the path to handle backslashes
-
 # Define your Snowflake stage name
 snowflake_stage_name = 'my_stage_name'
 
-# Define your Snowflake table name
-snowflake_table = 'automate_table'
-
-# Define the file name
-file_name = 'Downloaded_CSV_TABLE.csv'
-
-# Create a task that uploads the file from local path to Snowflake stage
-def put_file_to_snowflake_stage(directory_path, snowflake_stage_name, file_name, **kwargs):
-    try:
-        # Construct the full path to the file
-        # file_path = os.path.join(directory_path, file_name)
-        file_path = os.path.join(directory_path, file_name.replace('/', '\\'))
-
-
-        # Use SnowflakeOperator to PUT the file into the Snowflake stage
-        put_task = SnowflakeOperator(
-            task_id='put_file_to_stage',
-            sql=f'''
-                PUT file://{file_path} @{snowflake_stage_name}/{file_name}
-            ''',
-            snowflake_conn_id='air_conn',
-            autocommit=True,
-            dag=dag,
-        )
-
-        put_task.execute(context=kwargs)
-
-        # Log success
-        return 'File uploaded to Snowflake stage successfully'
-
-    except Exception as e:
-        # Log the error and return the error message
-        return f'Error uploading file to Snowflake stage: {str(e)}'
-
-# Create a task that loads data from the Snowflake stage to Snowflake table
-def load_data_from_stage_to_table(snowflake_stage_name, snowflake_table, file_name, **kwargs):
-    try:
-        # Use SnowflakeOperator to load data from stage to table
-        load_task = SnowflakeOperator(
-            task_id='load_data',
-            sql=f'''
-                COPY INTO {snowflake_table} FROM @{snowflake_stage_name}/{file_name}
-                FILE_FORMAT = (TYPE = 'csv')
-            ''',
-            snowflake_conn_id='air_conn',
-            autocommit=True,
-            dag=dag,
-        )
-
-        load_task.execute(context=kwargs)
-
-        # Log success
-        return 'Data loaded from Snowflake stage to table successfully'
-
-    except Exception as e:
-        # Log the error and return the error message
-        return f'Error loading data from Snowflake stage to table: {str(e)}'
-
-# Create the task that triggers file upload to Snowflake stage
-upload_to_stage_task = PythonOperator(
-    task_id='upload_file_to_snowflake_stage',
-    python_callable=put_file_to_snowflake_stage,
-    op_kwargs={'directory_path': directory_path, 'snowflake_stage_name': snowflake_stage_name, 'file_name': file_name},
-    provide_context=True,
+# Create a task that transfers the file from the specified local location to Snowflake stage
+transfer_task = SnowflakeFileTransferOperator(
+    task_id='transfer_file_to_snowflake_stage',
+    schema='exusia_schema',  # Change to your Snowflake schema
+    table='automate_table',  # Change to your Snowflake table name
+    stage=snowflake_stage_name,
+    filepaths=['C:\\Users\\User\\Desktop\\load\\Downloaded_CSV_TABLE.csv'],  # Updated file path
+    file_format=('TYPE' 'CSV'),  # Specify your file format
+    # column_list=['column1', 'column2'],  # List of columns if needed
+    snowflake_conn_id='air_conn',  # Specify your Snowflake connection ID
+    aws_conn_id=None,  # Specify your AWS connection ID if needed
+    task_concurrency=1,  # Number of parallel transfers
+    replace=False,  # Set to True if you want to replace existing files
+    truncate_table=False,  # Set to True to truncate the target table before loading
+    autocommit=False,  # Set to True if you want to autocommit the transaction
+    fail_on_transfer_error=True,  # Set to False if you don't want the task to fail on transfer error
     dag=dag,
 )
 
-# Create the task that triggers data load from Snowflake stage to table
-load_to_table_task = PythonOperator(
-    task_id='load_data_from_snowflake_stage_to_table',
-    python_callable=load_data_from_stage_to_table,
-    op_kwargs={'snowflake_stage_name': snowflake_stage_name, 'snowflake_table': snowflake_table, 'file_name': file_name},
-    provide_context=True,
-    dag=dag,
-)
+# Set the task dependencies
+transfer_task
 
-# Set task dependencies
-upload_to_stage_task >> load_to_table_task
+# Optionally, you can add additional tasks to process the data after it's loaded into Snowflake.
+# For example, you can run SQL queries or other data processing tasks here.
+
+# ...
+
+# Add more tasks as needed
+
+
+
+
+# from airflow import DAG
+# from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
+# from airflow.utils.dates import days_ago
+# from airflow.operators.python_operator import PythonOperator
+# import os
+
+# # Define your DAG
+# dag = DAG(
+#     'load_data_into_snowflake',
+#     default_args={
+#         'owner': 'airflow',
+#         'start_date': days_ago(1),
+#         'depends_on_past': False,
+#         'retries': 1,
+#     },
+#     schedule_interval=None,  # Remove schedule_interval for manual trigger
+#     catchup=False,
+# )
+
+# # Define your directory path where new files arrive
+# directory_path = r'C:\Users\User\Desktop\load'  # Use 'r' before the path to handle backslashes
+
+# # Define your Snowflake stage name
+# snowflake_stage_name = 'my_stage_name'
+
+# # Define your Snowflake table name
+# snowflake_table = 'automate_table'
+
+# # Define the file name
+# file_name = 'Downloaded_CSV_TABLE.csv'
+
+# # Create a task that uploads the file from local path to Snowflake stage
+# def put_file_to_snowflake_stage(directory_path, snowflake_stage_name, file_name, **kwargs):
+#     try:
+#         # Construct the full path to the file
+#         # file_path = os.path.join(directory_path, file_name)
+#         file_path = os.path.join(directory_path, file_name.replace('/', '\\'))
+
+
+#         # Use SnowflakeOperator to PUT the file into the Snowflake stage
+#         put_task = SnowflakeOperator(
+#             task_id='put_file_to_stage',
+#             sql=f'''
+#                 PUT file://{file_path} @{snowflake_stage_name}/{file_name}
+#             ''',
+#             snowflake_conn_id='air_conn',
+#             autocommit=True,
+#             dag=dag,
+#         )
+
+#         put_task.execute(context=kwargs)
+
+#         # Log success
+#         return 'File uploaded to Snowflake stage successfully'
+
+#     except Exception as e:
+#         # Log the error and return the error message
+#         return f'Error uploading file to Snowflake stage: {str(e)}'
+
+# # Create a task that loads data from the Snowflake stage to Snowflake table
+# def load_data_from_stage_to_table(snowflake_stage_name, snowflake_table, file_name, **kwargs):
+#     try:
+#         # Use SnowflakeOperator to load data from stage to table
+#         load_task = SnowflakeOperator(
+#             task_id='load_data',
+#             sql=f'''
+#                 COPY INTO {snowflake_table} FROM @{snowflake_stage_name}/{file_name}
+#                 FILE_FORMAT = (TYPE = 'csv')
+#             ''',
+#             snowflake_conn_id='air_conn',
+#             autocommit=True,
+#             dag=dag,
+#         )
+
+#         load_task.execute(context=kwargs)
+
+#         # Log success
+#         return 'Data loaded from Snowflake stage to table successfully'
+
+#     except Exception as e:
+#         # Log the error and return the error message
+#         return f'Error loading data from Snowflake stage to table: {str(e)}'
+
+# # Create the task that triggers file upload to Snowflake stage
+# upload_to_stage_task = PythonOperator(
+#     task_id='upload_file_to_snowflake_stage',
+#     python_callable=put_file_to_snowflake_stage,
+#     op_kwargs={'directory_path': directory_path, 'snowflake_stage_name': snowflake_stage_name, 'file_name': file_name},
+#     provide_context=True,
+#     dag=dag,
+# )
+
+# # Create the task that triggers data load from Snowflake stage to table
+# load_to_table_task = PythonOperator(
+#     task_id='load_data_from_snowflake_stage_to_table',
+#     python_callable=load_data_from_stage_to_table,
+#     op_kwargs={'snowflake_stage_name': snowflake_stage_name, 'snowflake_table': snowflake_table, 'file_name': file_name},
+#     provide_context=True,
+#     dag=dag,
+# )
+
+# # Set task dependencies
+# upload_to_stage_task >> load_to_table_task
 
 
 
