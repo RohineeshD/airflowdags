@@ -5,6 +5,8 @@ from airflow.utils.dates import days_ago
 from airflow.utils.task_group import TaskGroup
 from datetime import datetime
 import requests
+import pandas as pd
+from io import StringIO 
 # Define a function to calculate the sum of the first 10 even numbers
 def calculate_sum_of_even_numbers():
     # even_numbers = [2 * i for i in range(1, 11)]
