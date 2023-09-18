@@ -8,6 +8,17 @@ from airflow.models import Variable
 import requests
 from io import StringIO  # Required for Python 3
 
+class SharedData:
+    def __init__(self):
+        self.data = None
+
+    def set_data(self, data):
+        self.data = data
+
+    def get_data(self):
+        return self.data
+# Create an instance of the shared data class
+shared_data = SharedData()
 
 def start_task():
     # Perform any necessary initialization
@@ -29,12 +40,9 @@ def read_csv_from_url(**kwargs):
             # Convert the CSV data to a pandas DataFrame
             df = pd.read_csv(StringIO(csv_data))
 
-            # Push the loaded DataFrame to XCom for validation
-            kwargs['ti'].xcom_push(key='loaded_df', value=df)
-            print("Loaded CSV data and pushed to XCom")
-            print(df)
-            return df 
-            
+             # Set the loaded DataFrame in the shared data instance
+            shared_data.set_data(df)
+            print("Loaded CSV data")
 
         else:
             print(f"Failed to fetch CSV from URL. Status code: {response.status_code}")
@@ -42,17 +50,19 @@ def read_csv_from_url(**kwargs):
     except Exception as e:
         print(f"An error occurred: {str(e)}")
 
-def validate_csv(**kwargs):
+def validate_csv():
     print("Starting Task 3 - Validation")
 
-    # Pull the loaded DataFrame from XCom
-    loaded_df = kwargs['ti'].xcom_pull(task_ids='read_csv_from_url', key='loaded_df')
-    print(loaded_df)
+    # Retrieve the loaded DataFrame from the shared data instance
+    loaded_df = shared_data.get_data()
+
     # Perform validation logic on the loaded DataFrame
     # Replace this with your actual validation logic
     if loaded_df is not None:
         validation_passed = True
         # Example validation: Check if 'column_name' exists in the DataFrame
+        if 'column_name' not in loaded_df.columns:
+            validation_passed = False
     else:
         validation_passed = False
 
