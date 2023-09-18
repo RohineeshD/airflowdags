@@ -52,7 +52,7 @@ with DAG(
     )
     
     # TaskGroup for Task 2 and Task 3
-    with TaskGroup('group') as even_number_tasks:
+    with TaskGroup('group') as group:
     
         # Task 2: Calculate the sum of the first 10 even numbers
         calculate_sum_task = PythonOperator(
