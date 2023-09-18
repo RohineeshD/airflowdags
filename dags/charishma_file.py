@@ -1,11 +1,9 @@
 from airflow import DAG
-from airflow.operators.python import PythonOperator, BranchPythonOperator
 from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
+from airflow.operators.python import BranchPythonOperator, PythonOperator
 from airflow.utils.dates import days_ago
-from io import StringIO
-import pandas as pd
-import requests
 from datetime import timedelta
+import pandas as pd
 
 # Define your DAG with appropriate configurations
 dag = DAG(
@@ -19,28 +17,28 @@ dag = DAG(
     },
 )
 
-# Define the URL for the CSV file
-url = "https://github.com/jcharishma/my.repo/raw/master/sample_csv.csv"
+def decide_branch(**kwargs):
+    ti = kwargs['ti']
+    result = ti.xcom_pull(task_ids='load_data_to_snowflake')
+    return 'success_task' if result else 'failure_task'
 
 # Define the Snowflake data load task (task1)
 load_data_task = SnowflakeOperator(
-    task_id='task1',  # Renamed to task1
+    task_id='load_data_to_snowflake',
     sql=(
         f"COPY INTO SC1.CSV_TABLE "
         f"FROM 'https://github.com/jcharishma/my.repo/raw/master/sample_csv.csv' "
-        f"FILE_FORMAT = (TYPE = 'CSV' SKIP_HEADER = 1)"
+        f"FILE_FORMAT = (TYPE = 'CSV' SKIP_HEADER = 1) "
+        f"OVERWRITE = TRUE"
     ),
     snowflake_conn_id='snow_sc',
+    autocommit=True,
+    dag=dag,
 )
-
-def decide_branch(**kwargs):
-    ti = kwargs['ti']
-    result = ti.xcom_pull(task_ids='task1')  # Updated to task1
-    return 'success_task' if result else 'failure_task'
 
 # Define the BranchPythonOperator as task2
 task2 = BranchPythonOperator(
-    task_id='task2',  # Renamed to task2
+    task_id='task2',
     python_callable=decide_branch,
     provide_context=True,
     dag=dag,
@@ -67,7 +65,7 @@ failure_print_task = PythonOperator(
 )
 
 # Set up task dependencies
-load_data_task >> task2 >> [success_print_task, failure_print_task]  # Updated to task2
+load_data_task >> task2 >> [success_print_task, failure_print_task]
 
 
 
