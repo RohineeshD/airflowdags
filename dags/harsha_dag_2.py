@@ -1,8 +1,7 @@
 from airflow import DAG
 from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
-from airflow.operators.python_operator import PythonOperator
-
 from airflow.utils.dates import days_ago
+from airflow.operators.python_operator import PythonOperator
 import os
 
 # Define your DAG
@@ -28,11 +27,7 @@ snowflake_table = 'automate_table'
 file_name = 'Downloaded_CSV_TABLE.csv'
 
 # Create a task that uploads the local file to Snowflake
-def upload_file_to_snowflake(**kwargs):
-    directory_path = kwargs.get('directory_path')
-    snowflake_table = kwargs.get('snowflake_table')
-    file_name = kwargs.get('file_name')
-
+def upload_file_to_snowflake(directory_path, snowflake_table, file_name, **kwargs):
     # Construct the full path to the file
     file_path = os.path.join(directory_path, file_name)
 
@@ -41,9 +36,9 @@ def upload_file_to_snowflake(**kwargs):
         task_id='load_file',
         sql=f'''
             COPY INTO {snowflake_table} FROM '{file_path}'
-            FILE_FORMAT = (TYPE = 'your_file_format')
+            FILE_FORMAT = (TYPE = 'CSV')
         ''',
-        snowflake_conn_id='your_snowflake_conn_id',  # Replace with your Snowflake connection ID
+        snowflake_conn_id='air_conn',  # Replace with your Snowflake connection ID
         autocommit=True,  # Set to True to execute immediately
         dag=dag,
     )
@@ -54,7 +49,7 @@ def upload_file_to_snowflake(**kwargs):
 upload_task = PythonOperator(
     task_id='upload_file_to_snowflake',
     python_callable=upload_file_to_snowflake,
-    op_args={'directory_path': directory_path, 'snowflake_table': snowflake_table, 'file_name': file_name},
+    op_kwargs={'directory_path': directory_path, 'snowflake_table': snowflake_table, 'file_name': file_name},
     provide_context=True,
     dag=dag,
 )
