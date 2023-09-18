@@ -38,7 +38,7 @@ dag = DAG(
 
 # Define a PythonOperator to check for file arrival
 def check_file_arrival():
-    directory = 'C:/Users/User/Desktop/load/Downloaded_CSV_TABLE.csv'
+    directory = 'C:/Users/User/Desktop/load'
     files = os.listdir(directory)
     if files:
         return "load_local_file_task"  # Trigger the Snowflake task if files are present
