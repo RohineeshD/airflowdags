@@ -1,4 +1,4 @@
-Copy code
+
 from airflow import DAG
 from airflow.operators.python_operator import PythonOperator
 from airflow.utils.task_group import TaskGroup
