@@ -1,51 +1,114 @@
+from datetime import datetime
 from airflow import DAG
-from airflow.providers.snowflake.transfers.s3_to_snowflake import SnowflakeFileTransferOperator
-from airflow.utils.dates import days_ago
+from airflow.operators.python_operator import PythonOperator
+import pandas as pd
+import requests
+import io
+import logging
+from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
 
-# Define your DAG
+# Airflow DAG configuration
 dag = DAG(
-    'load_data_into_snowflake',
-    default_args={
-        'owner': 'airflow',
-        'start_date': days_ago(1),
-        'depends_on_past': False,
-        'retries': 1,
-    },
-    schedule_interval=None,  # Remove schedule_interval for manual trigger
+    'load_csv_url_to_snowflake',
+    start_date=datetime(2023, 1, 1),
+    schedule_interval=None,
     catchup=False,
 )
 
-# Define your Snowflake stage name
-snowflake_stage_name = 'my_stage_name'
+def csv_and_load_to_snowflake():
+    try:
+        # URL to the CSV file
+        csv_url = "C:/Users/User/Desktop/load/Downloaded_CSV_TABLE.csv"
 
-# Create a task that transfers the file from the specified local location to Snowflake stage
-transfer_task = SnowflakeFileTransferOperator(
-    task_id='transfer_file_to_snowflake_stage',
-    schema='exusia_schema',  # Change to your Snowflake schema
-    table='automate_table',  # Change to your Snowflake table name
-    stage=snowflake_stage_name,
-    filepaths=['C:\\Users\\User\\Desktop\\load\\Downloaded_CSV_TABLE.csv'],  # Updated file path
-    file_format=('TYPE' 'CSV'),  # Specify your file format
-    # column_list=['column1', 'column2'],  # List of columns if needed
-    snowflake_conn_id='air_conn',  # Specify your Snowflake connection ID
-    aws_conn_id=None,  # Specify your AWS connection ID if needed
-    task_concurrency=1,  # Number of parallel transfers
-    replace=False,  # Set to True if you want to replace existing files
-    truncate_table=False,  # Set to True to truncate the target table before loading
-    autocommit=False,  # Set to True if you want to autocommit the transaction
-    fail_on_transfer_error=True,  # Set to False if you don't want the task to fail on transfer error
+        # Attempt to download the CSV file
+        response = requests.get(csv_url)
+        response.raise_for_status()
+
+        # Read the CSV data from the response content into a pandas DataFrame
+        csv_data = pd.read_csv(io.StringIO(response.text))
+
+        # Initialize the SnowflakeHook
+        snowflake_hook = SnowflakeHook(snowflake_conn_id="air_conn")  
+
+        # Snowflake table name
+        snowflake_table = 'automate_table'
+
+
+        # Define the batch size for insertion
+        # batch_size = 1000
+
+        # Split the data into batches and insert into Snowflake
+        # for i in range(0, len(csv_data), batch_size):
+        #     batch = csv_data[i:i+batch_size]
+        engine = snowflake_hook.get_sqlalchemy_engine()
+        batch.to_sql(name=snowflake_table, con=engine, if_exists='replace', index=False)
+            # batch.to_sql(name=snowflake_table, con=engine, if_exists='fail', index=False)
+
+        logging.info('CSV data successfully loaded into Snowflake.')
+
+    except Exception as e:
+        # Handle the download or insertion error here
+        logging.error(f'Error: {str(e)}')
+        raise e
+
+# Task to download the CSV file and load it into Snowflake
+download_and_load_task = PythonOperator(
+    task_id='download_and_load_csv',
+    python_callable=download_csv_and_load_to_snowflake,
     dag=dag,
 )
 
-# Set the task dependencies
-transfer_task
+# Set task dependencies
+download_and_load_task
 
-# Optionally, you can add additional tasks to process the data after it's loaded into Snowflake.
-# For example, you can run SQL queries or other data processing tasks here.
+# from airflow import DAG
+# from airflow.providers.snowflake.transfers.s3_to_snowflake import SnowflakeFileTransferOperator
+# from airflow.utils.dates import days_ago
 
-# ...
+# # Define your DAG
+# dag = DAG(
+#     'load_data_into_snowflake',
+#     default_args={
+#         'owner': 'airflow',
+#         'start_date': days_ago(1),
+#         'depends_on_past': False,
+#         'retries': 1,
+#     },
+#     schedule_interval=None,  # Remove schedule_interval for manual trigger
+#     catchup=False,
+# )
 
-# Add more tasks as needed
+# # Define your Snowflake stage name
+# snowflake_stage_name = 'my_stage_name'
+
+# # Create a task that transfers the file from the specified local location to Snowflake stage
+# transfer_task = SnowflakeFileTransferOperator(
+#     task_id='transfer_file_to_snowflake_stage',
+#     schema='exusia_schema',  # Change to your Snowflake schema
+#     table='automate_table',  # Change to your Snowflake table name
+#     stage=snowflake_stage_name,
+#     filepaths=['C:\\Users\\User\\Desktop\\load\\Downloaded_CSV_TABLE.csv'],  # Updated file path
+#     file_format=('TYPE' 'CSV'),  # Specify your file format
+#     # column_list=['column1', 'column2'],  # List of columns if needed
+#     snowflake_conn_id='air_conn',  # Specify your Snowflake connection ID
+#     aws_conn_id=None,  # Specify your AWS connection ID if needed
+#     task_concurrency=1,  # Number of parallel transfers
+#     replace=False,  # Set to True if you want to replace existing files
+#     truncate_table=False,  # Set to True to truncate the target table before loading
+#     autocommit=False,  # Set to True if you want to autocommit the transaction
+#     fail_on_transfer_error=True,  # Set to False if you don't want the task to fail on transfer error
+#     dag=dag,
+# )
+
+# # Set the task dependencies
+# transfer_task
+
+# # Optionally, you can add additional tasks to process the data after it's loaded into Snowflake.
+# # For example, you can run SQL queries or other data processing tasks here.
+
+# # ...
+
+# # Add more tasks as needed
 
 
 
