@@ -4,7 +4,7 @@ from airflow.operators.python import PythonOperator
 from airflow.utils.task_group import TaskGroup
 import pandas as pd
 from datetime import datetime
-
+from airflow.models import Variable
 def start_task():
     # Perform any necessary initialization
     pass
