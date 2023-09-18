@@ -65,15 +65,15 @@ no_files_task = DummyOperator(
 # Define the SnowflakeOperator task to load the file
 load_local_file_task = SnowflakeOperator(
     task_id='load_local_file_task',
-    sql="COPY INTO automate_table FROM 'C:/Users/User/Desktop/load/Downloaded_CSV_TABLE.csv' FILE_FORMAT = (TYPE = 'CSV' SKIP_HEADER = 1);",
+    sql="COPY INTO automate_table FROM @your_snowflake_stage/Downloaded_CSV_TABLE.csv FILE_FORMAT = (TYPE = 'CSV' SKIP_HEADER = 1);",
     snowflake_conn_id='air_conn',
     autocommit=True,
-    trigger_rule='one_success',  # Run only if the check_for_file_task succeeds
+    trigger_rule='one_success',  
     dag=dag,
 )
 
 # Set up task dependencies
-check_for_file_task >> [load_local_file_task, no_files_task]
+check_for_file_task >> load_local_file_task
 
 if __name__ == "__main__":
     dag.cli()
