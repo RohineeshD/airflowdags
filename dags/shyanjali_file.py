@@ -15,12 +15,13 @@ def load_file_and_validate(**kwargs):
     # Load the file (replace 'file_path' with the actual file path)
     file_path = 'https://github.com/jcharishma/my.repo/raw/master/sample_csv.csv'
     df = pd.read_csv(file_path)
-    print(df)
     # Push the loaded file to XCom
     kwargs['ti'].xcom_push(key='loaded_file', value=df)
     print("Loaded file and pushed to XCom")
+    return df 
 
 def validate_csv(**kwargs):
+    print(df)
     print("Starting Task 3")
     ti = kwargs['ti']
    
