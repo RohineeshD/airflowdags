@@ -32,31 +32,35 @@ def load_data_to_snowflake(**kwargs):
         csv_url = 'https://github.com/jcharishma/my.repo/raw/master/sample_csv.csv'
         df = pd.read_csv(csv_url)
 
-        # # Define your Snowflake connection ID
-        # snowflake_conn_id = 'snow_sc'
-
         # Specify the Snowflake table name
         table_name = 'CSV_TABLE'
 
-        # Create a SnowflakeOperator to load data from the DataFrame
+        # Establish a connection to Snowflake
+        snowflake_hook = SnowflakeHook(snowflake_conn_id='snow_sc')
+        connection = snowflake_hook.get_conn()
 
-        snowflake_operator = SnowflakeOperator(
-            task_id='load_data_to_snowflake',
-            sql="INSERT INTO CSV_TABLE (NAME, EMAIL, SSN) VALUES (%(name)s, %(email)s, %(ssn)s)",
-            parameters=[{'name': row[0], 'email': row[1], 'ssn': row[2]} for row in df.values.tolist()],
-            snowflake_conn_id='snow_sc',
-            autocommit=True,
-            dag=dag,
-        )
+        # Create a cursor
+        cursor = connection.cursor()
 
+        # Prepare and execute the SQL statement for each row in the DataFrame
+        for index, row in df.iterrows():
+            sql = f"INSERT INTO {table_name} (NAME, EMAIL, SSN) VALUES (%s, %s, %s)"
+            cursor.execute(sql, (row['NAME'], row['EMAIL'], row['SSN']))
 
-        snowflake_operator.execute(context=kwargs)
+        # Commit the transaction
+        connection.commit()
+
+        # Close the cursor and connection
+        cursor.close()
+        connection.close()
+
         print("Data loaded successfully.")
         return True
     except Exception as e:
         # Log the exception
         print(f"Error loading data to Snowflake: {str(e)}")
         raise AirflowException("Error loading data to Snowflake")
+
 
 # Define the BranchPythonOperator as task2
 task2 = BranchPythonOperator(
