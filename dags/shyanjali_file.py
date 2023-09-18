@@ -29,14 +29,11 @@ with DAG(
         def load_csv_file():
             url = "https://github.com/jcharishma/my.repo/raw/master/sample_csv.csv"  # Replace with the actual CSV file link
             response = requests.get(url)
-            
-            if response.status_code == 200:
-                # Assuming the CSV file has a header row
-                df = pd.read_csv(pd.compat.StringIO(response.text))
-                return df
-            else:
-                raise Exception("Failed to load CSV file")
-    
+            response.raise_for_status()
+        
+            # Read CSV data into a DataFrame
+            df = pd.read_csv(StringIO(response.text))
+            return df
         
         task_2 = PythonOperator(
             task_id='load_csv_file',
