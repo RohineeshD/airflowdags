@@ -45,7 +45,7 @@ with DAG(
             # For example, check if specific columns or data exist
             ti = kwargs['ti']
             df = ti.xcom_pull(task_ids='load_csv_file')
-            print(df.columns)
+            print(df)
             # if "name" in df.columns:
             #     return True
             # else:
