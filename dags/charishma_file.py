@@ -7,8 +7,6 @@ from airflow.exceptions import AirflowException
 import pandas as pd
 from io import StringIO
 
-# # Define your specific start date as a datetime object
-# start_date = datetime(2023, 9, 18)
 
 # Define your DAG
 dag = DAG(
