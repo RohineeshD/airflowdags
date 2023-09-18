@@ -13,7 +13,7 @@ dag = DAG(
         'depends_on_past': False,
         'retries': 1,
     },
-    schedule_interval='@daily',  # Adjust the schedule as needed
+    schedule_interval=None,  # Remove schedule_interval for manual trigger
     catchup=False,
 )
 
@@ -35,11 +35,11 @@ def upload_file_to_snowflake(directory_path, snowflake_table, file_name, **kwarg
     load_task = SnowflakeOperator(
         task_id='load_file',
         sql=f'''
-            COPY INTO {snowflake_table} FROM '{file_path}'
+            COPY INTO {snowflake_table} FROM @{snowflake_stage_name}/{file_name}
             FILE_FORMAT = (TYPE = 'CSV')
         ''',
-        snowflake_conn_id='air_conn',  # Replace with your Snowflake connection ID
-        autocommit=True,  # Set to True to execute immediately
+        snowflake_conn_id='air_conn',  
+        autocommit=True,  
         dag=dag,
     )
 
@@ -53,6 +53,13 @@ upload_task = PythonOperator(
     provide_context=True,
     dag=dag,
 )
+
+# Set the task dependencies
+upload_task
+
+# Define your Snowflake stage name
+snowflake_stage_name = 'my_stage_name'  
+
 
 
 
