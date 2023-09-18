@@ -80,16 +80,17 @@ with DAG(
     
     # Define a TaskGroup for Task 2 and Task 3
     with TaskGroup('file_processing_tasks') as file_processing_tasks:
-        load_file_and_validate = PythonOperator(
-            task_id='load_file_and_validate',
-            python_callable=load_file_and_validate,
-        )
-    
-        validate_csv = PythonOperator(
-            task_id='validate_csv',
-            python_callable=validate_csv,
-            provide_context=True,
-        )
+       read_csv = PythonOperator(
+        task_id='read_csv_from_url',
+        python_callable=read_csv_from_url,
+        provide_context=True,
+    )
+
+    validate_file = PythonOperator(
+        task_id='validate_csv',
+        python_callable=validate_csv,
+        provide_context=True,
+    )
     # Define the task dependencies
     # start >> load_file_and_validate >>validate_csv>> end
 
