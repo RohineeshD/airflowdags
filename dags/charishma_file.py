@@ -3,7 +3,7 @@ from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
 from airflow.operators.python import BranchPythonOperator, PythonOperator
 from airflow.utils.dates import days_ago
 from datetime import timedelta
-import pandas as pd
+from airflow.exceptions import AirflowException
 
 # Define your DAG with appropriate configurations
 dag = DAG(
@@ -23,19 +23,26 @@ def decide_branch(**kwargs):
     return 'success_task' if result else 'failure_task'
 
 # Define the Snowflake data load task (task1)
-load_data_task = SnowflakeOperator(
-    task_id='load_data_to_snowflake',
-    sql=(
-        
-        f"COPY INTO CSV_TABLE "
-        f"FROM 'https://github.com/jcharishma/my.repo/raw/master/sample_csv.csv' "
-        f"FILE_FORMAT = (TYPE = 'CSV' SKIP_HEADER = 1) "
-       
-    ),
-    snowflake_conn_id='snow_sc',
-    autocommit=True,
-    dag=dag,
-)
+def load_data_to_snowflake(**kwargs):
+    try:
+        snowflake_operator = SnowflakeOperator(
+            task_id='load_data_to_snowflake',
+            sql=(
+                f"COPY INTO CSV_TABLE "
+                f"FROM 'https://github.com/jcharishma/my.repo/raw/master/sample_csv.csv' "
+                f"FILE_FORMAT = (TYPE = 'CSV' SKIP_HEADER = 1) "
+            ),
+            snowflake_conn_id='snow_sc',
+            autocommit=True,
+            dag=dag,
+        )
+        snowflake_operator.execute(context=kwargs)
+        print("Data loaded successfully.")
+        return True
+    except Exception as e:
+        # Log the exception
+        print(f"Error loading data to Snowflake: {str(e)}")
+        raise AirflowException("Error loading data to Snowflake")
 
 # Define the BranchPythonOperator as task2
 task2 = BranchPythonOperator(
@@ -66,7 +73,8 @@ failure_print_task = PythonOperator(
 )
 
 # Set up task dependencies
-load_data_task >> task2 >> [success_print_task, failure_print_task]
+load_data_to_snowflake_task >> task2 >> [success_print_task, failure_print_task]
+
 
 
 
