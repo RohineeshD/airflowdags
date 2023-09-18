@@ -23,39 +23,40 @@ directory_path = r'C:\Users\User\Desktop\load'  # Use 'r' before the path to han
 # Define your Snowflake table name
 snowflake_table = 'automate_table'
 
+# Define the file name
+file_name = 'Downloaded_CSV_TABLE.csv'
+
 # Create a task that uploads the local file to Snowflake
 def upload_file_to_snowflake(**kwargs):
     directory_path = kwargs.get('directory_path')
     snowflake_table = kwargs.get('snowflake_table')
+    file_name = kwargs.get('file_name')
 
     # Get the Snowflake connection
-    snowflake_hook = SnowflakeHook(snowflake_conn_id='air_conn')
+    snowflake_hook = SnowflakeHook(snowflake_conn_id='your_snowflake_conn_id')
 
-    # List all files in the directory
-    files = os.listdir(directory_path)
+    # Construct the full path to the file
+    file_path = os.path.join(directory_path, file_name)
 
-    for file in files:
-        file_path = os.path.join(directory_path, file)
+    # Use SnowflakeOperator to load the file into Snowflake
+    load_task = SnowflakeOperator(
+        task_id='load_file',
+        sql=f'''
+            COPY INTO {snowflake_table} FROM '{file_path}'
+            FILE_FORMAT = (TYPE = 'your_file_format')
+        ''',
+        snowflake_conn_id='your_snowflake_conn_id',
+        autocommit=True,  # Set to True to execute immediately
+        dag=dag,
+    )
 
-        # Use SnowflakeOperator to load the file into Snowflake
-        load_task = SnowflakeOperator(
-            task_id=f'load_file_{file}',
-            sql=f'''
-                COPY INTO {snowflake_table} FROM '{file_path}'
-                FILE_FORMAT = (TYPE = 'your_file_format')
-            ''',
-            snowflake_conn_id='your_snowflake_conn_id',
-            autocommit=True,  # Set to True to execute immediately
-            dag=dag,
-        )
+    load_task.execute(context=kwargs)
 
-        load_task.execute(context=kwargs)
-
-# Create the task that triggers the file uploads
+# Create the task that triggers the file upload
 upload_task = PythonOperator(
-    task_id='upload_files_to_snowflake',
+    task_id='upload_file_to_snowflake',
     python_callable=upload_file_to_snowflake,
-    op_args={'directory_path': directory_path, 'snowflake_table': snowflake_table},
+    op_args={'directory_path': directory_path, 'snowflake_table': snowflake_table, 'file_name': file_name},
     provide_context=True,
     dag=dag,
 )
