@@ -39,7 +39,7 @@ dag = DAG(
 # Define a PythonOperator to check for file arrival
 
 def check_file_arrival():
-    directory = 'C:\Users\User\Desktop\load'  
+    directory = 'C:/Users/User/Desktop/load'  
     file_name = 'Downloaded_CSV_TABLE.csv'
     full_file_path = os.path.join(directory, file_name)
     
