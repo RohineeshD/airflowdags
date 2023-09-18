@@ -34,6 +34,7 @@ with DAG(
         
             # Read CSV data into a DataFrame
             df = pd.read_csv(StringIO(response.text))
+            print(df)
             return df
         
         task_2 = PythonOperator(
@@ -41,8 +42,7 @@ with DAG(
             python_callable=load_csv_file,
         )
         def validate_csv_data(**kwargs):
-            ti = kwargs['ti']
-            df = ti.xcom_pull(task_ids='load_csv_file')
+            df=kwargs['ti'].xcom_pull(task_ids='load_csv_file',
             print(f"Received DataFrame:\n{df}")
             # if "name" in df.columns:
             #     return True
