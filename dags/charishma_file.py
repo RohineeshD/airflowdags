@@ -32,8 +32,8 @@ def load_data_to_snowflake(**kwargs):
         csv_url = 'https://github.com/jcharishma/my.repo/raw/master/sample_csv.csv'
         df = pd.read_csv(csv_url)
 
-        # Define your Snowflake connection ID
-        snowflake_conn_id = 'snow_sc'
+        # # Define your Snowflake connection ID
+        # snowflake_conn_id = 'snow_sc'
 
         # Specify the Snowflake table name
         table_name = 'CSV_TABLE'
@@ -41,9 +41,9 @@ def load_data_to_snowflake(**kwargs):
         # Create a SnowflakeOperator to load data from the DataFrame
         snowflake_operator = SnowflakeOperator(
             task_id='load_data_to_snowflake',
-            sql=f"INSERT INTO {table_name} VALUES(%s, %s, %s)",  # Modify this SQL query as per your table structure
+            sql=f"INSERT INTO CSV_TABLE VALUES(%s, %s, %s)",  # Modify this SQL query as per your table structure
             parameters=[tuple(row) for row in df.values.tolist()],
-            snowflake_conn_id=snowflake_conn_id,
+            snowflake_conn_id='snow_sc',
             autocommit=True,
             dag=dag,
         )
