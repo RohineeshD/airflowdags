@@ -17,16 +17,21 @@ def load_csv_file(**kwargs):
     response = requests.get(url)
     response.raise_for_status()
     
-    # Read CSV data into a DataFrame
-    df = pd.read_csv(StringIO(response.text))
-    print(df)
-    return df
+    df = pd.read_csv(file_path)
+    kwargs['ti'].xcom_push(key='loaded_df', value=df)
     # return df
 
 def validate_csv_data(**kwargs):
     ti = kwargs['ti']
-    df = ti.xcom_pull(task_ids='load_csv_file')
-    print(f"Received DataFrame:\n{df}")
+    loaded_df = ti.xcom_pull(key='loaded_df', task_ids='load_csv_file')
+    print(loaded_df)
+    # Simulate file validation; replace with your validation logic
+    is_valid = len(loaded_df) > 0  # Example: Check if the DataFrame is not empty
+    
+    if is_valid:
+        print("File is valid")
+    else:
+        print("File is not valid")
 
     # if "name" in df.columns:
     #     return True
@@ -51,6 +56,7 @@ with DAG(
         task_2 = PythonOperator(
             task_id='load_csv_file',
             python_callable=load_csv_file,
+            provide_context=True
         )
         
             
