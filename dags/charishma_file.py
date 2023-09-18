@@ -1,6 +1,7 @@
 from airflow import DAG
 from airflow.operators.python import PythonOperator, BranchPythonOperator
 from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
+from airflow.providers.snowflake.transfers.snowflake_to_snowflake import SnowflakeToSnowflakeTransfer
 from airflow.utils.dates import days_ago
 from io import StringIO
 import pandas as pd
@@ -22,52 +23,26 @@ dag = DAG(
 # Define the URL for the CSV file
 url = "https://github.com/jcharishma/my.repo/raw/master/sample_csv.csv"
 
-def load_csv_from_url_to_snowflake(**kwargs):
-    try:
-        # Load CSV data from URL into a DataFrame
-        response = requests.get(url)
-        csv_content = response.text
-        df = pd.read_csv(StringIO(csv_content))
-        
-        # Connect to Snowflake
-        snowflake_hook = SnowflakeHook(snowflake_conn_id='snow_sc')
-        schema = 'SC1'
-        table_name = 'CSV_TABLE'
-        
-        connection = snowflake_hook.get_conn()
-        cursor = connection.cursor()
-        
-        # Insert data into the existing CSV_TABLE
-        insert_sql = f"""
-        INSERT INTO SC1.CSV_TABLE (NAME, EMAIL, SSN)
-        VALUES (?, ?, ?);"""
-        
-        cursor.executemany(insert_sql, df.values.tolist())
-        
-        connection.commit()
-        connection.close()
-        
-        print("CSV data loaded successfully into Snowflake!")
-        return 'success'
-    except Exception as e:
-        print(f"Failed to load CSV data into Snowflake: {str(e)}")
-        return 'failure'
-
-# Define the tasks
-load_from_url_to_snowflake_task = PythonOperator(
-    task_id='load_csv_from_url_to_snowflake',
-    python_callable=load_csv_from_url_to_snowflake,
-    provide_context=True,
-    dag=dag,
+# Define the Snowflake data load task (task1)
+load_data_task = SnowflakeToSnowflakeTransfer(
+    task_id='task1',  # Renamed to task1
+    sql=(
+        "COPY INTO SC1.CSV_TABLE "
+        "FROM 'https://github.com/jcharishma/my.repo/raw/master/sample_csv.csv' "
+        "FILE_FORMAT = (TYPE = 'CSV' SKIP_HEADER = 1)"
+    ),
+    snowflake_conn_id='snow_sc',
+    schema='SC1',        
 )
 
 def decide_branch(**kwargs):
     ti = kwargs['ti']
-    result = ti.xcom_pull(task_ids='load_csv_from_url_to_snowflake')
-    return 'success_task' if result == 'success' else 'failure_task'
+    result = ti.xcom_pull(task_ids='task1')  # Updated to task1
+    return 'success_task' if result else 'failure_task'
 
-branch_task = BranchPythonOperator(
-    task_id='branch_task',
+# Define the BranchPythonOperator as task2
+task2 = BranchPythonOperator(
+    task_id='task2',  # Renamed to task2
     python_callable=decide_branch,
     provide_context=True,
     dag=dag,
@@ -94,8 +69,8 @@ failure_print_task = PythonOperator(
 )
 
 # Set up task dependencies
-load_from_url_to_snowflake_task >> branch_task
-branch_task >> [success_print_task, failure_print_task]
+load_data_task >> task2 >> [success_print_task, failure_print_task]  
+
 
 
 
