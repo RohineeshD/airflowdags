@@ -13,14 +13,14 @@ def load_file_and_validate(**kwargs):
     # Load the file (replace 'file_path' with the actual file path)
     file_path = "https://github.com/jcharishma/my.repo/raw/master/sample_csv.csv"
     df = pd.read_csv(file_path)
-
+    print(df)
     # Pass the loaded file as output to the downstream tasks
     kwargs['ti'].xcom_push(key='loaded_file', value=df)
 
 def validate_csv(**kwargs):
     ti = kwargs['ti']
     loaded_file = ti.xcom_pull(task_ids='load_file_and_validate', key='loaded_file')
-
+    print(loaded_file)
     # Perform validation logic on the loaded CSV file (e.g., check for required columns, data quality, etc.)
     # Replace this with your actual validation logic
     if loaded_file is not None:
