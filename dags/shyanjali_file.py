@@ -46,13 +46,13 @@ with DAG(
     start = PythonOperator(
         task_id='start_task',
         python_callable=start_task,
-        dag=dag,
+       
     )
     
     end = PythonOperator(
         task_id='end_task',
         python_callable=end_task,
-        dag=dag,
+       
     )
     
     # Define a TaskGroup for Task 2 and Task 3
