@@ -64,7 +64,7 @@ no_files_task = DummyOperator(
 create_snowflake_stage_task = SnowflakeOperator(
     task_id='create_snowflake_stage',
     sql=[
-        "CREATE OR REPLACE STAGE IF NOT EXISTS snowflake_stage",  
+        "CREATE OR REPLACE stage snowflake_stage",  
         "URL = 'C:/Users/User/Desktop/load'",  
         "FILE_FORMAT = (TYPE = 'CSV' SKIP_HEADER = 1)"  
     ],
