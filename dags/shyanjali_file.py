@@ -23,10 +23,10 @@ def load_file_and_validate(**kwargs):
 def validate_csv(**kwargs):
     print("Starting Task 3")
     ti = kwargs['ti']
-    print(ti)
+   
     # Pull the loaded file from XCom
     loaded_file = ti.xcom_pull(task_ids='load_file_and_validate', key='loaded_file')
-
+    print(loaded_file)
     # Perform validation logic on the loaded CSV file (e.g., check for required columns, data quality, etc.)
     # Replace this with your actual validation logic
     if loaded_file is not None:
