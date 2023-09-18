@@ -11,62 +11,66 @@ default_args = {
     'start_date': datetime(2023, 9, 18),
 }
 
-dag = DAG(
-    'shyanjali_dag',
-    default_args=default_args,
-    schedule_interval=None,
-)
+
+with DAG(
+        dag_id="shyanjali_dag",
+        schedule_interval=None,
+        default_args=default_args,
+        catchup=False) as f:
+    
+            
+
 
 # Task 1: Start Task (You can replace this with your specific task)
-start_task = PythonOperator(
-    task_id='start_task',
-    python_callable=lambda: print("Start task"),
-    dag=dag,
-)
+    start_task = PythonOperator(
+        task_id='start_task',
+        python_callable=lambda: print("Start task"),
+        dag=dag,
+    )
 
 # Create a TaskGroup to group Task 2 (load_csv_file) and Task 3 (validate_csv_data)
-with TaskGroup('csv_processing_group') as csv_processing_group:
-    def load_csv_file():
-        url = "https://github.com/jcharishma/my.repo/raw/master/sample_csv.csv"  # Replace with the actual CSV file link
-        response = requests.get(url)
-        
-        if response.status_code == 200:
-            # Assuming the CSV file has a header row
-            df = pd.read_csv(pd.compat.StringIO(response.text))
-            return df
-        else:
-            raise Exception("Failed to load CSV file")
-
+    with TaskGroup('csv_processing_group') as csv_processing_group:
+        def load_csv_file():
+            url = "https://github.com/jcharishma/my.repo/raw/master/sample_csv.csv"  # Replace with the actual CSV file link
+            response = requests.get(url)
+            
+            if response.status_code == 200:
+                # Assuming the CSV file has a header row
+                df = pd.read_csv(pd.compat.StringIO(response.text))
+                return df
+            else:
+                raise Exception("Failed to load CSV file")
     
-    task_2 = PythonOperator(
-        task_id='load_csv_file',
-        python_callable=load_csv_file,
-        dag=dag,
-    )
-    def validate_csv_data(df):
-        # Implement your validation logic here
-        # For example, check if specific columns or data exist
-        if "name" in df.columns:
-            return True
-        else:
-            return False
         
-    task_3 = PythonOperator(
-        task_id='validate_csv_data',
-        python_callable=validate_csv_data,
-        provide_context=True,  # This allows passing the output of task_2 to task_3
+        task_2 = PythonOperator(
+            task_id='load_csv_file',
+            python_callable=load_csv_file,
+            dag=dag,
+        )
+        def validate_csv_data(df):
+            # Implement your validation logic here
+            # For example, check if specific columns or data exist
+            if "name" in df.columns:
+                return True
+            else:
+                return False
+            
+        task_3 = PythonOperator(
+            task_id='validate_csv_data',
+            python_callable=validate_csv_data,
+            provide_context=True,  # This allows passing the output of task_2 to task_3
+            dag=dag,
+        )
+    
+    # Task 4: End Task (You can replace this with your specific task)
+    end_task = PythonOperator(
+        task_id='end_task',
+        python_callable=lambda: print("End task"),
         dag=dag,
     )
-
-# Task 4: End Task (You can replace this with your specific task)
-end_task = PythonOperator(
-    task_id='end_task',
-    python_callable=lambda: print("End task"),
-    dag=dag,
-)
 
 # Define task dependencies
-start_task >> csv_processing_group >> end_task
+    start_task >> csv_processing_group >> end_task
 
 # import pandas as pd
 # from pydantic import BaseModel, ValidationError, validator
