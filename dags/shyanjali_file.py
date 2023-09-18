@@ -8,12 +8,14 @@ from datetime import datetime
 def start_task():
     # Perform any necessary initialization
     pass
+
+
 def load_file_and_validate(**kwargs):
     print("Starting Task 2")
     # Load the file (replace 'file_path' with the actual file path)
     file_path = 'https://github.com/jcharishma/my.repo/raw/master/sample_csv.csv'
     df = pd.read_csv(file_path)
-
+    print(df)
     # Push the loaded file to XCom
     kwargs['ti'].xcom_push(key='loaded_file', value=df)
     print("Loaded file and pushed to XCom")
@@ -21,7 +23,7 @@ def load_file_and_validate(**kwargs):
 def validate_csv(**kwargs):
     print("Starting Task 3")
     ti = kwargs['ti']
-
+    print(ti)
     # Pull the loaded file from XCom
     loaded_file = ti.xcom_pull(task_ids='load_file_and_validate', key='loaded_file')
 
@@ -60,13 +62,13 @@ with DAG(
     
     # Define a TaskGroup for Task 2 and Task 3
     with TaskGroup('file_processing_tasks') as file_processing_tasks:
-        load_file = PythonOperator(
+        load_file_and_validate = PythonOperator(
             task_id='load_file_and_validate',
             python_callable=load_file_and_validate,
             provide_context=True,
         )
     
-        validate_file = PythonOperator(
+        validate_csv = PythonOperator(
             task_id='validate_csv',
             python_callable=validate_csv,
             provide_context=True,
