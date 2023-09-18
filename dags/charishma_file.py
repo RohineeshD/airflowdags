@@ -1,7 +1,6 @@
 from airflow import DAG
 from airflow.operators.python import PythonOperator, BranchPythonOperator
-from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
-from airflow.providers.snowflake.transfers.snowflake_to_snowflake import SnowflakeToSnowflakeTransfer
+from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
 from airflow.utils.dates import days_ago
 from io import StringIO
 import pandas as pd
@@ -24,15 +23,14 @@ dag = DAG(
 url = "https://github.com/jcharishma/my.repo/raw/master/sample_csv.csv"
 
 # Define the Snowflake data load task (task1)
-load_data_task = SnowflakeToSnowflakeTransfer(
+load_data_task = SnowflakeOperator(
     task_id='task1',  # Renamed to task1
     sql=(
-        "COPY INTO SC1.CSV_TABLE "
-        "FROM 'https://github.com/jcharishma/my.repo/raw/master/sample_csv.csv' "
-        "FILE_FORMAT = (TYPE = 'CSV' SKIP_HEADER = 1)"
+        f"COPY INTO SC1.CSV_TABLE "
+        f"FROM 'https://github.com/jcharishma/my.repo/raw/master/sample_csv.csv' "
+        f"FILE_FORMAT = (TYPE = 'CSV' SKIP_HEADER = 1)"
     ),
     snowflake_conn_id='snow_sc',
-    schema='SC1',        
 )
 
 def decide_branch(**kwargs):
@@ -69,7 +67,7 @@ failure_print_task = PythonOperator(
 )
 
 # Set up task dependencies
-load_data_task >> task2 >> [success_print_task, failure_print_task]  
+load_data_task >> task2 >> [success_print_task, failure_print_task]  # Updated to task2
 
 
 
