@@ -5,6 +5,10 @@ from airflow.utils.task_group import TaskGroup
 import pandas as pd
 from datetime import datetime
 from airflow.models import Variable
+import requests
+from io import StringIO  # Required for Python 3
+
+
 def start_task():
     # Perform any necessary initialization
     pass
@@ -86,7 +90,7 @@ with DAG(
         provide_context=True,
     )
 
-    validate_file = PythonOperator(
+        validate_file = PythonOperator(
         task_id='validate_csv',
         python_callable=validate_csv,
         provide_context=True,
