@@ -8,33 +8,51 @@ from airflow.models import Variable
 def start_task():
     # Perform any necessary initialization
     pass
-CSV_URL = 'https://github.com/jcharishma/my.repo/raw/master/sample_csv.csv'
-loaded_file = None  # Define a global variable to store the loaded file
-
-def load_file_and_validate():
-    global loaded_file  # Access the global variable
-
+ 
+def read_csv_from_url(**kwargs):
     print("Starting Task 2")
-    # Load the file (replace 'file_path' with the actual file path)
-    # file_path = '/path/to/your/file.csv'
-    loaded_file = pd.read_csv(CSV_URL)  # Assign the loaded file to the global variable
+    # Define the URL of the CSV file
+    csv_url = 'https://github.com/jcharishma/my.repo/raw/master/sample_csv.csv'  # Replace with the actual URL
 
-    print("Loaded file")
+    try:
+        # Fetch CSV data from the URL
+        response = requests.get(csv_url)
 
+        # Check if the request was successful
+        if response.status_code == 200:
+            csv_data = response.text
 
-def validate_csv():
-    global loaded_file  # Access the global variable
+            # Convert the CSV data to a pandas DataFrame
+            df = pd.read_csv(StringIO(csv_data))
 
-    print("Starting Task 3")
+            # Push the loaded DataFrame to XCom for validation
+            kwargs['ti'].xcom_push(key='loaded_df', value=df)
+            print("Loaded CSV data and pushed to XCom")
 
-    # Perform validation logic on the loaded CSV file (e.g., check for required columns, data quality, etc.)
+        else:
+            print(f"Failed to fetch CSV from URL. Status code: {response.status_code}")
+
+    except Exception as e:
+        print(f"An error occurred: {str(e)}")
+
+def validate_csv(**kwargs):
+    print("Starting Task 3 - Validation")
+
+    # Pull the loaded DataFrame from XCom
+    loaded_df = kwargs['ti'].xcom_pull(task_ids='read_csv_from_url', key='loaded_df')
+
+    # Perform validation logic on the loaded DataFrame
     # Replace this with your actual validation logic
-    if loaded_file is not None:
+    if loaded_df is not None:
         validation_passed = True
+        # Example validation: Check if 'column_name' exists in the DataFrame
+        if 'column_name' not in loaded_df.columns:
+            validation_passed = False
     else:
         validation_passed = False
 
     print(f"CSV Validation Result: {validation_passed}")
+
 
 def end_task():
     # Perform any necessary cleanup or finalization
