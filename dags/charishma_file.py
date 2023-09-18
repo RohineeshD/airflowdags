@@ -4,6 +4,8 @@ from airflow.operators.python import BranchPythonOperator, PythonOperator
 from airflow.utils.dates import days_ago
 from datetime import timedelta
 from airflow.exceptions import AirflowException
+import pandas as pd
+import requests
 
 # Define your DAG with appropriate configurations
 dag = DAG(
@@ -25,20 +27,33 @@ def decide_branch(**kwargs):
 # Define the Snowflake data load task (task1)
 def load_data_to_snowflake(**kwargs):
     try:
-        snowflake_operator = SnowflakeOperator(
-            task_id='load_data_to_snowflake',
-            sql=(
-                f"COPY INTO CSV_TABLE "
-                f"FROM 'https://github.com/jcharishma/my.repo/raw/master/sample_csv.csv' "
-                f"FILE_FORMAT = (TYPE = 'CSV' SKIP_HEADER = 1) "
-            ),
-            snowflake_conn_id='snow_sc',
-            autocommit=True,
-            dag=dag,
-        )
-        snowflake_operator.execute(context=kwargs)
-        print("Data loaded successfully.")
-        return True
+        url = 'https://github.com/jcharishma/my.repo/raw/master/sample_csv.csv'
+        response = requests.get(url)
+        if response.status_code == 200:
+            csv_data = response.text
+            # Parse CSV data into a DataFrame
+            df = pd.read_csv(pd.compat.StringIO(csv_data))
+            
+            # Assuming you have a Snowflake connection already set up in Airflow
+            # You should replace 'YOUR_SNOWFLAKE_TABLE' and define the SnowflakeOperator accordingly
+            snowflake_operator = SnowflakeOperator(
+                task_id='load_data_to_snowflake',
+                sql=(
+                    "INSERT INTO CSV_ATBLE "
+                    "(NAME, EMAIL, SSN) "
+                    "VALUES (%s, %s, %s)"
+                ),  # Replace with your SQL INSERT statement
+                snowflake_conn_id='snow_sc',
+                autocommit=True,
+                parameters=[tuple(row) for row in df.values],  # Convert DataFrame rows to tuples
+                dag=dag,
+            )
+            snowflake_operator.execute(context=kwargs)
+            print("Data loaded successfully.")
+            return True
+        else:
+            print("Failed to download CSV data from the URL.")
+            return False
     except Exception as e:
         # Log the exception
         print(f"Error loading data to Snowflake: {str(e)}")
@@ -51,6 +66,7 @@ task2 = BranchPythonOperator(
     provide_context=True,
     dag=dag,
 )
+
 def success_task(**kwargs):
     print("CSV data loaded successfully into Snowflake!")
     ti = kwargs['ti']
@@ -87,6 +103,7 @@ load_data_to_snowflake_task = PythonOperator(
 )
 
 load_data_to_snowflake_task >> task2 >> [success_print_task, failure_print_task]
+
 
 
 
