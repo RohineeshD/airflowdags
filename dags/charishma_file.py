@@ -1,5 +1,6 @@
 from airflow import DAG
 from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
+from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
 from airflow.operators.python import BranchPythonOperator, PythonOperator
 from datetime import datetime, timedelta
 from airflow.exceptions import AirflowException
