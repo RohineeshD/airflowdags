@@ -1,3 +1,44 @@
+from airflow import DAG
+from airflow.operators.dummy_operator import DummyOperator
+from your_custom_operators import FileArrivalAndSnowflakeLoadOperator
+from airflow.utils.dates import days_ago
+
+# Define your DAG
+dag = DAG(
+    'load_data_into_snowflake',
+    default_args={
+        'owner': 'airflow',
+        'start_date': days_ago(1),
+        'depends_on_past': False,
+        'retries': 1,
+    },
+    schedule_interval='@daily',  # Adjust the schedule as needed
+    catchup=False,
+)
+
+# Define your Snowflake connection ID
+snowflake_conn_id = 'air_conn'
+
+# Define your directory path where new files arrive
+directory_path = 'C:/Users/User/Desktop/load'
+
+# Define your Snowflake table name
+snowflake_table = 'automate_table'
+
+start = DummyOperator(task_id='start', dag=dag)
+
+# Create the custom operator
+file_arrival_task = FileArrivalAndSnowflakeLoadOperator(
+    task_id='file_arrival_task',
+    directory_path=directory_path,
+    snowflake_conn_id=snowflake_conn_id,
+    snowflake_table=snowflake_table,
+    dag=dag,
+)
+
+start >> file_arrival_task
+
+
 # # monitor_file_arrival.py
 # from watchdog.observers import Observer
 # from watchdog.events import FileSystemEventHandler
@@ -20,72 +61,72 @@
 # if __name__ == "__main__":
 #     start_file_monitoring()
 
-# load_local_file_to_snowflake_dag.py
-from airflow import DAG
-from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
-from datetime import datetime
-from airflow.operators.dummy_operator import DummyOperator
-from airflow.operators.python_operator import PythonOperator
-import os
+# # load_local_file_to_snowflake_dag.py
+# from airflow import DAG
+# from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
+# from datetime import datetime
+# from airflow.operators.dummy_operator import DummyOperator
+# from airflow.operators.python_operator import PythonOperator
+# import os
 
-# Define your DAG
-dag = DAG(
-    'load_local_file_to_snowflake',
-    schedule_interval=None,  
-    start_date=datetime(2023, 9, 18),  
-    catchup=False,  
-)
+# # Define your DAG
+# dag = DAG(
+#     'load_local_file_to_snowflake',
+#     schedule_interval=None,  
+#     start_date=datetime(2023, 9, 18),  
+#     catchup=False,  
+# )
 
-# Define a PythonOperator to check for file arrival
-def check_file_arrival():
-    directory = 'Users/User/Desktop/load'  
+# # Define a PythonOperator to check for file arrival
+# def check_file_arrival():
+#     directory = 'Users/User/Desktop/load'  
     
-    # List all files in the directory for debugging
-    files_in_directory = os.listdir(directory)
-    print(f"Files in the directory: {files_in_directory}")
+#     # List all files in the directory for debugging
+#     files_in_directory = os.listdir(directory)
+#     print(f"Files in the directory: {files_in_directory}")
     
-    file_name = 'Downloaded_CSV_TABLE.csv'
-    full_file_path = os.path.join(directory, file_name)
+#     file_name = 'Downloaded_CSV_TABLE.csv'
+#     full_file_path = os.path.join(directory, file_name)
     
-    if os.path.exists(full_file_path):
-        return "load_local_file_task"  # Trigger the Snowflake task if the file exists
-    else:
-        return "no_files"
+#     if os.path.exists(full_file_path):
+#         return "load_local_file_task"  # Trigger the Snowflake task if the file exists
+#     else:
+#         return "no_files"
 
 
 
-check_for_file_task = PythonOperator(
-    task_id='check_for_file_arrival',
-    python_callable=check_file_arrival,
-    provide_context=True,
-    dag=dag,
-)
+# check_for_file_task = PythonOperator(
+#     task_id='check_for_file_arrival',
+#     python_callable=check_file_arrival,
+#     provide_context=True,
+#     dag=dag,
+# )
 
-# Define a DummyOperator task for when no files are present
-no_files_task = DummyOperator(
-    task_id='no_files',
-    dag=dag,
-)
+# # Define a DummyOperator task for when no files are present
+# no_files_task = DummyOperator(
+#     task_id='no_files',
+#     dag=dag,
+# )
 
-# Define the SnowflakeOperator task to create the stage and load the file
-create_snowflake_stage_task = SnowflakeOperator(
-    task_id='create_snowflake_stage',
-    sql=[
-        "CREATE OR REPLACE stage snowflake_stage",  
-        "COPY INTO automate_table FROM 'C:/Users/User/Desktop/load/Downloaded_CSV_TABLE.csv' FILE_FORMAT = (TYPE = 'CSV' SKIP_HEADER = 1)"  
-    ],
-    snowflake_conn_id='air_conn',
-    autocommit=True,
-    trigger_rule='one_success',  
-    dag=dag,
-)
+# # Define the SnowflakeOperator task to create the stage and load the file
+# create_snowflake_stage_task = SnowflakeOperator(
+#     task_id='create_snowflake_stage',
+#     sql=[
+#         "CREATE OR REPLACE stage snowflake_stage",  
+#         "COPY INTO automate_table FROM 'C:/Users/User/Desktop/load/Downloaded_CSV_TABLE.csv' FILE_FORMAT = (TYPE = 'CSV' SKIP_HEADER = 1)"  
+#     ],
+#     snowflake_conn_id='air_conn',
+#     autocommit=True,
+#     trigger_rule='one_success',  
+#     dag=dag,
+# )
 
-# Set up task dependencies
-check_for_file_task >> create_snowflake_stage_task
-no_files_task >> create_snowflake_stage_task  # In case there are no files, still create the stage
+# # Set up task dependencies
+# check_for_file_task >> create_snowflake_stage_task
+# no_files_task >> create_snowflake_stage_task  # In case there are no files, still create the stage
 
-if __name__ == "__main__":
-    dag.cli()
+# if __name__ == "__main__":
+#     dag.cli()
 
 
 
