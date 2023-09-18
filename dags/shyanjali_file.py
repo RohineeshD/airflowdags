@@ -45,10 +45,11 @@ with DAG(
             # For example, check if specific columns or data exist
             ti = kwargs['ti']
             df = ti.xcom_pull(task_ids='load_csv_file')
-            if "name" in df.columns:
-                return True
-            else:
-                return False
+            print(df.columns)
+            # if "name" in df.columns:
+            #     return True
+            # else:
+            #     return False
             
         task_3 = PythonOperator(
             task_id='validate_csv_data',
