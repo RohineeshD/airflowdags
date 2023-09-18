@@ -35,7 +35,7 @@ def upload_file_to_snowflake(directory_path, snowflake_table, file_name, **kwarg
     load_task = SnowflakeOperator(
         task_id='load_file',
         sql=f'''
-            COPY INTO {snowflake_table} FROM @{snowflake_stage_name}/{file_name}
+            COPY INTO {snowflake_table} FROM @{snowflake_stage_name}/{file_path}
             FILE_FORMAT = (TYPE = 'csv')
         ''',
         snowflake_conn_id='air_conn',  
