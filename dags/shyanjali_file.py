@@ -46,7 +46,7 @@ with DAG(
             # Implement your validation logic here
             # For example, check if specific columns or data exist
             ti = kwargs['ti']
-            data_received = ti.xcom_pull(task_ids='load_csv_file')
+            df = ti.xcom_pull(task_ids='load_csv_file')
             if "name" in df.columns:
                 return True
             else:
