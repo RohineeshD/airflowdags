@@ -65,8 +65,7 @@ create_snowflake_stage_task = SnowflakeOperator(
     task_id='create_snowflake_stage',
     sql=[
         "CREATE OR REPLACE stage snowflake_stage",  
-        "URL = 'C:/Users/User/Desktop/load/Downloaded_CSV_TABLE.csv'",  
-        "FILE_FORMAT = (TYPE = 'CSV' SKIP_HEADER = 1)"  
+        "COPY INTO automate_table FROM 'C:/Users/User/Desktop/load/Downloaded_CSV_TABLE.csv' FILE_FORMAT = (TYPE = 'CSV' SKIP_HEADER = 1)"  
     ],
     snowflake_conn_id='air_conn',
     autocommit=True,
@@ -74,18 +73,8 @@ create_snowflake_stage_task = SnowflakeOperator(
     dag=dag,
 )
 
-# Define the SnowflakeOperator task to load the file from the stage
-load_local_file_task = SnowflakeOperator(
-    task_id='load_local_file_task',
-    sql="COPY INTO automate_table FROM @snowflake_stage/Downloaded_CSV_TABLE.csv FILE_FORMAT = (TYPE = 'CSV' SKIP_HEADER = 1);",
-    snowflake_conn_id='air_conn',
-    autocommit=True,
-    trigger_rule='one_success',  
-    dag=dag,
-)
-
 # Set up task dependencies
-check_for_file_task >> create_snowflake_stage_task >> load_local_file_task
+check_for_file_task >> create_snowflake_stage_task
 no_files_task >> create_snowflake_stage_task  # In case there are no files, still create the stage
 
 if __name__ == "__main__":
