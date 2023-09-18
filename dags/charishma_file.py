@@ -48,7 +48,7 @@ def load_data_to_snowflake(**kwargs):
             autocommit=True,
             dag=dag,
         )
-    
+
 
         snowflake_operator.execute(context=kwargs)
         print("Data loaded successfully.")
