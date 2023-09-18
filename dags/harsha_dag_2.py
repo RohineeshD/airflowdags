@@ -1,151 +1,79 @@
+# monitor_file_arrival.py
+from watchdog.observers import Observer
+from watchdog.events import FileSystemEventHandler
+import subprocess
+
+class FileArrivalHandler(FileSystemEventHandler):
+    def on_created(self, event):
+        if not event.is_directory:
+            # Trigger the Airflow DAG when a new file arrives
+            subprocess.call(["airflow", "trigger_dag", "load_local_file_to_snowflake"])
+
+def start_file_monitoring():
+    path = "C:/Users/User/Desktop"  
+    event_handler = FileArrivalHandler()
+    observer = Observer()
+    observer.schedule(event_handler, path, recursive=False)
+    observer.start()
+    observer.join()
+
+if __name__ == "__main__":
+    start_file_monitoring()
+
+# load_local_file_to_snowflake_dag.py
 from airflow import DAG
 from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
-from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
-from datetime import datetime, timedelta
-import pandas as pd
-import requests
-from io import StringIO
+from datetime import datetime
+from airflow.operators.dummy_operator import DummyOperator
+from airflow.operators.python_operator import PythonOperator
+import os
 
-# Define Snowflake connection ID
-SNOWFLAKE_CONN_ID = 'air_conn'
-
-# Define Snowflake database and schema
-SNOWFLAKE_DATABASE = 'exusia_db'
-SNOWFLAKE_SCHEMA = 'exusia_schema'
-
-# Define the URL of the CSV file
-CSV_URL = "https://media.githubusercontent.com/media/datablist/sample-csv-files/main/files/customers/customers-100000.csv"
-
-# Define the number of records to load into each table
-RECORDS_PER_TABLE = 20000
-
-# Define the DAG and default_args
-default_args = {
-    'owner': 'airflow',
-    'start_date': datetime(2023, 9, 13),
-    'retries': 1,
-    'retry_delay': timedelta(minutes=5),
-}
-
+# Define your DAG
 dag = DAG(
-    'split_and_load_into_snowflake',
-    default_args=default_args,
+    'load_local_file_to_snowflake',
     schedule_interval=None,  
-    catchup=False,
+    start_date=datetime(2023, 9, 18),  
+    catchup=False,  
 )
 
-# Create a SnowflakeHook for connecting to Snowflake
-snowflake_hook = SnowflakeHook(snowflake_conn_id=SNOWFLAKE_CONN_ID)
-
-# Define a function to read data from URL and create a Snowflake task for loading data
-def create_snowflake_task(table_name, start_record, end_record):
-    # Read data from the CSV URL using requests
-    response = requests.get(CSV_URL)
-    content = response.content.decode('utf-8')
-    
-    if end_record is None:
-        # Read all remaining records from the CSV content
-        df = pd.read_csv(StringIO(content), delimiter=',', quotechar='"', skiprows=start_record+1)
+# Define a PythonOperator to check for file arrival
+def check_file_arrival():
+    directory = 'C:/Users/User/Desktop/load/Downloaded_CSV_TABLE.csv'
+    files = os.listdir(directory)
+    if files:
+        return "load_local_file_task"  # Trigger the Snowflake task if files are present
     else:
-        # Read the specified range of records from the CSV content
-        df = pd.read_csv(StringIO(content), delimiter=',', quotechar='"', skiprows=start_record+1, nrows=end_record-start_record+1)
+        return "no_files"
 
-    # Generate the SQL query to load data into Snowflake
-    sql = f'''
-        COPY INTO {table_name}
-        FROM VALUES {",".join(["('" + "','".join(map(str, row)) + "')" for row in df.values])}
-        FILE_FORMAT = (TYPE = 'CSV' SKIP_HEADER = 1)
-    '''
+check_for_file_task = PythonOperator(
+    task_id='check_for_file_arrival',
+    python_callable=check_file_arrival,
+    provide_context=True,
+    dag=dag,
+)
 
-    return SnowflakeOperator(
-        task_id=f'load_{table_name}',
-        sql=sql,
-        snowflake_conn_id=SNOWFLAKE_CONN_ID,
-        autocommit=True,  
-        database=SNOWFLAKE_DATABASE,
-        schema=SNOWFLAKE_SCHEMA,
-        dag=dag,
-    )
+# Define a DummyOperator task for when no files are present
+no_files_task = DummyOperator(
+    task_id='no_files',
+    dag=dag,
+)
 
-# Define tasks to load data into five tables with specified record ranges
-table1_task = create_snowflake_task('table_1', 0, RECORDS_PER_TABLE-1)
-table2_task = create_snowflake_task('table_2', RECORDS_PER_TABLE, 2*RECORDS_PER_TABLE-1)
-table3_task = create_snowflake_task('table_3', 2*RECORDS_PER_TABLE, 3*RECORDS_PER_TABLE-1)
-table4_task = create_snowflake_task('table_4', 3*RECORDS_PER_TABLE, 4*RECORDS_PER_TABLE-1)
-table5_task = create_snowflake_task('table_5', 4*RECORDS_PER_TABLE, None)
+# Define the SnowflakeOperator task to load the file
+load_local_file_task = SnowflakeOperator(
+    task_id='load_local_file_task',
+    sql="COPY INTO your_snowflake_table FROM 'C:/Users/User/Desktop/load/Downloaded_CSV_TABLE.csv' FILE_FORMAT = (TYPE = 'CSV' SKIP_HEADER = 1);",
+    snowflake_conn_id='air_conn',
+    autocommit=True,
+    trigger_rule='one_success',  # Run only if the check_for_file_task succeeds
+    dag=dag,
+)
 
-# Set task dependencies as needed
-table1_task >> table2_task
-table2_task >> table3_task
-table3_task >> table4_task
-table4_task >> table5_task
+# Set up task dependencies
+check_for_file_task >> [load_local_file_task, no_files_task]
 
+if __name__ == "__main__":
+    dag.cli()
 
-
-
-# from airflow import DAG
-# from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
-# from datetime import datetime, timedelta
-
-# # Define Snowflake connection ID
-# SNOWFLAKE_CONN_ID = 'air_conn'
-
-# # Define Snowflake database and schema
-# SNOWFLAKE_DATABASE = 'exusia_db'
-# SNOWFLAKE_SCHEMA = 'exusia_schema'
-
-# # Define the URL of the CSV file
-# CSV_URL = "https://media.githubusercontent.com/media/datablist/sample-csv-files/main/files/customers/customers-100000.csv"
-
-# # Define the DAG and default_args
-# default_args = {
-#     'owner': 'airflow',
-#     'start_date': datetime(2023, 9, 13),
-#     'retries': 1,
-#     'retry_delay': timedelta(minutes=5),
-# }
-
-# dag = DAG(
-#     'split_and_load_into_snowflake',
-#     default_args=default_args,
-#     schedule_interval=None,  
-#     catchup=False,
-# )
-
-# # Define a function to create a Snowflake task for loading data
-# def create_snowflake_task(table_name, start_skip, end_skip):
-#     sql = f'''
-#         COPY INTO {table_name}
-#         FROM '{CSV_URL}'
-#         FILE_FORMAT = (TYPE = 'CSV' FIELD_OPTIONALLY_ENCLOSED_BY = '"' SKIP_HEADER = 1)
-        
-#     '''
-
-#     return SnowflakeOperator(
-#         task_id=f'load_{table_name}',
-#         sql=sql,
-#         snowflake_conn_id=SNOWFLAKE_CONN_ID,
-#         autocommit=True,  
-#         database=SNOWFLAKE_DATABASE,
-#         schema=SNOWFLAKE_SCHEMA,
-#         dag=dag,
-#     )
-
-# # Define tasks to load data into five tables with specified record ranges
-# table1_task = create_snowflake_task('table_1', 0, 19999)
-# table2_task = create_snowflake_task('table_2', 20000, 39999)
-# table3_task = create_snowflake_task('table_3', 40000, 59999)
-# table4_task = create_snowflake_task('table_4', 60000, 79999)
-# table5_task = create_snowflake_task('table_5', 80000, None)
-
-# # Set task dependencies as needed
-# table1_task >> table2_task
-# table2_task >> table3_task
-# table3_task >> table4_task
-# table4_task >> table5_task
-
-# if __name__ == "__main__":
-#     dag.cli()
 
 
 
