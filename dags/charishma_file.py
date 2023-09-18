@@ -44,11 +44,12 @@ def load_data_to_snowflake(**kwargs):
             task_id='load_data_to_snowflake',
             sql_query="INSERT INTO CSV_TABLE (NAME, EMAIL, SSN) VALUES (%(name)s, %(email)s, %(ssn)s)",
             parameters=[{'name': row[0], 'email': row[1], 'ssn': row[2]} for row in df.values.tolist()],
-            parameters=[tuple(row) for row in df.values.tolist()],
             snowflake_conn_id='snow_sc',
             autocommit=True,
             dag=dag,
         )
+    
+
         snowflake_operator.execute(context=kwargs)
         print("Data loaded successfully.")
         return True
