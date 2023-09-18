@@ -7,14 +7,14 @@ from airflow.exceptions import AirflowException
 import pandas as pd
 from io import StringIO
 
-# Define your specific start date as a datetime object
-start_date = datetime(2023, 9, 18)
+# # Define your specific start date as a datetime object
+# start_date = datetime(2023, 9, 18)
 
-# Define your DAG with appropriate configurations
+# Define your DAG
 dag = DAG(
     'csv_upload_to_snowflake',
     schedule_interval=None,
-    start_date=start_date,
+    start_date=datetime(2023, 9, 18),
     catchup=False,
     default_args={
         'retries': 1,
@@ -32,8 +32,8 @@ def load_data_to_snowflake(**kwargs):
         # Create a DataFrame from the CSV URL
         csv_url = 'https://github.com/jcharishma/my.repo/raw/master/sample_csv.csv'
         df = pd.read_csv(csv_url)
-
-        # Specify the Snowflake table name
+        
+        # Snowflake table name
         table_name = 'CSV_TABLE'
 
         # Establish a connection to Snowflake
@@ -50,8 +50,6 @@ def load_data_to_snowflake(**kwargs):
 
         # Commit the transaction
         connection.commit()
-
-        # Close the cursor and connection
         cursor.close()
         connection.close()
 
@@ -62,7 +60,7 @@ def load_data_to_snowflake(**kwargs):
         print(f"Error loading data to Snowflake: {str(e)}")
         raise AirflowException("Error loading data to Snowflake")
 
-# Define the BranchPythonOperator as task2
+# Define the BranchPythonOperator
 task2 = BranchPythonOperator(
     task_id='task2',
     python_callable=decide_branch,
