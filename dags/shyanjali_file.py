@@ -42,6 +42,7 @@ def read_csv_from_url(**kwargs):
 
              # Set the loaded DataFrame in the shared data instance
             shared_data.set_data(df)
+            print(df)
             print("Loaded CSV data")
 
         else:
@@ -55,6 +56,7 @@ def validate_csv():
 
     # Retrieve the loaded DataFrame from the shared data instance
     loaded_df = shared_data.get_data()
+    print(loaded_df)
 
     # Perform validation logic on the loaded DataFrame
     # Replace this with your actual validation logic
