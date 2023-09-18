@@ -20,16 +20,14 @@ def load_csv_file(**kwargs):
     # Read CSV data into a DataFrame
     df = pd.read_csv(StringIO(response.text))
     print(df)
-    kwargs['ti'].xcom_push(key='csv', value=df)  # Push the CSV data to XCom
     return df
     # return df
 
 def validate_csv_data(**kwargs):
-    csv_data = kwargs['ti'].xcom_pull(key='csv', task_ids='load_csv_file')
+    ti = kwargs['ti']
+    df = ti.xcom_pull(task_ids='load_csv_file')
+    print(f"Received DataFrame:\n{df}")
 
-    # Convert the CSV data to a DataFrame
-    df = pd.read_csv((csv_data))
-    print(df)
     # if "name" in df.columns:
     #     return True
     # else:
@@ -59,7 +57,7 @@ with DAG(
     task_3 = PythonOperator(
         task_id='validate_csv_data',
         python_callable=validate_csv_data,
-        provide_context=True,  # This allows passing the output of task_2 to task_3
+        provide_context=True  # This allows passing the output of task_2 to task_3
     )
     
     # Task 4: End Task (You can replace this with your specific task)
