@@ -9,25 +9,27 @@ from datetime import timedelta
 # Define your DAG with appropriate configurations
 dag = DAG(
     'csv_upload_snowflake',
-    schedule_interval=None,  # Set your desired schedule interval or None for manual execution
-    start_date=days_ago(1),  # Adjust the start date as needed
-    catchup=False,  # Set to True if you want to backfill historical data
+    schedule_interval=None,
+    start_date=days_ago(1),
+    catchup=False,
     default_args={
         'retries': 1,
         'retry_delay': timedelta(minutes=5),
     },
 )
 
-# Task 1: Start the process by directly loading data from the URL into the existing CSV_TABLE
+# Define the URL for the CSV file
 url = "https://github.com/jcharishma/my.repo/raw/master/sample_csv.csv"
 
 def load_csv_from_url_to_snowflake(**kwargs):
     try:
+        # Load CSV data from URL into a DataFrame
         response = requests.get(url)
         csv_content = response.text
         df = pd.read_csv(pd.compat.StringIO(csv_content))
         
-        snowflake_hook = SnowflakeHook(snowflake_conn_id='snow_sc')  
+        # Connect to Snowflake
+        snowflake_hook = SnowflakeHook(snowflake_conn_id='snow_sc')
         schema = 'SC1'
         table_name = 'CSV_TABLE'
         
@@ -36,8 +38,8 @@ def load_csv_from_url_to_snowflake(**kwargs):
         
         # Insert data into the existing CSV_TABLE
         insert_sql = f"""
-       INSERT INTO SC1.CSV_TABLE (NAME, EMAIL, SSN)
-      VALUES (?, ?, ?);"""
+        INSERT INTO SC1.CSV_TABLE (NAME, EMAIL, SSN)
+        VALUES (?, ?, ?);"""
         
         cursor.executemany(insert_sql, df.values.tolist())
         
@@ -50,6 +52,7 @@ def load_csv_from_url_to_snowflake(**kwargs):
         print(f"Failed to load CSV data into Snowflake: {str(e)}")
         return 'failure'
 
+# Define the tasks
 load_from_url_to_snowflake_task = PythonOperator(
     task_id='load_csv_from_url_to_snowflake',
     python_callable=load_csv_from_url_to_snowflake,
@@ -57,7 +60,6 @@ load_from_url_to_snowflake_task = PythonOperator(
     dag=dag,
 )
 
-# Task 2: Define a BranchPythonOperator to check success or failure
 def decide_branch(**kwargs):
     ti = kwargs['ti']
     result = ti.xcom_pull(task_ids='load_csv_from_url_to_snowflake')
@@ -70,7 +72,6 @@ branch_task = BranchPythonOperator(
     dag=dag,
 )
 
-# Task 3: Define tasks for success and failure
 def success_task(**kwargs):
     print("CSV data loaded successfully into Snowflake!")
 
@@ -93,8 +94,8 @@ failure_print_task = PythonOperator(
 
 # Set up task dependencies
 load_from_url_to_snowflake_task >> branch_task
-branch_task >> success_print_task
-branch_task >> failure_print_task
+branch_task >> [success_print_task, failure_print_task]
+
 
 
 
