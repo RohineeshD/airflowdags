@@ -64,7 +64,7 @@ def end_task():
 with DAG(
     'shyanjali_dag',
     schedule_interval=None,  # Set your desired schedule interval
-    start_date=datetime(2023, 9, 18),  # Set your desired start date
+     # Set your desired start date
     catchup=False,
 ) as dag:
 
