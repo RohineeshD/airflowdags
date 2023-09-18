@@ -33,7 +33,7 @@ def upload_file_to_snowflake(**kwargs):
     file_name = kwargs.get('file_name')
 
     # Get the Snowflake connection
-    snowflake_hook = SnowflakeHook(snowflake_conn_id='air_conn')
+    # snowflake_hook = SnowflakeHook(snowflake_conn_id='air_conn')
 
     # Construct the full path to the file
     file_path = os.path.join(directory_path, file_name)
@@ -43,9 +43,9 @@ def upload_file_to_snowflake(**kwargs):
         task_id='load_file',
         sql=f'''
             COPY INTO {snowflake_table} FROM '{file_path}'
-            FILE_FORMAT = (TYPE = 'your_file_format')
+            FILE_FORMAT = (TYPE = 'csv')
         ''',
-        snowflake_conn_id='your_snowflake_conn_id',
+        snowflake_conn_id='air-conn',
         autocommit=True,  # Set to True to execute immediately
         dag=dag,
     )
