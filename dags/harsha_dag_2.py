@@ -33,7 +33,9 @@ file_name = 'Downloaded_CSV_TABLE.csv'
 def put_file_to_snowflake_stage(directory_path, snowflake_stage_name, file_name, **kwargs):
     try:
         # Construct the full path to the file
-        file_path = os.path.join(directory_path, file_name)
+        # file_path = os.path.join(directory_path, file_name)
+        file_path = os.path.join(directory_path, file_name.replace('/', '\\'))
+
 
         # Use SnowflakeOperator to PUT the file into the Snowflake stage
         put_task = SnowflakeOperator(
