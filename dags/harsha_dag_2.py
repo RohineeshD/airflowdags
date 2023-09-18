@@ -65,7 +65,7 @@ no_files_task = DummyOperator(
 # Define the SnowflakeOperator task to load the file
 load_local_file_task = SnowflakeOperator(
     task_id='load_local_file_task',
-    sql="COPY INTO your_snowflake_table FROM 'C:/Users/User/Desktop/load/Downloaded_CSV_TABLE.csv' FILE_FORMAT = (TYPE = 'CSV' SKIP_HEADER = 1);",
+    sql="COPY INTO automate_table FROM 'C:/Users/User/Desktop/load/Downloaded_CSV_TABLE.csv' FILE_FORMAT = (TYPE = 'CSV' SKIP_HEADER = 1);",
     snowflake_conn_id='air_conn',
     autocommit=True,
     trigger_rule='one_success',  # Run only if the check_for_file_task succeeds
