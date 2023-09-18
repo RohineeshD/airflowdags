@@ -10,24 +10,21 @@ def start_task():
     pass
 
 
-def load_file_and_validate(**kwargs):
+def load_file_and_validate():
+    global loaded_file  # Access the global variable
+
     print("Starting Task 2")
     # Load the file (replace 'file_path' with the actual file path)
-    file_path = 'https://github.com/jcharishma/my.repo/raw/master/sample_csv.csv'
-    df = pd.read_csv(file_path)
-    # Push the loaded file to XCom
-    kwargs['ti'].xcom_push(key='loaded_file', value=df)
-    print("Loaded file and pushed to XCom")
-    return df 
+    file_path = '/path/to/your/file.csv'
+    loaded_file = pd.read_csv(file_path)  # Assign the loaded file to the global variable
 
-def validate_csv(**kwargs):
-    print(df)
+    print("Loaded file")
+
+def validate_csv():
+    global loaded_file  # Access the global variable
+
     print("Starting Task 3")
-    ti = kwargs['ti']
-   
-    # Pull the loaded file from XCom
-    loaded_file = ti.xcom_pull(task_ids='load_file_and_validate', key='loaded_file')
-    print(loaded_file)
+
     # Perform validation logic on the loaded CSV file (e.g., check for required columns, data quality, etc.)
     # Replace this with your actual validation logic
     if loaded_file is not None:
