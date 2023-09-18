@@ -4,16 +4,22 @@ from airflow.operators.python import PythonOperator
 from airflow.utils.dates import days_ago
 from airflow.utils.task_group import TaskGroup
 from datetime import datetime
-
+import requests
 # Define a function to calculate the sum of the first 10 even numbers
 def calculate_sum_of_even_numbers():
-    even_numbers = [2 * i for i in range(1, 11)]
-    result = sum(even_numbers)
-    return result
+    # even_numbers = [2 * i for i in range(1, 11)]
+    # result = sum(even_numbers)
+    csv_url = 'https://github.com/jcharishma/my.repo/raw/master/sample_csv.csv'  # Replace with the actual URL
+    response = requests.get(CSV_URL)
+    response.raise_for_status()
+    # Read CSV data into a DataFrame
+    df = pd.read_csv(StringIO(response.text))
+    # print(df)
+    return df
 
 # Define a function to print the result
-def print_result(result):
-    print(f"The sum of the first 10 even numbers is: {result}")
+def print_result(df):
+    print(f"{df}")
 
 # Define the default_args for the DAG
 default_args = {
