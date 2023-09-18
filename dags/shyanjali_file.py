@@ -17,9 +17,6 @@ with DAG(
         schedule_interval=None,
         default_args=default_args,
         catchup=False) as f:
-    
-            
-
 
 # Task 1: Start Task (You can replace this with your specific task)
     start_task = PythonOperator(
@@ -45,7 +42,6 @@ with DAG(
         task_2 = PythonOperator(
             task_id='load_csv_file',
             python_callable=load_csv_file,
-            dag=dag,
         )
         def validate_csv_data(df):
             # Implement your validation logic here
@@ -59,7 +55,6 @@ with DAG(
             task_id='validate_csv_data',
             python_callable=validate_csv_data,
             provide_context=True,  # This allows passing the output of task_2 to task_3
-            dag=dag,
         )
     
     # Task 4: End Task (You can replace this with your specific task)
