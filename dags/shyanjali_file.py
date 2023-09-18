@@ -32,6 +32,7 @@ def read_csv_from_url(**kwargs):
             # Push the loaded DataFrame to XCom for validation
             kwargs['ti'].xcom_push(key='loaded_df', value=df)
             print("Loaded CSV data and pushed to XCom")
+            print(df)
             return df 
             
 
@@ -46,7 +47,7 @@ def validate_csv(**kwargs):
 
     # Pull the loaded DataFrame from XCom
     loaded_df = kwargs['ti'].xcom_pull(task_ids='read_csv_from_url', key='loaded_df')
-
+    print(loaded_df)
     # Perform validation logic on the loaded DataFrame
     # Replace this with your actual validation logic
     if loaded_df is not None:
