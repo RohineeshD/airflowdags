@@ -1,7 +1,6 @@
 from airflow import DAG
 from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
 from airflow.utils.dates import days_ago
-# from airflow.hooks.snowflake_hook import SnowflakeHook
 import os
 
 # Define your DAG
@@ -32,9 +31,6 @@ def upload_file_to_snowflake(**kwargs):
     snowflake_table = kwargs.get('snowflake_table')
     file_name = kwargs.get('file_name')
 
-    # Get the Snowflake connection
-    # snowflake_hook = SnowflakeHook(snowflake_conn_id='air_conn')
-
     # Construct the full path to the file
     file_path = os.path.join(directory_path, file_name)
 
@@ -43,9 +39,9 @@ def upload_file_to_snowflake(**kwargs):
         task_id='load_file',
         sql=f'''
             COPY INTO {snowflake_table} FROM '{file_path}'
-            FILE_FORMAT = (TYPE = 'csv')
+            FILE_FORMAT = (TYPE = 'your_file_format')
         ''',
-        snowflake_conn_id='air-conn',
+        snowflake_conn_id='your_snowflake_conn_id',  # Replace with your Snowflake connection ID
         autocommit=True,  # Set to True to execute immediately
         dag=dag,
     )
