@@ -42,10 +42,15 @@ def check_file_arrival():
     file_name = 'Downloaded_CSV_TABLE.csv'
     full_file_path = os.path.join(directory, file_name)
     
+    print(f"Checking for file at path: {full_file_path}")  # Add this line for debugging
+    
     if os.path.exists(full_file_path):
+        print("File exists")  # Add this line for debugging
         return "load_local_file_task"  # Trigger the Snowflake task if the file exists
     else:
+        print("File does not exist")  # Add this line for debugging
         return "no_files"
+
 
 check_for_file_task = PythonOperator(
     task_id='check_for_file_arrival',
