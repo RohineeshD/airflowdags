@@ -5,7 +5,7 @@ from airflow.utils.task_group import TaskGroup
 import pandas as pd
 import requests
 from io import StringIO 
-import datetime# Required for Python 3
+from datetime import datetime# Required for Python 3
 
 def start_task():
     print("Starting Task 1")
