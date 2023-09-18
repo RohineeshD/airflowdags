@@ -27,23 +27,27 @@ with DAG(
 
 # Create a TaskGroup to group Task 2 (load_csv_file) and Task 3 (validate_csv_data)
     with TaskGroup('csv_processing_group') as csv_processing_group:
-        def load_csv_file():
+        def load_csv_file(**kwargs):
             url = "https://github.com/jcharishma/my.repo/raw/master/sample_csv.csv"  # Replace with the actual CSV file link
             response = requests.get(url)
             response.raise_for_status()
         
             # Read CSV data into a DataFrame
             df = pd.read_csv(StringIO(response.text))
-            print(df)
-            return df
+            kwargs['ti'].xcom_push(key='csv', value=df)  # Push the CSV data to XCom
+            return True
+            # return df
         
         task_2 = PythonOperator(
             task_id='load_csv_file',
             python_callable=load_csv_file,
         )
         def validate_csv_data(**kwargs):
-            df=kwargs['ti'].xcom_pull(task_ids='load_csv_file')
-            print(f"Received DataFrame:\n{df}")
+            csv_data = kwargs['ti'].xcom_pull(key='csv', task_ids='load_csv_file')
+        
+            # Convert the CSV data to a DataFrame
+            df = pd.read_csv(StringIO(csv_data))
+            print(df)
             # if "name" in df.columns:
             #     return True
             # else:
@@ -64,6 +68,47 @@ with DAG(
 
 # Define task dependencies
     start_task >> csv_processing_group >> end_task
+
+
+
+
+
+
+
+# # Function to read data from the URL
+# def read_data_from_url(**kwargs):
+#     try:
+#         url = "https://raw.githubusercontent.com/cs109/2014_data/master/countries.csv"
+#         response = requests.get(url)
+#         data = response.text
+#         df = pd.read_csv(StringIO(data))
+        
+#         # Convert the DataFrame to a CSV 
+#         csv_data = df.to_csv(index=False)
+
+#         # Push the CSV data to XCom
+#         kwargs['ti'].xcom_push(key='data_frame_csv', value=csv_data)  # Push the CSV data to XCom
+#         return True
+#     except Exception as e:
+#         print(f"An error occurred while reading data: {str(e)}")
+#         return False
+
+# # Function to load data into Snowflake
+# def load_data_into_snowflake(**kwargs):
+#     try:
+#         # Retrieve the CSV data from XCom
+#         csv_data = kwargs['ti'].xcom_pull(key='data_frame_csv', task_ids='read_data_from_url')
+        
+#         # Convert the CSV data to a DataFrame
+#         df = pd.read_csv(StringIO(csv_data))
+
+
+
+
+
+
+
+
 
 # import pandas as pd
 # from pydantic import BaseModel, ValidationError, validator
