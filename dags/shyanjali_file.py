@@ -1,195 +1,267 @@
-import pandas as pd
-from pydantic import BaseModel, ValidationError, validator
+Copy code
 from airflow import DAG
 from airflow.operators.python_operator import PythonOperator
-from airflow.utils.dates import days_ago
+from airflow.utils.task_group import TaskGroup
+from datetime import datetime
 import requests
-from io import StringIO
-import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
-from email.mime.application import MIMEApplication
-from airflow.hooks.base_hook import BaseHook
-from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
-import os
+import pandas as pd
 
-# Define your CSV URL
-CSV_URL = 'https://github.com/jcharishma/my.repo/raw/master/sample_csv.csv'
+# Define your custom Python function to load the CSV file from a link
+def load_csv_file():
+    url = "https://example.com/your_csv_file.csv"  # Replace with the actual CSV file link
+    response = requests.get(url)
+    
+    if response.status_code == 200:
+        # Assuming the CSV file has a header row
+        df = pd.read_csv(pd.compat.StringIO(response.text))
+        return df
+    else:
+        raise Exception("Failed to load CSV file")
+
+# Define your custom Python function to validate the loaded CSV data
+def validate_csv_data(df):
+    # Implement your validation logic here
+    # For example, check if specific columns or data exist
+    if "column_name" in df.columns and df["column_name"].dtype == "int64":
+        return True
+    else:
+        return False
 
 default_args = {
     'owner': 'airflow',
-    'start_date': days_ago(1),
+    'start_date': datetime(2023, 9, 18),
 }
 
 dag = DAG(
     'shyanjali_dag',
     default_args=default_args,
-    schedule_interval=None,  # You can set a schedule as needed
-    catchup=False,
+    schedule_interval=None,
 )
 
-# Define Pydantic model for validation
-class CsvRow(BaseModel):
-    NAME: str
-    EMAIL: str
-    SSN: int
-    @validator('SSN')
-    def validate_id(cls, SSN):
-        if not (1000 <= SSN <= 9999):
-            raise ValueError('ID must be a 4-digit integer')
-        return SSN
+# Task 1: Start Task (You can replace this with your specific task)
+start_task = PythonOperator(
+    task_id='start_task',
+    python_callable=lambda: print("Start task"),
+    dag=dag,
+)
 
-def fetch_and_validate_csv():
+# Create a TaskGroup to group Task 2 (load_csv_file) and Task 3 (validate_csv_data)
+with TaskGroup('csv_processing_group') as csv_processing_group:
+    task_2 = PythonOperator(
+        task_id='load_csv_file',
+        python_callable=load_csv_file,
+        dag=dag,
+    )
     
-    response = requests.get(CSV_URL)
-    response.raise_for_status()
+    task_3 = PythonOperator(
+        task_id='validate_csv_data',
+        python_callable=validate_csv_data,
+        provide_context=True,  # This allows passing the output of task_2 to task_3
+        dag=dag,
+    )
 
-    # Read CSV data into a DataFrame
-    df = pd.read_csv(StringIO(response.text))
-    # print(df)
-    valid_rows=[]
-    # Replace with your Snowflake schema and table name
-    try:
-        # Fetch data from CSV URL
+# Task 4: End Task (You can replace this with your specific task)
+end_task = PythonOperator(
+    task_id='end_task',
+    python_callable=lambda: print("End task"),
+    dag=dag,
+)
+
+# Define task dependencies
+start_task >> csv_processing_group >> end_task
+
+# import pandas as pd
+# from pydantic import BaseModel, ValidationError, validator
+# from airflow import DAG
+# from airflow.operators.python_operator import PythonOperator
+# from airflow.utils.dates import days_ago
+# import requests
+# from io import StringIO
+# import smtplib
+# from email.mime.text import MIMEText
+# from email.mime.multipart import MIMEMultipart
+# from email.mime.application import MIMEApplication
+# from airflow.hooks.base_hook import BaseHook
+# from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
+# import os
+
+# # Define your CSV URL
+# CSV_URL = 'https://github.com/jcharishma/my.repo/raw/master/sample_csv.csv'
+
+# default_args = {
+#     'owner': 'airflow',
+#     'start_date': days_ago(1),
+# }
+
+# dag = DAG(
+#     'shyanjali_dag',
+#     default_args=default_args,
+#     schedule_interval=None,  # You can set a schedule as needed
+#     catchup=False,
+# )
+
+# # Define Pydantic model for validation
+# class CsvRow(BaseModel):
+#     NAME: str
+#     EMAIL: str
+#     SSN: int
+#     @validator('SSN')
+#     def validate_id(cls, SSN):
+#         if not (1000 <= SSN <= 9999):
+#             raise ValueError('ID must be a 4-digit integer')
+#         return SSN
+
+# def fetch_and_validate_csv():
+    
+#     response = requests.get(CSV_URL)
+#     response.raise_for_status()
+
+#     # Read CSV data into a DataFrame
+#     df = pd.read_csv(StringIO(response.text))
+#     # print(df)
+#     valid_rows=[]
+#     # Replace with your Snowflake schema and table name
+#     try:
+#         # Fetch data from CSV URL
         
-        # Iterate through rows and validate each one
-        errors = []
-        for index, row in df.iterrows():
-            try:
-                validated_row=CsvRow(**row.to_dict())
-                print(validated_row)
-                valid_rows.append((validated_row.NAME, validated_row.EMAIL, validated_row.SSN))
-            except ValidationError as e:
-                # Record validation errors and add them to the "error" column
-                error_message = f"CHECK SSN IT SHOULD HAVE 4 DIGIT NUMBER: {str(e)}"
-                errors.append(error_message)
-                df.at[index, 'error'] = error_message
-        # Add a new column to the DataFrame if not already present
-        if 'error' not in df.columns:
-            df['error'] = "--"
+#         # Iterate through rows and validate each one
+#         errors = []
+#         for index, row in df.iterrows():
+#             try:
+#                 validated_row=CsvRow(**row.to_dict())
+#                 print(validated_row)
+#                 valid_rows.append((validated_row.NAME, validated_row.EMAIL, validated_row.SSN))
+#             except ValidationError as e:
+#                 # Record validation errors and add them to the "error" column
+#                 error_message = f"CHECK SSN IT SHOULD HAVE 4 DIGIT NUMBER: {str(e)}"
+#                 errors.append(error_message)
+#                 df.at[index, 'error'] = error_message
+#         # Add a new column to the DataFrame if not already present
+#         if 'error' not in df.columns:
+#             df['error'] = "--"
             
-        df['error'].fillna(value='--', inplace=True)
-        df['SSN'].fillna(value=0, inplace=True)
-        # df.to_csv('/tmp/data.csv', index=False)
-        csv_file_path = "/tmp/error.csv"
-        df.to_csv(csv_file_path, index=False)
-        # Export the DataFrame to CSV
-        kwargs['ti'].xcom_push(key='csv_file_path', value=csv_file_path)
+#         df['error'].fillna(value='--', inplace=True)
+#         df['SSN'].fillna(value=0, inplace=True)
+#         # df.to_csv('/tmp/data.csv', index=False)
+#         csv_file_path = "/tmp/error.csv"
+#         df.to_csv(csv_file_path, index=False)
+#         # Export the DataFrame to CSV
+#         kwargs['ti'].xcom_push(key='csv_file_path', value=csv_file_path)
         
-        # snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake_li')
-        # schema = 'PUBLIC'
+#         # snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake_li')
+#         # schema = 'PUBLIC'
         
-        # connection.close()
+#         # connection.close()
         
-        print(f"CSV at {CSV_URL} has been validated successfully.")
+#         print(f"CSV at {CSV_URL} has been validated successfully.")
         
     
-    except Exception as e:
+#     except Exception as e:
         
-        print(f"Error: {str(e)}")
+#         print(f"Error: {str(e)}")
         
-    snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake_li')
-    schema = 'PUBLIC'
+#     snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake_li')
+#     schema = 'PUBLIC'
     
-    table_name = 'SAMPLE_CSV'
-    connection = snowflake_hook.get_conn()
-    snowflake_hook.insert_rows(table_name, valid_rows)
+#     table_name = 'SAMPLE_CSV'
+#     connection = snowflake_hook.get_conn()
+#     snowflake_hook.insert_rows(table_name, valid_rows)
     
-    table_name = 'SAMPLE_CSV_ERROR'
-    connection = snowflake_hook.get_conn()
-    snowflake_hook.insert_rows(table_name, df.values.tolist())
-    connection.close()
+#     table_name = 'SAMPLE_CSV_ERROR'
+#     connection = snowflake_hook.get_conn()
+#     snowflake_hook.insert_rows(table_name, df.values.tolist())
+#     connection.close()
     
-def send_email_task(**kwargs):
-    csv_file_path = kwargs['ti'].xcom_pull(task_ids='fetch_and_validate_csv', key='csv_file_path')
-    email_content = "Errors in csv uploaded"
-    # Use BaseHook to get the connection
-    connection = BaseHook.get_connection('EMAIL_LI')
+# def send_email_task(**kwargs):
+#     csv_file_path = kwargs['ti'].xcom_pull(task_ids='fetch_and_validate_csv', key='csv_file_path')
+#     email_content = "Errors in csv uploaded"
+#     # Use BaseHook to get the connection
+#     connection = BaseHook.get_connection('EMAIL_LI')
 
-    # Access connection details
-    smtp_server = connection.host
-    smtp_port = connection.port
-    smtp_username = connection.login
-    smtp_password = connection.password
-    sender_email = 'shyanjali.kantumuchu@exusia.com'
+#     # Access connection details
+#     smtp_server = connection.host
+#     smtp_port = connection.port
+#     smtp_username = connection.login
+#     smtp_password = connection.password
+#     sender_email = 'shyanjali.kantumuchu@exusia.com'
 
-    # recipient_email = ['charishma.jetty@exusia.com','harsha.vardhan@exusia.com']
-    recipient_email=['shyanjali.kantumuchu@exusia.com']
+#     # recipient_email = ['charishma.jetty@exusia.com','harsha.vardhan@exusia.com']
+#     recipient_email=['shyanjali.kantumuchu@exusia.com']
 
-    # Email details
-    email_subject = "ERROR IN CSV UPLOADED"
-    # status =  email_content
-    email_body = f"""
-    <html>
-    <head>
-        <style>
-            /* Define styles for the box */
-            .status-box {{
-                border: 2px solid #007bff;
-                padding: 10px;
-                background-color: #f0faff;
-            }}
+#     # Email details
+#     email_subject = "ERROR IN CSV UPLOADED"
+#     # status =  email_content
+#     email_body = f"""
+#     <html>
+#     <head>
+#         <style>
+#             /* Define styles for the box */
+#             .status-box {{
+#                 border: 2px solid #007bff;
+#                 padding: 10px;
+#                 background-color: #f0faff;
+#             }}
     
-            /* Define styles for the heading */
-            h1 {{
-                color: #007bff;
-            }}
-        </style>
-    </head>
-    <body>
-        <h1>Airflow Status Notification</h1>
-        <div class="status-box">
-            <p>Hello,</p>
-            <p>Check the file that you have uploaded. The errors are given to the CSV attached.</p>
-            <p>Please find the attached CSV file.</p>
-        </div>
-    </body>
-    </html>
-    """
-    for r_email in recipient_email:
-        # Create the email message
-        message = MIMEMultipart()
-        message['From'] = sender_email
-        message['To'] = r_email
-        message['Subject'] = email_subject
-        # Add text to the email (optional)
-        message.attach(MIMEText(email_body, 'html'))
-        # message.attach(MIMEText('Please find the attached CSV file.', 'plain'))
+#             /* Define styles for the heading */
+#             h1 {{
+#                 color: #007bff;
+#             }}
+#         </style>
+#     </head>
+#     <body>
+#         <h1>Airflow Status Notification</h1>
+#         <div class="status-box">
+#             <p>Hello,</p>
+#             <p>Check the file that you have uploaded. The errors are given to the CSV attached.</p>
+#             <p>Please find the attached CSV file.</p>
+#         </div>
+#     </body>
+#     </html>
+#     """
+#     for r_email in recipient_email:
+#         # Create the email message
+#         message = MIMEMultipart()
+#         message['From'] = sender_email
+#         message['To'] = r_email
+#         message['Subject'] = email_subject
+#         # Add text to the email (optional)
+#         message.attach(MIMEText(email_body, 'html'))
+#         # message.attach(MIMEText('Please find the attached CSV file.', 'plain'))
     
-        # Attach the CSV file
-        csv_file_path = '/tmp/error.csv'
-        with open(csv_file_path, 'rb') as file:
-            csv_attachment = MIMEApplication(file.read(), Name=os.path.basename(csv_file_path))
-        csv_attachment['Content-Disposition'] = f'attachment; filename="{os.path.basename(csv_file_path)}"'
-        message.attach(csv_attachment)
+#         # Attach the CSV file
+#         csv_file_path = '/tmp/error.csv'
+#         with open(csv_file_path, 'rb') as file:
+#             csv_attachment = MIMEApplication(file.read(), Name=os.path.basename(csv_file_path))
+#         csv_attachment['Content-Disposition'] = f'attachment; filename="{os.path.basename(csv_file_path)}"'
+#         message.attach(csv_attachment)
     
-        # Send the email
-        try:
-            server = smtplib.SMTP(smtp_server, smtp_port)
-            server.starttls()
-            server.login(smtp_username, smtp_password)
-            server.sendmail(sender_email, recipient_email, message.as_string())
-            server.quit()
-            print("Email sent successfully!")
-        except Exception as e:
-            print(f"Failed to send email: {str(e)}")
+#         # Send the email
+#         try:
+#             server = smtplib.SMTP(smtp_server, smtp_port)
+#             server.starttls()
+#             server.login(smtp_username, smtp_password)
+#             server.sendmail(sender_email, recipient_email, message.as_string())
+#             server.quit()
+#             print("Email sent successfully!")
+#         except Exception as e:
+#             print(f"Failed to send email: {str(e)}")
 
     
     
-fetch_and_validate_csv = PythonOperator(
-    task_id='fetch_and_validate_csv',
-    python_callable=fetch_and_validate_csv,
-    provide_context=True,
-    dag=dag,
-)
+# fetch_and_validate_csv = PythonOperator(
+#     task_id='fetch_and_validate_csv',
+#     python_callable=fetch_and_validate_csv,
+#     provide_context=True,
+#     dag=dag,
+# )
 
-send_email_task = PythonOperator(
-    task_id='send_email_task',
-    python_callable=send_email_task,
-    dag=dag,
-)
+# send_email_task = PythonOperator(
+#     task_id='send_email_task',
+#     python_callable=send_email_task,
+#     dag=dag,
+# )
 
-fetch_and_validate_csv >>send_email_task
+# fetch_and_validate_csv >>send_email_task
 
 
 
