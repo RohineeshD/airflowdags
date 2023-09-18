@@ -2,6 +2,7 @@ from airflow import DAG
 from airflow.operators.python import PythonOperator, BranchPythonOperator
 from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
 from airflow.utils.dates import days_ago
+from io import StringIO
 import pandas as pd
 import requests
 from datetime import timedelta
@@ -26,7 +27,7 @@ def load_csv_from_url_to_snowflake(**kwargs):
         # Load CSV data from URL into a DataFrame
         response = requests.get(url)
         csv_content = response.text
-        df = pd.read_csv(pd.compat.StringIO(csv_content))
+        df = pd.read_csv(StringIO(csv_content))
         
         # Connect to Snowflake
         snowflake_hook = SnowflakeHook(snowflake_conn_id='snow_sc')
