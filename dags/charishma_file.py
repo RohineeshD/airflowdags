@@ -65,15 +65,9 @@ task2 = BranchPythonOperator(
 
 def success_task(**kwargs):
     print("CSV data loaded successfully into Snowflake!")
-    ti = kwargs['ti']
-    result = ti.xcom_pull(task_ids='load_data_to_snowflake')
-    print(f"XCom result from load_data_to_snowflake task: {result}")
 
 def failure_task(**kwargs):
     print("Failed to load CSV data into Snowflake!")
-    ti = kwargs['ti']
-    result = ti.xcom_pull(task_ids='load_data_to_snowflake')
-    print(f"XCom result from load_data_to_snowflake task: {result}")
 
 success_print_task = PythonOperator(
     task_id='success_print',
@@ -90,7 +84,15 @@ failure_print_task = PythonOperator(
 )
 
 # Set up task dependencies
+load_data_to_snowflake_task = PythonOperator(
+    task_id='load_data_to_snowflake_task',
+    python_callable=load_data_to_snowflake,
+    provide_context=True,
+    dag=dag,
+)
+
 load_data_to_snowflake_task >> task2 >> [success_print_task, failure_print_task]
+
 
 
 
