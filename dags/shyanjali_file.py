@@ -3,31 +3,18 @@ from airflow.operators.dummy import DummyOperator
 from airflow.operators.python import PythonOperator
 from airflow.utils.task_group import TaskGroup
 import pandas as pd
-from datetime import datetime
-from airflow.models import Variable
 import requests
 from io import StringIO  # Required for Python 3
 
-class SharedData:
-    def __init__(self):
-        self.data = None
-
-    def set_data(self, data):
-        self.data = data
-
-    def get_data(self):
-        return self.data
-# Create an instance of the shared data class
-shared_data = SharedData()
-
 def start_task():
+    print("Starting Task 1")
     # Perform any necessary initialization
     pass
- 
+
 def read_csv_from_url(**kwargs):
     print("Starting Task 2")
     # Define the URL of the CSV file
-    csv_url = 'https://github.com/jcharishma/my.repo/raw/master/sample_csv.csv'  # Replace with the actual URL
+    csv_url = https://github.com/jcharishma/my.repo/raw/master/sample_csv.csv # Replace with the actual URL
 
     try:
         # Fetch CSV data from the URL
@@ -40,9 +27,8 @@ def read_csv_from_url(**kwargs):
             # Convert the CSV data to a pandas DataFrame
             df = pd.read_csv(StringIO(csv_data))
 
-             # Set the loaded DataFrame in the shared data instance
-            shared_data.set_data(df)
-            print(df)
+            # Set the loaded DataFrame as an XCom variable
+            kwargs['ti'].xcom_push(key='loaded_df', value=df)
             print("Loaded CSV data")
 
         else:
@@ -51,12 +37,11 @@ def read_csv_from_url(**kwargs):
     except Exception as e:
         print(f"An error occurred: {str(e)}")
 
-def validate_csv():
+def validate_csv(**kwargs):
     print("Starting Task 3 - Validation")
 
-    # Retrieve the loaded DataFrame from the shared data instance
-    loaded_df = shared_data.get_data()
-    print(loaded_df)
+    # Retrieve the loaded DataFrame from XCom
+    loaded_df = kwargs['ti'].xcom_pull(task_ids='read_csv_from_url', key='loaded_df')
 
     # Perform validation logic on the loaded DataFrame
     # Replace this with your actual validation logic
@@ -70,54 +55,49 @@ def validate_csv():
 
     print(f"CSV Validation Result: {validation_passed}")
 
-
 def end_task():
+    print("Ending Task")
     # Perform any necessary cleanup or finalization
     pass
 
 # Define the DAG
 with DAG(
-    'shyanjali_dag',
+    'your_dag_id',
     schedule_interval=None,  # Set your desired schedule interval
-    start_date=datetime(2023, 9, 16),  # Set your desired start date
-) as f:
+    start_date=datetime(2023, 9, 18),  # Set your desired start date
+    catchup=False,
+) as dag:
 
     # Define tasks
     start = PythonOperator(
         task_id='start_task',
         python_callable=start_task,
-       
     )
-    
+
     end = PythonOperator(
         task_id='end_task',
         python_callable=end_task,
-       
     )
-    
-    # Define a TaskGroup for Task 2 and Task 3
+
     # Define a TaskGroup for Task 2 and Task 3
     with TaskGroup('file_processing_tasks') as file_processing_tasks:
         read_csv = PythonOperator(
             task_id='read_csv_from_url',
             python_callable=read_csv_from_url,
-            # provide_context=True,
+            provide_context=True,
         )
-    
+
         validate_file = PythonOperator(
             task_id='validate_csv',
             python_callable=validate_csv,
-            # provide_context=True,
+            provide_context=True,
         )
-    # Define the task dependencies
-    # start >> load_file_and_validate >>validate_csv>> end
 
-    start >> file_processing_tasks >> end
-
-
-    
+    # Set task dependencies
+    start >> file_processing_tasks >> validate_file >> end
 
 
+  
 # ---------------------------------------------------
 
 
