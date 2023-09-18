@@ -89,13 +89,13 @@ with DAG(
         read_csv = PythonOperator(
             task_id='read_csv_from_url',
             python_callable=read_csv_from_url,
-            provide_context=True,
+            # provide_context=True,
         )
     
         validate_file = PythonOperator(
             task_id='validate_csv',
             python_callable=validate_csv,
-            provide_context=True,
+            # provide_context=True,
         )
     # Define the task dependencies
     # start >> load_file_and_validate >>validate_csv>> end
