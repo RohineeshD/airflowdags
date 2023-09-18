@@ -60,7 +60,7 @@ with DAG(
     end_task = PythonOperator(
         task_id='end_task',
         python_callable=lambda: print("End task"),
-        dag=dag,
+   
     )
 
 # Define task dependencies
