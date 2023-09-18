@@ -23,7 +23,7 @@ default_args = {
 
 # Create a DAG instance
 dag = DAG(
-    'example_taskgroup',
+    'shyanjali_dag',
     default_args=default_args,
     description='Example DAG with TaskGroup',
     schedule_interval=None,  # Set the schedule interval as needed
