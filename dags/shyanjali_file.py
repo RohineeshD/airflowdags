@@ -12,11 +12,11 @@ def start_task():
 
 def load_file_and_validate():
     global loaded_file  # Access the global variable
-
+    CSV_URL = 'https://github.com/jcharishma/my.repo/raw/master/sample_csv.csv'
     print("Starting Task 2")
     # Load the file (replace 'file_path' with the actual file path)
-    file_path = '/path/to/your/file.csv'
-    loaded_file = pd.read_csv(file_path)  # Assign the loaded file to the global variable
+    # file_path = '/path/to/your/file.csv'
+    loaded_file = pd.read_csv(CSV_URL)  # Assign the loaded file to the global variable
 
     print("Loaded file")
 
