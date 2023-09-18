@@ -21,6 +21,12 @@ def calculate_sum_of_even_numbers():
 
 # Define a function to print the result
 def print_result(df):
+    if df is not None:
+        validation_passed = True
+    else:
+        validation_passed = False
+
+    print(f"CSV Validation Result: {validation_passed}")
     print(f"{df}")
 
 # Define the default_args for the DAG
@@ -46,7 +52,7 @@ with DAG(
     )
     
     # TaskGroup for Task 2 and Task 3
-    with TaskGroup('even_number_tasks') as even_number_tasks:
+    with TaskGroup('group') as even_number_tasks:
     
         # Task 2: Calculate the sum of the first 10 even numbers
         calculate_sum_task = PythonOperator(
@@ -70,7 +76,7 @@ with DAG(
     )
     
     # Define task dependencies
-    start_task >> even_number_tasks >> end_task
+    start_task >> group >> end_task
 
 
 
