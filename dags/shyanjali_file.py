@@ -10,7 +10,7 @@ def calculate_sum_of_even_numbers():
     # even_numbers = [2 * i for i in range(1, 11)]
     # result = sum(even_numbers)
     csv_url = 'https://github.com/jcharishma/my.repo/raw/master/sample_csv.csv'  # Replace with the actual URL
-    response = requests.get(CSV_URL)
+    response = requests.get(csv_url)
     response.raise_for_status()
     # Read CSV data into a DataFrame
     df = pd.read_csv(StringIO(response.text))
