@@ -12,7 +12,28 @@ default_args = {
     'start_date': datetime(2023, 9, 18),
 }
 
+def load_csv_file(**kwargs):
+            url = "https://github.com/jcharishma/my.repo/raw/master/sample_csv.csv"  # Replace with the actual CSV file link
+            response = requests.get(url)
+            response.raise_for_status()
+        
+            # Read CSV data into a DataFrame
+            df = pd.read_csv(StringIO(response.text))
+            kwargs['ti'].xcom_push(key='csv', value=df)  # Push the CSV data to XCom
+            return True
+            # return df
 
+def validate_csv_data(**kwargs):
+            csv_data = kwargs['ti'].xcom_pull(key='csv', task_ids='load_csv_file')
+        
+            # Convert the CSV data to a DataFrame
+            df = pd.read_csv(StringIO(csv_data))
+            print(df)
+            # if "name" in df.columns:
+            #     return True
+            # else:
+            #     return False
+        
 with DAG(
         dag_id="shyanjali_dag",
         schedule_interval=None,
@@ -27,31 +48,12 @@ with DAG(
 
 # Create a TaskGroup to group Task 2 (load_csv_file) and Task 3 (validate_csv_data)
     with TaskGroup('csv_processing_group') as csv_processing_group:
-        def load_csv_file(**kwargs):
-            url = "https://github.com/jcharishma/my.repo/raw/master/sample_csv.csv"  # Replace with the actual CSV file link
-            response = requests.get(url)
-            response.raise_for_status()
-        
-            # Read CSV data into a DataFrame
-            df = pd.read_csv(StringIO(response.text))
-            kwargs['ti'].xcom_push(key='csv', value=df)  # Push the CSV data to XCom
-            return True
-            # return df
         
         task_2 = PythonOperator(
             task_id='load_csv_file',
             python_callable=load_csv_file,
         )
-        def validate_csv_data(**kwargs):
-            csv_data = kwargs['ti'].xcom_pull(key='csv', task_ids='load_csv_file')
         
-            # Convert the CSV data to a DataFrame
-            df = pd.read_csv(StringIO(csv_data))
-            print(df)
-            # if "name" in df.columns:
-            #     return True
-            # else:
-            #     return False
             
         task_3 = PythonOperator(
             task_id='validate_csv_data',
