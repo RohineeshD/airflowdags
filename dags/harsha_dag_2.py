@@ -20,23 +20,49 @@ dag = DAG(
 # Define your directory path where new files arrive
 directory_path = r'C:\Users\User\Desktop\load'  # Use 'r' before the path to handle backslashes
 
+# Define your Snowflake stage name
+snowflake_stage_name = 'my_stage_name'
+
 # Define your Snowflake table name
 snowflake_table = 'automate_table'
 
 # Define the file name
 file_name = 'Downloaded_CSV_TABLE.csv'
 
-# Create a task that uploads the local file to Snowflake
-def upload_file_to_snowflake(directory_path, snowflake_table, file_name, **kwargs):
+# Create a task that uploads the file from local path to Snowflake stage
+def put_file_to_snowflake_stage(directory_path, snowflake_stage_name, file_name, **kwargs):
     try:
         # Construct the full path to the file
         file_path = os.path.join(directory_path, file_name)
 
-        # Use SnowflakeOperator to load the file into Snowflake
-        load_task = SnowflakeOperator(
-            task_id='load_file',
+        # Use SnowflakeOperator to PUT the file into the Snowflake stage
+        put_task = SnowflakeOperator(
+            task_id='put_file_to_stage',
             sql=f'''
-                COPY INTO {snowflake_table} FROM @{snowflake_stage_name}/{file_path}
+                PUT file://{file_path} @{snowflake_stage_name}/{file_name}
+            ''',
+            snowflake_conn_id='air_conn',
+            autocommit=True,
+            dag=dag,
+        )
+
+        put_task.execute(context=kwargs)
+
+        # Log success
+        return 'File uploaded to Snowflake stage successfully'
+
+    except Exception as e:
+        # Log the error and return the error message
+        return f'Error uploading file to Snowflake stage: {str(e)}'
+
+# Create a task that loads data from the Snowflake stage to Snowflake table
+def load_data_from_stage_to_table(snowflake_stage_name, snowflake_table, file_name, **kwargs):
+    try:
+        # Use SnowflakeOperator to load data from stage to table
+        load_task = SnowflakeOperator(
+            task_id='load_data',
+            sql=f'''
+                COPY INTO {snowflake_table} FROM @{snowflake_stage_name}/{file_name}
                 FILE_FORMAT = (TYPE = 'csv')
             ''',
             snowflake_conn_id='air_conn',
@@ -45,44 +71,35 @@ def upload_file_to_snowflake(directory_path, snowflake_table, file_name, **kwarg
         )
 
         load_task.execute(context=kwargs)
-        
+
         # Log success
-        return 'Data loaded successfully'
+        return 'Data loaded from Snowflake stage to table successfully'
 
     except Exception as e:
         # Log the error and return the error message
-        return f'Error loading data: {str(e)}'
+        return f'Error loading data from Snowflake stage to table: {str(e)}'
 
-# Create the task that triggers the file upload
-upload_task = PythonOperator(
-    task_id='upload_file_to_snowflake',
-    python_callable=upload_file_to_snowflake,
-    op_kwargs={'directory_path': directory_path, 'snowflake_table': snowflake_table, 'file_name': file_name},
+# Create the task that triggers file upload to Snowflake stage
+upload_to_stage_task = PythonOperator(
+    task_id='upload_file_to_snowflake_stage',
+    python_callable=put_file_to_snowflake_stage,
+    op_kwargs={'directory_path': directory_path, 'snowflake_stage_name': snowflake_stage_name, 'file_name': file_name},
     provide_context=True,
     dag=dag,
 )
 
-# Set the task dependencies
-upload_task
-
-# Define your Snowflake stage name
-snowflake_stage_name = 'my_stage_name'
-
-# Error handling task
-error_handling_task = SnowflakeOperator(
-    task_id='error_handling',
-    sql=f'''
-        INSERT INTO error_logs (error_message, execution_date)
-        VALUES ('{{{{ task_instance.xcom_pull(task_ids="upload_file_to_snowflake") }}}}', '{{{{ ds_nodash }}}}')
-    ''',
-    snowflake_conn_id='air_conn',
-    autocommit=True,
-    trigger_rule='all_failed',  # This task runs when any upstream task fails
+# Create the task that triggers data load from Snowflake stage to table
+load_to_table_task = PythonOperator(
+    task_id='load_data_from_snowflake_stage_to_table',
+    python_callable=load_data_from_stage_to_table,
+    op_kwargs={'snowflake_stage_name': snowflake_stage_name, 'snowflake_table': snowflake_table, 'file_name': file_name},
+    provide_context=True,
     dag=dag,
 )
 
-# Set the dependencies for the error handling task
-upload_task >> error_handling_task
+# Set task dependencies
+upload_to_stage_task >> load_to_table_task
+
 
 
 
