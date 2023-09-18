@@ -96,7 +96,7 @@ with DAG(
         )
 
     # Set task dependencies
-    start >> file_processing_tasks >> validate_file >> end
+    start >> file_processing_tasks>> end
 
 
   
