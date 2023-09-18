@@ -33,7 +33,7 @@ def upload_file_to_snowflake(**kwargs):
     file_name = kwargs.get('file_name')
 
     # Get the Snowflake connection
-    snowflake_hook = SnowflakeHook(snowflake_conn_id='your_snowflake_conn_id')
+    snowflake_hook = SnowflakeHook(snowflake_conn_id='air_conn')
 
     # Construct the full path to the file
     file_path = os.path.join(directory_path, file_name)
