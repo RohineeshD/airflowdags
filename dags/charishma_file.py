@@ -24,8 +24,8 @@ dag = DAG(
 
 def decide_branch(**kwargs):
     ti = kwargs['ti']
-    result = ti.xcom_pull(task_ids='load_data_to_snowflake')
-    return 'success_task' if result else 'failure_task'
+    result = ti.xcom_pull(task_ids='load_data_to_snowflake_task')  
+    return 'success_print' if result else 'failure_print' 
 
 def load_data_to_snowflake(**kwargs):
     try:
@@ -61,7 +61,6 @@ def load_data_to_snowflake(**kwargs):
         # Log the exception
         print(f"Error loading data to Snowflake: {str(e)}")
         raise AirflowException("Error loading data to Snowflake")
-
 
 # Define the BranchPythonOperator as task2
 task2 = BranchPythonOperator(
