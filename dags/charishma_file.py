@@ -10,7 +10,7 @@ from io import StringIO
 
 # Define your DAG
 dag = DAG(
-    'csv_upload_to_snowflake',
+    'csv_upload_snowflake',
     schedule_interval=None,
     start_date=datetime(2023, 9, 18),
     catchup=False,
@@ -22,10 +22,10 @@ dag = DAG(
 
 def decide_branch(**kwargs):
     ti = kwargs['ti']
-    result = ti.xcom_pull(task_ids='load_data_to_snowflake_task')  
+    result = ti.xcom_pull(task_ids='snowflake_data_load')  
     return 'success_print' if result else 'failure_print' 
 
-def load_data_to_snowflake(**kwargs):
+def snowflake_data_load(**kwargs):
     try:
         # Create a DataFrame from the CSV URL
         csv_url = 'https://github.com/jcharishma/my.repo/raw/master/sample_csv.csv'
@@ -59,8 +59,8 @@ def load_data_to_snowflake(**kwargs):
         raise AirflowException("Error loading data to Snowflake")
 
 # Define the BranchPythonOperator
-task2 = BranchPythonOperator(
-    task_id='task2',
+validation_task = BranchPythonOperator(
+    task_id='validation_task',
     python_callable=decide_branch,
     provide_context=True,
     dag=dag,
@@ -87,14 +87,14 @@ failure_print_task = PythonOperator(
 )
 
 # Set up task dependencies
-load_data_to_snowflake_task = PythonOperator(
-    task_id='load_data_to_snowflake_task',
-    python_callable=load_data_to_snowflake,
+snowflake_data_load = PythonOperator(
+    task_id='snowflake_data_load',
+    python_callable=snowflake_data_load,
     provide_context=True,
     dag=dag,
 )
 
-load_data_to_snowflake_task >> task2 >> [success_print_task, failure_print_task]
+snowflake_data_load >> validation_task >> [success_print_task, failure_print_task]
 
 
 
