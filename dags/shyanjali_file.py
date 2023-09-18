@@ -22,7 +22,6 @@ with DAG(
     start_task = PythonOperator(
         task_id='start_task',
         python_callable=lambda: print("Start task"),
-        dag=dag,
     )
 
 # Create a TaskGroup to group Task 2 (load_csv_file) and Task 3 (validate_csv_data)
