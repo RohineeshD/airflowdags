@@ -6,27 +6,6 @@ from datetime import datetime
 import requests
 import pandas as pd
 
-# Define your custom Python function to load the CSV file from a link
-def load_csv_file():
-    url = "https://github.com/jcharishma/my.repo/raw/master/sample_csv.csv"  # Replace with the actual CSV file link
-    response = requests.get(url)
-    
-    if response.status_code == 200:
-        # Assuming the CSV file has a header row
-        df = pd.read_csv(pd.compat.StringIO(response.text))
-        return df
-    else:
-        raise Exception("Failed to load CSV file")
-
-# Define your custom Python function to validate the loaded CSV data
-def validate_csv_data(df):
-    # Implement your validation logic here
-    # For example, check if specific columns or data exist
-    if "column_name" in df.columns and df["column_name"].dtype == "int64":
-        return True
-    else:
-        return False
-
 default_args = {
     'owner': 'airflow',
     'start_date': datetime(2023, 9, 18),
@@ -47,12 +26,31 @@ start_task = PythonOperator(
 
 # Create a TaskGroup to group Task 2 (load_csv_file) and Task 3 (validate_csv_data)
 with TaskGroup('csv_processing_group') as csv_processing_group:
+    def load_csv_file():
+    url = "https://github.com/jcharishma/my.repo/raw/master/sample_csv.csv"  # Replace with the actual CSV file link
+    response = requests.get(url)
+    
+    if response.status_code == 200:
+        # Assuming the CSV file has a header row
+        df = pd.read_csv(pd.compat.StringIO(response.text))
+        return df
+    else:
+        raise Exception("Failed to load CSV file")
+
+    
     task_2 = PythonOperator(
         task_id='load_csv_file',
         python_callable=load_csv_file,
         dag=dag,
     )
-    
+    def validate_csv_data(df):
+    # Implement your validation logic here
+    # For example, check if specific columns or data exist
+    if "column_name" in df.columns and df["column_name"].dtype == "int64":
+        return True
+    else:
+        return False
+        
     task_3 = PythonOperator(
         task_id='validate_csv_data',
         python_callable=validate_csv_data,
