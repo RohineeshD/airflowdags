@@ -42,7 +42,7 @@ with DAG(
             python_callable=load_csv_file,
         )
         def validate_csv_data(**kwargs):
-            df=kwargs['ti'].xcom_pull(task_ids='load_csv_file',
+            df=kwargs['ti'].xcom_pull(task_ids='load_csv_file')
             print(f"Received DataFrame:\n{df}")
             # if "name" in df.columns:
             #     return True
