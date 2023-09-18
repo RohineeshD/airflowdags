@@ -41,11 +41,9 @@ with DAG(
             python_callable=load_csv_file,
         )
         def validate_csv_data(**kwargs):
-            # Implement your validation logic here
-            # For example, check if specific columns or data exist
             ti = kwargs['ti']
             df = ti.xcom_pull(task_ids='load_csv_file')
-            print(df)
+            print(f"Received DataFrame:\n{df}")
             # if "name" in df.columns:
             #     return True
             # else:
