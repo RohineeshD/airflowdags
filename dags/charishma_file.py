@@ -1,23 +1,27 @@
 from airflow import DAG
 from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
 from airflow.operators.python import BranchPythonOperator, PythonOperator
-from airflow.utils.dates import days_ago
-from datetime import timedelta
+from datetime import datetime, timedelta  # Import datetime module
 from airflow.exceptions import AirflowException
 import pandas as pd
 import requests
+from io import StringIO
+
 
 # Define your DAG with appropriate configurations
 dag = DAG(
     'csv_upload_to_snowflake',
     schedule_interval=None,
-    start_date=days_ago(1),
+    start_date=datetime(2023, 9, 18),  # Use the specific start_date
     catchup=False,
     default_args={
         'retries': 1,
         'retry_delay': timedelta(minutes=5),
     },
 )
+
+# Rest of the code remains the same
+
 
 def decide_branch(**kwargs):
     ti = kwargs['ti']
@@ -34,8 +38,7 @@ def load_data_to_snowflake(**kwargs):
             # Parse CSV data into a DataFrame
             df = pd.read_csv(pd.compat.StringIO(csv_data))
             
-            # Assuming you have a Snowflake connection already set up in Airflow
-            # You should replace 'YOUR_SNOWFLAKE_TABLE' and define the SnowflakeOperator accordingly
+        
             snowflake_operator = SnowflakeOperator(
                 task_id='load_data_to_snowflake',
                 sql=(
