@@ -8,22 +8,25 @@ from datetime import datetime
 def start_task():
     # Perform any necessary initialization
     pass
+CSV_URL = 'https://github.com/jcharishma/my.repo/raw/master/sample_csv.csv'
 
-
-def load_file_and_validate():
-    global loaded_file  # Access the global variable
-    CSV_URL = 'https://github.com/jcharishma/my.repo/raw/master/sample_csv.csv'
+def load_file_and_validate(**kwargs):
     print("Starting Task 2")
     # Load the file (replace 'file_path' with the actual file path)
-    # file_path = '/path/to/your/file.csv'
-    loaded_file = pd.read_csv(CSV_URL)  # Assign the loaded file to the global variable
+    df = pd.read_csv(CSV_URL)
 
-    print("Loaded file")
+    # Push the loaded file to Airflow's Variable
+    Variable.set("loaded_file", df.to_json())
 
-def validate_csv():
-    global loaded_file  # Access the global variable
+    print("Loaded file and pushed to Airflow Variable")
 
+
+def validate_csv(**kwargs):
     print("Starting Task 3")
+
+    # Pull the loaded file from Airflow's Variable
+    loaded_file_json = Variable.get("loaded_file")
+    loaded_file = pd.read_json(loaded_file_json)
 
     # Perform validation logic on the loaded CSV file (e.g., check for required columns, data quality, etc.)
     # Replace this with your actual validation logic
