@@ -9,7 +9,7 @@ from datetime import timedelta
 
 # Define your DAG with appropriate configurations
 dag = DAG(
-    'csv_upload_snowflake',
+    'csv_upload_to_snowflake',
     schedule_interval=None,
     start_date=days_ago(1),
     catchup=False,
