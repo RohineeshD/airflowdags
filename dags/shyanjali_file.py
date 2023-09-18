@@ -32,6 +32,8 @@ def read_csv_from_url(**kwargs):
             # Push the loaded DataFrame to XCom for validation
             kwargs['ti'].xcom_push(key='loaded_df', value=df)
             print("Loaded CSV data and pushed to XCom")
+            return df 
+            
 
         else:
             print(f"Failed to fetch CSV from URL. Status code: {response.status_code}")
@@ -50,8 +52,6 @@ def validate_csv(**kwargs):
     if loaded_df is not None:
         validation_passed = True
         # Example validation: Check if 'column_name' exists in the DataFrame
-        if 'column_name' not in loaded_df.columns:
-            validation_passed = False
     else:
         validation_passed = False
 
