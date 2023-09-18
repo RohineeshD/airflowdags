@@ -37,7 +37,6 @@ dag = DAG(
 )
 
 # Define a PythonOperator to check for file arrival
-
 def check_file_arrival():
     directory = 'C:/Users/User/Desktop/load'  
     file_name = 'Downloaded_CSV_TABLE.csv'
@@ -55,14 +54,27 @@ check_for_file_task = PythonOperator(
     dag=dag,
 )
 
-
 # Define a DummyOperator task for when no files are present
 no_files_task = DummyOperator(
     task_id='no_files',
     dag=dag,
 )
 
-# Define the SnowflakeOperator task to load the file
+# Define the SnowflakeOperator task to create the stage and load the file
+create_snowflake_stage_task = SnowflakeOperator(
+    task_id='create_snowflake_stage',
+    sql=[
+        "CREATE OR REPLACE STAGE IF NOT EXISTS your_snowflake_stage",  
+        "URL = 's3://your-s3-bucket/path/to/stage'",  
+        "FILE_FORMAT = (TYPE = 'CSV' SKIP_HEADER = 1)"  
+    ],
+    snowflake_conn_id='your_snowflake_connection',
+    autocommit=True,
+    trigger_rule='one_success',  
+    dag=dag,
+)
+
+# Define the SnowflakeOperator task to load the file from the stage
 load_local_file_task = SnowflakeOperator(
     task_id='load_local_file_task',
     sql="COPY INTO automate_table FROM @your_snowflake_stage/Downloaded_CSV_TABLE.csv FILE_FORMAT = (TYPE = 'CSV' SKIP_HEADER = 1);",
@@ -73,7 +85,12 @@ load_local_file_task = SnowflakeOperator(
 )
 
 # Set up task dependencies
-check_for_file_task >> load_local_file_task
+check_for_file_task >> create_snowflake_stage_task >> load_local_file_task
+no_files_task >> create_snowflake_stage_task  # In case there are no files, still create the stage
+
+if __name__ == "__main__":
+    dag.cli()
+
 
 if __name__ == "__main__":
     dag.cli()
