@@ -35,42 +35,42 @@ def end_task():
     pass
 
 # Define the DAG
-dag = DAG(
+with DAG(
     'your_dag_id',
     schedule_interval=None,  # Set your desired schedule interval
     start_date=datetime(2023, 9, 18),  # Set your desired start date
     catchup=False,
-)
+) as f:
 
-# Define tasks
-start = PythonOperator(
-    task_id='start_task',
-    python_callable=start_task,
-    dag=dag,
-)
-
-end = PythonOperator(
-    task_id='end_task',
-    python_callable=end_task,
-    dag=dag,
-)
-
-# Define a TaskGroup for Task 2 and Task 3
-with TaskGroup('file_processing_tasks') as file_processing_tasks:
-    load_file = PythonOperator(
-        task_id='load_file_and_validate',
-        python_callable=load_file_and_validate,
-        provide_context=True,
+    # Define tasks
+    start = PythonOperator(
+        task_id='start_task',
+        python_callable=start_task,
+        dag=dag,
     )
-
-    validate_file = PythonOperator(
-        task_id='validate_csv',
-        python_callable=validate_csv,
-        provide_context=True,
+    
+    end = PythonOperator(
+        task_id='end_task',
+        python_callable=end_task,
+        dag=dag,
     )
-
-# Define the task dependencies
-start >> file_processing_tasks >> end
+    
+    # Define a TaskGroup for Task 2 and Task 3
+    with TaskGroup('file_processing_tasks') as file_processing_tasks:
+        load_file = PythonOperator(
+            task_id='load_file_and_validate',
+            python_callable=load_file_and_validate,
+            provide_context=True,
+        )
+    
+        validate_file = PythonOperator(
+            task_id='validate_csv',
+            python_callable=validate_csv,
+            provide_context=True,
+        )
+    
+    # Define the task dependencies
+    start >> file_processing_tasks >> end
 
 
 
