@@ -6,16 +6,18 @@ import pandas as pd
 import requests
 from io import StringIO 
 from datetime import datetime# Required for Python 3
+loaded_df = None  # Define a global variable to store the loaded DataFrame
 
 def start_task():
     print("Starting Task 1")
     # Perform any necessary initialization
     pass
 
-def read_csv_from_url(**kwargs):
+def read_csv_from_url():
+    global loaded_df  # Access the global variable
     print("Starting Task 2")
     # Define the URL of the CSV file
-    csv_url = 'https://github.com/jcharishma/my.repo/raw/master/sample_csv.csv' # Replace with the actual URL
+    csv_url = 'https://github.com/jcharishma/my.repo/raw/master/sample_csv.csv'  # Replace with the actual URL
 
     try:
         # Fetch CSV data from the URL
@@ -26,11 +28,9 @@ def read_csv_from_url(**kwargs):
             csv_data = response.text
 
             # Convert the CSV data to a pandas DataFrame
-            df = pd.read_csv(StringIO(csv_data))
-
-            # Set the loaded DataFrame as an XCom variable
-            kwargs['ti'].xcom_push(key='loaded_df', value=df)
+            loaded_df = pd.read_csv(StringIO(csv_data))  # Assign the loaded DataFrame to the global variable
             print("Loaded CSV data")
+            print(loaded_df)
 
         else:
             print(f"Failed to fetch CSV from URL. Status code: {response.status_code}")
@@ -38,14 +38,13 @@ def read_csv_from_url(**kwargs):
     except Exception as e:
         print(f"An error occurred: {str(e)}")
 
-def validate_csv(**kwargs):
+def validate_csv():
+    global loaded_df  # Access the global variable
     print("Starting Task 3 - Validation")
-
-    # Retrieve the loaded DataFrame from XCom
-    loaded_df = kwargs['ti'].xcom_pull(task_ids='read_csv_from_url', key='loaded_df')
 
     # Perform validation logic on the loaded DataFrame
     # Replace this with your actual validation logic
+    print(loaded_df)
     if loaded_df is not None:
         validation_passed = True
         # Example validation: Check if 'column_name' exists in the DataFrame
@@ -55,6 +54,55 @@ def validate_csv(**kwargs):
         validation_passed = False
 
     print(f"CSV Validation Result: {validation_passed}")
+
+# def start_task():
+#     print("Starting Task 1")
+#     # Perform any necessary initialization
+#     pass
+
+# def read_csv_from_url(**kwargs):
+#     print("Starting Task 2")
+#     # Define the URL of the CSV file
+#     csv_url = 'https://github.com/jcharishma/my.repo/raw/master/sample_csv.csv' # Replace with the actual URL
+
+#     try:
+#         # Fetch CSV data from the URL
+#         response = requests.get(csv_url)
+
+#         # Check if the request was successful
+#         if response.status_code == 200:
+#             csv_data = response.text
+
+#             # Convert the CSV data to a pandas DataFrame
+#             df = pd.read_csv(StringIO(csv_data))
+
+#             # Set the loaded DataFrame as an XCom variable
+#             kwargs['ti'].xcom_push(key='loaded_df', value=df)
+#             print("Loaded CSV data")
+
+#         else:
+#             print(f"Failed to fetch CSV from URL. Status code: {response.status_code}")
+
+#     except Exception as e:
+#         print(f"An error occurred: {str(e)}")
+
+# def validate_csv(**kwargs):
+#     print("Starting Task 3 - Validation")
+
+#     # Retrieve the loaded DataFrame from XCom
+#     loaded_df = kwargs['ti'].xcom_pull(task_ids='read_csv_from_url', key='loaded_df')
+
+#     # Perform validation logic on the loaded DataFrame
+#     # Replace this with your actual validation logic
+#     if loaded_df is not None:
+#         validation_passed = True
+#         # Example validation: Check if 'column_name' exists in the DataFrame
+#         if 'column_name' not in loaded_df.columns:
+#             validation_passed = False
+#     else:
+#         validation_passed = False
+
+#     print(f"CSV Validation Result: {validation_passed}")
 
 def end_task():
     print("Ending Task")
