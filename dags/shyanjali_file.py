@@ -19,7 +19,7 @@ def load_csv_file(**kwargs):
     
     df = pd.read_csv(url)
     kwargs['ti'].xcom_push(key='loaded_df', value=df)
-    # return df
+    return df
 
 def validate_csv_data(**kwargs):
     ti = kwargs['ti']
