@@ -41,7 +41,7 @@ def load_data_to_snowflake(**kwargs):
         # Create a SnowflakeOperator to load data from the DataFrame
         snowflake_operator = SnowflakeOperator(
             task_id='load_data_to_snowflake',
-            sql=f"INSERT INTO CSV_TABLE VALUES(%s, %s, %s)",  # Modify this SQL query as per your table structure
+            sql_query = "INSERT INTO CSV_TABLE (NAME, EMAIL, SSN) VALUES (%s, %s, %s)"
             parameters=[tuple(row) for row in df.values.tolist()],
             snowflake_conn_id='snow_sc',
             autocommit=True,
