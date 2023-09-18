@@ -54,7 +54,7 @@ def csv_and_load_to_snowflake():
 # Task to download the CSV file and load it into Snowflake
 download_and_load_task = PythonOperator(
     task_id='download_and_load_csv',
-    python_callable=download_csv_and_load_to_snowflake,
+    python_callable=csv_and_load_to_snowflake,
     dag=dag,
 )
 
