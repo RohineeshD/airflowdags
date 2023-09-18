@@ -22,47 +22,47 @@ default_args = {
 }
 
 # Create a DAG instance
-dag = DAG(
+with DAG(
     'shyanjali_dag',
     default_args=default_args,
     description='Example DAG with TaskGroup',
     schedule_interval=None,  # Set the schedule interval as needed
     catchup=False,  # Prevent catching up on historical runs
     tags=['example'],
-)
+) as f:
 
-# Task 1: Start
-start_task = DummyOperator(
-    task_id='start_task',
-    dag=dag,
-)
-
-# TaskGroup for Task 2 and Task 3
-with TaskGroup('even_number_tasks') as even_number_tasks:
-
-    # Task 2: Calculate the sum of the first 10 even numbers
-    calculate_sum_task = PythonOperator(
-        task_id='task_2',
-        python_callable=calculate_sum_of_even_numbers,
+    # Task 1: Start
+    start_task = DummyOperator(
+        task_id='start_task',
         dag=dag,
     )
-
-    # Task 3: Print the result
-    print_result_task = PythonOperator(
-        task_id='task_3',
-        python_callable=print_result,
-        op_args=[calculate_sum_task.output],  # Pass the output from Task 2 to Task 3
+    
+    # TaskGroup for Task 2 and Task 3
+    with TaskGroup('even_number_tasks') as even_number_tasks:
+    
+        # Task 2: Calculate the sum of the first 10 even numbers
+        calculate_sum_task = PythonOperator(
+            task_id='task_2',
+            python_callable=calculate_sum_of_even_numbers,
+            dag=dag,
+        )
+    
+        # Task 3: Print the result
+        print_result_task = PythonOperator(
+            task_id='task_3',
+            python_callable=print_result,
+            op_args=[calculate_sum_task.output],  # Pass the output from Task 2 to Task 3
+            dag=dag,
+        )
+    
+    # Task 4: End
+    end_task = DummyOperator(
+        task_id='end_task',
         dag=dag,
     )
-
-# Task 4: End
-end_task = DummyOperator(
-    task_id='end_task',
-    dag=dag,
-)
-
-# Define task dependencies
-start_task >> even_number_tasks >> end_task
+    
+    # Define task dependencies
+    start_task >> even_number_tasks >> end_task
 
 
 
