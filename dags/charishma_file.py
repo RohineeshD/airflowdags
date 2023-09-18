@@ -27,7 +27,7 @@ load_data_task = SnowflakeOperator(
     task_id='load_data_to_snowflake',
     sql=(
         
-        f"COPY INTO SC1.CSV_TABLE "
+        f"COPY INTO CSV_TABLE "
         f"FROM 'https://github.com/jcharishma/my.repo/raw/master/sample_csv.csv' "
         f"FILE_FORMAT = (TYPE = 'CSV' SKIP_HEADER = 1) "
        
