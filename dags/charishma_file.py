@@ -1,18 +1,19 @@
 from airflow import DAG
 from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
 from airflow.operators.python import BranchPythonOperator, PythonOperator
-from datetime import datetime, timedelta  # Import datetime module
+from datetime import datetime, timedelta
 from airflow.exceptions import AirflowException
 import pandas as pd
-import requests
 from io import StringIO
 
+# Define your specific start date as a datetime object
+start_date = datetime(2023, 9, 18)
 
 # Define your DAG with appropriate configurations
 dag = DAG(
     'csv_upload_to_snowflake',
     schedule_interval=None,
-    start_date=datetime(2023, 9, 18),  # Use the specific start_date
+    start_date=start_date,
     catchup=False,
     default_args={
         'retries': 1,
@@ -20,43 +21,35 @@ dag = DAG(
     },
 )
 
-# Rest of the code remains the same
-
-
 def decide_branch(**kwargs):
     ti = kwargs['ti']
     result = ti.xcom_pull(task_ids='load_data_to_snowflake')
     return 'success_task' if result else 'failure_task'
 
-# Define the Snowflake data load task (task1)
 def load_data_to_snowflake(**kwargs):
     try:
-        url = 'https://github.com/jcharishma/my.repo/raw/master/sample_csv.csv'
-        response = requests.get(url)
-        if response.status_code == 200:
-            csv_data = response.text
-            # Parse CSV data into a DataFrame
-            df = pd.read_csv(pd.compat.StringIO(csv_data))
-            
-        
-            snowflake_operator = SnowflakeOperator(
-                task_id='load_data_to_snowflake',
-                sql=(
-                    "INSERT INTO CSV_ATBLE "
-                    "(NAME, EMAIL, SSN) "
-                    "VALUES (%s, %s, %s)"
-                ),  # Replace with your SQL INSERT statement
-                snowflake_conn_id='snow_sc',
-                autocommit=True,
-                parameters=[tuple(row) for row in df.values],  # Convert DataFrame rows to tuples
-                dag=dag,
-            )
-            snowflake_operator.execute(context=kwargs)
-            print("Data loaded successfully.")
-            return True
-        else:
-            print("Failed to download CSV data from the URL.")
-            return False
+        # Create a DataFrame from the CSV URL
+        csv_url = 'https://github.com/jcharishma/my.repo/raw/master/sample_csv.csv'
+        df = pd.read_csv(csv_url)
+
+        # Define your Snowflake connection ID
+        snowflake_conn_id = 'snow_sc'
+
+        # Specify the Snowflake table name
+        table_name = 'CSV_TABLE'
+
+        # Create a SnowflakeOperator to load data from the DataFrame
+        snowflake_operator = SnowflakeOperator(
+            task_id='load_data_to_snowflake',
+            sql=f"INSERT INTO {table_name} VALUES(%s, %s, %s)",  # Modify this SQL query as per your table structure
+            parameters=[tuple(row) for row in df.values.tolist()],
+            snowflake_conn_id=snowflake_conn_id,
+            autocommit=True,
+            dag=dag,
+        )
+        snowflake_operator.execute(context=kwargs)
+        print("Data loaded successfully.")
+        return True
     except Exception as e:
         # Log the exception
         print(f"Error loading data to Snowflake: {str(e)}")
@@ -82,7 +75,6 @@ def failure_task(**kwargs):
     result = ti.xcom_pull(task_ids='load_data_to_snowflake')
     print(f"XCom result from load_data_to_snowflake task: {result}")
 
-# Define the task to print success or failure
 success_print_task = PythonOperator(
     task_id='success_print',
     python_callable=success_task,
@@ -98,14 +90,8 @@ failure_print_task = PythonOperator(
 )
 
 # Set up task dependencies
-load_data_to_snowflake_task = PythonOperator(
-    task_id='load_data_to_snowflake',
-    python_callable=load_data_to_snowflake,
-    provide_context=True,
-    dag=dag,
-)
-
 load_data_to_snowflake_task >> task2 >> [success_print_task, failure_print_task]
+
 
 
 
