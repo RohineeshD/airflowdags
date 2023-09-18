@@ -68,7 +68,6 @@ with DAG(
             python_callable=validate_csv,
             provide_context=True,
         )
-    
     # Define the task dependencies
     start >> file_processing_tasks >> end
 
