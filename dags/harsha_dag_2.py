@@ -28,22 +28,30 @@ file_name = 'Downloaded_CSV_TABLE.csv'
 
 # Create a task that uploads the local file to Snowflake
 def upload_file_to_snowflake(directory_path, snowflake_table, file_name, **kwargs):
-    # Construct the full path to the file
-    file_path = os.path.join(directory_path, file_name)
+    try:
+        # Construct the full path to the file
+        file_path = os.path.join(directory_path, file_name)
 
-    # Use SnowflakeOperator to load the file into Snowflake
-    load_task = SnowflakeOperator(
-        task_id='load_file',
-        sql=f'''
-            COPY INTO {snowflake_table} FROM @{snowflake_stage_name}/{file_path}
-            FILE_FORMAT = (TYPE = 'csv')
-        ''',
-        snowflake_conn_id='air_conn',  
-        autocommit=True,  
-        dag=dag,
-    )
+        # Use SnowflakeOperator to load the file into Snowflake
+        load_task = SnowflakeOperator(
+            task_id='load_file',
+            sql=f'''
+                COPY INTO {snowflake_table} FROM @{snowflake_stage_name}/{file_path}
+                FILE_FORMAT = (TYPE = 'csv')
+            ''',
+            snowflake_conn_id='air_conn',
+            autocommit=True,
+            dag=dag,
+        )
 
-    load_task.execute(context=kwargs)
+        load_task.execute(context=kwargs)
+        
+        # Log success
+        return 'Data loaded successfully'
+
+    except Exception as e:
+        # Log the error and return the error message
+        return f'Error loading data: {str(e)}'
 
 # Create the task that triggers the file upload
 upload_task = PythonOperator(
@@ -58,7 +66,23 @@ upload_task = PythonOperator(
 upload_task
 
 # Define your Snowflake stage name
-snowflake_stage_name = 'my_stage_name'  
+snowflake_stage_name = 'my_stage_name'
+
+# Error handling task
+error_handling_task = SnowflakeOperator(
+    task_id='error_handling',
+    sql=f'''
+        INSERT INTO error_logs (error_message, execution_date)
+        VALUES ('{{{{ task_instance.xcom_pull(task_ids="upload_file_to_snowflake") }}}}', '{{{{ ds_nodash }}}}')
+    ''',
+    snowflake_conn_id='air_conn',
+    autocommit=True,
+    trigger_rule='all_failed',  # This task runs when any upstream task fails
+    dag=dag,
+)
+
+# Set the dependencies for the error handling task
+upload_task >> error_handling_task
 
 
 
