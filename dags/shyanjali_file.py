@@ -4,7 +4,8 @@ from airflow.operators.python import PythonOperator
 from airflow.utils.task_group import TaskGroup
 import pandas as pd
 import requests
-from io import StringIO  # Required for Python 3
+from io import StringIO 
+import datetime# Required for Python 3
 
 def start_task():
     print("Starting Task 1")
@@ -63,7 +64,8 @@ def end_task():
 # Define the DAG
 with DAG(
     'shyanjali_dag',
-    schedule_interval=None,  # Set your desired schedule interval
+    schedule_interval=None,
+    start_date=datetime(2023, 9, 18),  # Set your desired schedule interval
      # Set your desired start date
     catchup=False,
 ) as dag:
