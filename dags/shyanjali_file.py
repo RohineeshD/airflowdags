@@ -16,19 +16,22 @@ def load_file_and_validate(**kwargs):
     print(df)
     # Pass the loaded file as output to the downstream tasks
     kwargs['ti'].xcom_push(key='loaded_file', value=df)
+    return df
 
-def validate_csv(**kwargs):
-    ti = kwargs['ti']
-    loaded_file = ti.xcom_pull(task_ids='load_file_and_validate', key='loaded_file')
-    print(loaded_file)
+def validate_csv(ti):
+    dt = ti.xcom_pull(task_ids=['load_file_and_validate'])
+    print(dt)
+    # ti = kwargs['ti']
+    # loaded_file = ti.xcom_pull(task_ids='load_file_and_validate', key='loaded_file')
+    # print(loaded_file)
     # Perform validation logic on the loaded CSV file (e.g., check for required columns, data quality, etc.)
     # Replace this with your actual validation logic
-    if loaded_file is not None:
-        validation_passed = True
-    else:
-        validation_passed = False
+    # if loaded_file is not None:
+    #     validation_passed = True
+    # else:
+    #     validation_passed = False
 
-    print(f"CSV Validation Result: {validation_passed}")
+    # print(f"CSV Validation Result: {validation_passed}")
 
 def end_task():
     # Perform any necessary cleanup or finalization
