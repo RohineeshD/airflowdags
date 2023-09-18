@@ -63,7 +63,7 @@ def failure_task(**kwargs):
     result = ti.xcom_pull(task_ids='load_data_to_snowflake')
     print(f"XCom result from load_data_to_snowflake task: {result}")
 
-
+# Define the task to print success or failure
 success_print_task = PythonOperator(
     task_id='success_print',
     python_callable=success_task,
@@ -79,6 +79,13 @@ failure_print_task = PythonOperator(
 )
 
 # Set up task dependencies
+load_data_to_snowflake_task = PythonOperator(
+    task_id='load_data_to_snowflake',
+    python_callable=load_data_to_snowflake,
+    provide_context=True,
+    dag=dag,
+)
+
 load_data_to_snowflake_task >> task2 >> [success_print_task, failure_print_task]
 
 
