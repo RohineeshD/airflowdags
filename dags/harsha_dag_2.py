@@ -64,11 +64,11 @@ no_files_task = DummyOperator(
 create_snowflake_stage_task = SnowflakeOperator(
     task_id='create_snowflake_stage',
     sql=[
-        "CREATE OR REPLACE STAGE IF NOT EXISTS your_snowflake_stage",  
-        "URL = 's3://your-s3-bucket/path/to/stage'",  
+        "CREATE OR REPLACE STAGE IF NOT EXISTS snowflake_stage",  
+        "URL = 'C:/Users/User/Desktop/load'",  
         "FILE_FORMAT = (TYPE = 'CSV' SKIP_HEADER = 1)"  
     ],
-    snowflake_conn_id='your_snowflake_connection',
+    snowflake_conn_id='air_conn',
     autocommit=True,
     trigger_rule='one_success',  
     dag=dag,
@@ -77,7 +77,7 @@ create_snowflake_stage_task = SnowflakeOperator(
 # Define the SnowflakeOperator task to load the file from the stage
 load_local_file_task = SnowflakeOperator(
     task_id='load_local_file_task',
-    sql="COPY INTO automate_table FROM @your_snowflake_stage/Downloaded_CSV_TABLE.csv FILE_FORMAT = (TYPE = 'CSV' SKIP_HEADER = 1);",
+    sql="COPY INTO automate_table FROM @snowflake_stage/Downloaded_CSV_TABLE.csv FILE_FORMAT = (TYPE = 'CSV' SKIP_HEADER = 1);",
     snowflake_conn_id='air_conn',
     autocommit=True,
     trigger_rule='one_success',  
