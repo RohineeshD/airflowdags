@@ -8,7 +8,7 @@ from datetime import timedelta
 
 # Define your DAG with appropriate configurations
 dag = DAG(
-    'csv_upload_and_check_snowflake',
+    'csv_upload_snowflake',
     schedule_interval=None,  # Set your desired schedule interval or None for manual execution
     start_date=days_ago(1),  # Adjust the start date as needed
     catchup=False,  # Set to True if you want to backfill historical data
