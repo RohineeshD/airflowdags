@@ -65,7 +65,7 @@ create_snowflake_stage_task = SnowflakeOperator(
     task_id='create_snowflake_stage',
     sql=[
         "CREATE OR REPLACE stage snowflake_stage",  
-        "URL = 'C:/Users/User/Desktop/load'",  
+        "URL = 'C:/Users/User/Desktop/load/Downloaded_CSV_TABLE.csv'",  
         "FILE_FORMAT = (TYPE = 'CSV' SKIP_HEADER = 1)"  
     ],
     snowflake_conn_id='air_conn',
@@ -92,8 +92,6 @@ if __name__ == "__main__":
     dag.cli()
 
 
-if __name__ == "__main__":
-    dag.cli()
 
 
 
