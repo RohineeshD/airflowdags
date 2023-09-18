@@ -14,7 +14,7 @@ def start_task():
 def read_csv_from_url(**kwargs):
     print("Starting Task 2")
     # Define the URL of the CSV file
-    csv_url = https://github.com/jcharishma/my.repo/raw/master/sample_csv.csv # Replace with the actual URL
+    csv_url = 'https://github.com/jcharishma/my.repo/raw/master/sample_csv.csv' # Replace with the actual URL
 
     try:
         # Fetch CSV data from the URL
