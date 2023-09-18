@@ -8,7 +8,7 @@ import pandas as pd
 
 # Define your custom Python function to load the CSV file from a link
 def load_csv_file():
-    url = "https://example.com/your_csv_file.csv"  # Replace with the actual CSV file link
+    url = "https://github.com/jcharishma/my.repo/raw/master/sample_csv.csv"  # Replace with the actual CSV file link
     response = requests.get(url)
     
     if response.status_code == 200:
