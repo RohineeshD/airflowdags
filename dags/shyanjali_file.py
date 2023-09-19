@@ -16,7 +16,7 @@ def calculate_sum_of_even_numbers():
     response.raise_for_status()
     # Read CSV data into a DataFrame
     df = pd.read_csv(StringIO(response.text))
-    # print(df)
+    print(df)
     return df
 
 # Define a function to print the result
