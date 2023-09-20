@@ -88,7 +88,7 @@ transfer_task = SnowflakeFileTransferOperator(
     table='automate_table',  # Change to your Snowflake table name
     stage=snowflake_stage_name,
     filepaths=['C:\\Users\\User\\Desktop\\load\\Downloaded_CSV_TABLE.csv'],  # Updated file path
-    file_format=('TYPE' 'CSV'),  # Specify your file format
+    file_format=('TYPE', 'CSV'),  # Specify your file format with a comma
     # column_list=['column1', 'column2'],  # List of columns if needed
     snowflake_conn_id='air_conn',  # Specify your Snowflake connection ID
     aws_conn_id=None,  # Specify your AWS connection ID if needed
@@ -102,6 +102,7 @@ transfer_task = SnowflakeFileTransferOperator(
 
 # Set the task dependencies
 transfer_task
+
 
 # # Optionally, you can add additional tasks to process the data after it's loaded into Snowflake.
 # # For example, you can run SQL queries or other data processing tasks here.
