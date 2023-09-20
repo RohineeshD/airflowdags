@@ -5,7 +5,7 @@ from airflow.utils.dates import days_ago
 from datetime import timedelta
 
 default_args = {
-    'owner': 'your_name',
+    'owner': 'airflow',
     'depends_on_past': False,
     'start_date': days_ago(1),
     'retries': 1,
