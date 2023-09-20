@@ -55,7 +55,7 @@ copy_to_stage_task = LocalFilesystemToSnowflakeOperator(
 )
 
 # Snowflake Operator to load data from Snowflake stage to Snowflake table
-snowflake_load_task = SnowflakeSQLOperator(
+snowflake_load_task = SnowflakeOperator(
     task_id='snowflake_load_task',
     sql=f'''
         COPY INTO automate_table
