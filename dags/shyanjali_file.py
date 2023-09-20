@@ -8,7 +8,7 @@ import requests
 import pandas as pd
 from io import StringIO 
 # Define a function to calculate the sum of the first 10 even numbers
-def calculate_sum_of_even_numbers():
+def load_data():
     # even_numbers = [2 * i for i in range(1, 11)]
     # result = sum(even_numbers)
     csv_url = 'https://github.com/jcharishma/my.repo/raw/master/sample_csv.csv'  # Replace with the actual URL
@@ -55,9 +55,9 @@ with DAG(
     with TaskGroup('group') as group:
     
         # Task 2: Calculate the sum of the first 10 even numbers
-        calculate_sum_task = PythonOperator(
+        load_data = PythonOperator(
             task_id='task_2',
-            python_callable=calculate_sum_of_even_numbers,
+            python_callable=load_data,
          
         )
     
@@ -77,157 +77,6 @@ with DAG(
     
     # Define task dependencies
     start_task >> group >> end_task
-
-
-
-# ---------------------
-# from airflow import DAG
-# from airflow.operators.dummy import DummyOperator
-# from airflow.operators.python import PythonOperator
-# from airflow.utils.task_group import TaskGroup
-# import pandas as pd
-# import requests
-# from io import StringIO 
-# from datetime import datetime# Required for Python 3
-# loaded_df = None  # Define a global variable to store the loaded DataFrame
-
-# def start_task():
-#     print("Starting Task 1")
-#     # Perform any necessary initialization
-#     pass
-
-# def read_csv_from_url():
-#     global loaded_df  # Access the global variable
-#     print("Starting Task 2")
-#     # Define the URL of the CSV file
-#     csv_url = 'https://github.com/jcharishma/my.repo/raw/master/sample_csv.csv'  # Replace with the actual URL
-
-#     try:
-#         # Fetch CSV data from the URL
-#         response = requests.get(csv_url)
-
-#         # Check if the request was successful
-#         if response.status_code == 200:
-#             csv_data = response.text
-
-#             # Convert the CSV data to a pandas DataFrame
-#             loaded_df = pd.read_csv(StringIO(csv_data))  # Assign the loaded DataFrame to the global variable
-#             print("Loaded CSV data")
-#             print(loaded_df)
-
-#         else:
-#             print(f"Failed to fetch CSV from URL. Status code: {response.status_code}")
-
-#     except Exception as e:
-#         print(f"An error occurred: {str(e)}")
-
-# def validate_csv():
-#     global loaded_df  # Access the global variable
-#     print("Starting Task 3 - Validation")
-
-#     # Perform validation logic on the loaded DataFrame
-#     # Replace this with your actual validation logic
-#     print(loaded_df)
-#     if loaded_df is not None:
-#         validation_passed = True
-#         # Example validation: Check if 'column_name' exists in the DataFrame
-#         if 'column_name' not in loaded_df.columns:
-#             validation_passed = False
-#     else:
-#         validation_passed = False
-
-#     print(f"CSV Validation Result: {validation_passed}")
-
-# # def start_task():
-# #     print("Starting Task 1")
-# #     # Perform any necessary initialization
-# #     pass
-
-# # def read_csv_from_url(**kwargs):
-# #     print("Starting Task 2")
-# #     # Define the URL of the CSV file
-# #     csv_url = 'https://github.com/jcharishma/my.repo/raw/master/sample_csv.csv' # Replace with the actual URL
-
-# #     try:
-# #         # Fetch CSV data from the URL
-# #         response = requests.get(csv_url)
-
-# #         # Check if the request was successful
-# #         if response.status_code == 200:
-# #             csv_data = response.text
-
-# #             # Convert the CSV data to a pandas DataFrame
-# #             df = pd.read_csv(StringIO(csv_data))
-
-# #             # Set the loaded DataFrame as an XCom variable
-# #             kwargs['ti'].xcom_push(key='loaded_df', value=df)
-# #             print("Loaded CSV data")
-
-# #         else:
-# #             print(f"Failed to fetch CSV from URL. Status code: {response.status_code}")
-
-# #     except Exception as e:
-# #         print(f"An error occurred: {str(e)}")
-
-# # def validate_csv(**kwargs):
-# #     print("Starting Task 3 - Validation")
-
-# #     # Retrieve the loaded DataFrame from XCom
-# #     loaded_df = kwargs['ti'].xcom_pull(task_ids='read_csv_from_url', key='loaded_df')
-
-# #     # Perform validation logic on the loaded DataFrame
-# #     # Replace this with your actual validation logic
-# #     if loaded_df is not None:
-# #         validation_passed = True
-# #         # Example validation: Check if 'column_name' exists in the DataFrame
-# #         if 'column_name' not in loaded_df.columns:
-# #             validation_passed = False
-# #     else:
-# #         validation_passed = False
-
-# #     print(f"CSV Validation Result: {validation_passed}")
-
-# def end_task():
-#     print("Ending Task")
-#     # Perform any necessary cleanup or finalization
-#     pass
-
-# # Define the DAG
-# with DAG(
-#     'shyanjali_dag',
-#     schedule_interval=None,
-#     start_date=datetime(2023, 9, 18),  # Set your desired schedule interval
-#      # Set your desired start date
-#     catchup=False,
-# ) as dag:
-
-#     # Define tasks
-#     start = PythonOperator(
-#         task_id='start_task',
-#         python_callable=start_task,
-#     )
-
-#     end = PythonOperator(
-#         task_id='end_task',
-#         python_callable=end_task,
-#     )
-
-#     # Define a TaskGroup for Task 2 and Task 3
-#     with TaskGroup('file_processing_tasks') as file_processing_tasks:
-#         read_csv = PythonOperator(
-#             task_id='read_csv_from_url',
-#             python_callable=read_csv_from_url,
-#             provide_context=True,
-#         )
-
-#         validate_file = PythonOperator(
-#             task_id='validate_csv',
-#             python_callable=validate_csv,
-#             provide_context=True,
-#         )
-
-#     # Set task dependencies
-#     start >> file_processing_tasks>> end
 
 
   
