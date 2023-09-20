@@ -1,11 +1,11 @@
 from airflow import DAG
 from airflow.sensors.filesystem import FileSensor
 from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
-from airflow.providers.snowflake.transfers.local_to_snowflake import LocalFilesystemToSnowflakeOperator
+from airflow.providers.snowflake.operators.snowflake import SnowflakeFileTransferOperator
 from airflow.utils.dates import days_ago
 from datetime import datetime, timedelta
 
-# start_date = days_ago(1)
+start_date = days_ago(1)
 
 default_args = {
     'owner': 'airflow',
@@ -17,8 +17,8 @@ default_args = {
 dag = DAG(
     'snowflake_file_load_dag',
     default_args=default_args,
-    start_date=datetime(2023, 9, 20),
-    description='DAG to load files into Snowflake',
+    start_date=start_date,
+    description='DAG to load CSV files into Snowflake',
     schedule_interval=None,  # Set the schedule interval according to your requirements
 )
 
@@ -39,19 +39,20 @@ file_sensor = FileSensor(
 snowflake_hook = SnowflakeHook(snowflake_conn_id='air_conn')
 
 # Snowflake Operator to load the CSV file into Snowflake internal stage
-snowflake_stage_load_task = LocalFilesystemToSnowflakeOperator(
+snowflake_stage_load_task = SnowflakeFileTransferOperator(
     task_id='snowflake_stage_load_task',
     schema='exusia_schema',
     table='automate_table',
     stage='my_stage_name',  # Replace with your internal stage name
-    file_path=file_directory,  # Path to the file to load
-    file_pattern='.*\.csv',  # Specify a regular expression to match CSV files
+    file_paths=[file_directory],  # List of file paths to load
     file_format='(TYPE = "CSV" FIELD_OPTIONALLY_ENCLOSED_BY = "")',  # Specify CSV format
-    column_transformation=[],  # Optional column transformations
+    load_options='SKIP_HEADER = 1',  # Specify options like skipping header
+    snowflake_conn_id='snowflake_conn_id',
 )
 
 # Set task dependencies
 file_sensor >> snowflake_stage_load_task
+
 
 
 # from airflow import DAG
