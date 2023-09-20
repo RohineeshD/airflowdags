@@ -1,11 +1,11 @@
 from airflow import DAG
 from airflow.sensors.filesystem import FileSensor
 from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
-from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
+from airflow.providers.snowflake.transfers.local_to_snowflake import LocalFilesystemToSnowflakeOperator
 from airflow.utils.dates import days_ago
-from datetime import datetime, timedelta  # Add this import
+from datetime import datetime, timedelta
 
-start_date = days_ago(1)
+# start_date = days_ago(1)
 
 default_args = {
     'owner': 'airflow',
@@ -17,15 +17,15 @@ default_args = {
 dag = DAG(
     'snowflake_file_load_dag',
     default_args=default_args,
-    start_date=datetime(2023, 9, 20),  # Use datetime to define the start_date
+    start_date=datetime(2023, 9, 20),
     description='DAG to load files into Snowflake',
     schedule_interval=None,  # Set the schedule interval according to your requirements
 )
 
-# Define the directory where files will arrive
+# Define the directory where CSV files will arrive
 file_directory = 'C:/Users/User/Desktop/load'
 
-# Create a FileSensor to detect the presence of new files
+# Create a FileSensor to detect the presence of new CSV files
 file_sensor = FileSensor(
     task_id='file_sensor_task',
     filepath=file_directory,
@@ -38,17 +38,73 @@ file_sensor = FileSensor(
 # Snowflake Hook for connection
 snowflake_hook = SnowflakeHook(snowflake_conn_id='air_conn')
 
-# Snowflake Operator to load the file into Snowflake
-snowflake_load_task = SnowflakeOperator(
-    task_id='snowflake_load_task',
-    sql='''COPY INTO automate_table FROM @my_stage_name FILE_FORMAT = (
-             TYPE = 'CSV' SKIP_HEADER = 1 FIELD_OPTIONALLY_ENCLOSED_BY = ''
-             )''',
-    snowflake_conn_id='snowflake_conn_id',
+# Snowflake Operator to load the CSV file into Snowflake internal stage
+snowflake_stage_load_task = LocalFilesystemToSnowflakeOperator(
+    task_id='snowflake_stage_load_task',
+    schema='exusia_schema',
+    table='automate_table',
+    stage='my_stage_name',  # Replace with your internal stage name
+    file_path=file_directory,  # Path to the file to load
+    file_pattern='.*\.csv',  # Specify a regular expression to match CSV files
+    file_format='(TYPE = "CSV" FIELD_OPTIONALLY_ENCLOSED_BY = "")',  # Specify CSV format
+    column_transformation=[],  # Optional column transformations
 )
 
 # Set task dependencies
-file_sensor >> snowflake_load_task
+file_sensor >> snowflake_stage_load_task
+
+
+# from airflow import DAG
+# from airflow.sensors.filesystem import FileSensor
+# from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
+# from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
+# from airflow.utils.dates import days_ago
+# from datetime import datetime, timedelta  # Add this import
+
+# start_date = days_ago(1)
+
+# default_args = {
+#     'owner': 'airflow',
+#     'depends_on_past': False,
+#     'retries': 1,
+#     'retry_delay': timedelta(minutes=5),
+# }
+
+# dag = DAG(
+#     'snowflake_file_load_dag',
+#     default_args=default_args,
+#     start_date=datetime(2023, 9, 20),  # Use datetime to define the start_date
+#     description='DAG to load files into Snowflake',
+#     schedule_interval=None,  # Set the schedule interval according to your requirements
+# )
+
+# # Define the directory where files will arrive
+# file_directory = 'C:/Users/User/Desktop/load'
+
+# # Create a FileSensor to detect the presence of new files
+# file_sensor = FileSensor(
+#     task_id='file_sensor_task',
+#     filepath=file_directory,
+#     poke_interval=10,  # Check every 10 seconds if a new file has arrived
+#     timeout=3600,  # Stop checking after 1 hour
+#     mode='poke',
+#     dag=dag,
+# )
+
+# # Snowflake Hook for connection
+# snowflake_hook = SnowflakeHook(snowflake_conn_id='air_conn')
+
+# # Snowflake Operator to load the file into Snowflake
+# snowflake_load_task = SnowflakeOperator(
+#     task_id='snowflake_load_task',
+#     sql='''COPY INTO automate_table FROM @my_stage_name FILE_FORMAT = (
+#              TYPE = 'CSV' SKIP_HEADER = 1 FIELD_OPTIONALLY_ENCLOSED_BY = ''
+#              )''',
+#     snowflake_conn_id='snowflake_conn_id',
+# )
+
+# # Set task dependencies
+# file_sensor >> snowflake_load_task
 
 
 
