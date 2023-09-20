@@ -4,6 +4,12 @@ from airflow.providers.snowflake.operators.snowflake import SnowflakeSQLOperator
 from airflow.providers.snowflake.transfers.local_to_snowflake import LocalFilesystemToSnowflakeOperator
 from airflow.utils.dates import days_ago
 from datetime import datetime, timedelta
+from airflow import DAG
+from airflow.sensors.filesystem import FileSensor
+from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
+from airflow.providers.snowflake.transfers.local_to_snowflake import LocalFilesystemToSnowflakeOperator
+from airflow.utils.dates import days_ago
+from datetime import datetime, timedelta
 
 start_date = days_ago(1)
 
