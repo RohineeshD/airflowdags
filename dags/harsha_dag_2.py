@@ -3,7 +3,7 @@ from airflow.sensors.filesystem import FileSensor
 from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
 from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
 from airflow.utils.dates import days_ago
-from datetime import timedelta
+from datetime import datetime, timedelta  # Add this import
 
 start_date = days_ago(1)
 
@@ -17,7 +17,7 @@ default_args = {
 dag = DAG(
     'snowflake_file_load_dag',
     default_args=default_args,
-    start_date=datetime(2023, 9, 20),
+    start_date=datetime(2023, 9, 20),  # Use datetime to define the start_date
     description='DAG to load files into Snowflake',
     schedule_interval=None,  # Set the schedule interval according to your requirements
 )
@@ -49,6 +49,7 @@ snowflake_load_task = SnowflakeOperator(
 
 # Set task dependencies
 file_sensor >> snowflake_load_task
+
 
 
 # from airflow import DAG
