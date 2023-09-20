@@ -10,7 +10,6 @@ start_date = days_ago(1)
 default_args = {
     'owner': 'airflow',
     'depends_on_past': False,
-    'start_date':start_date,
     'retries': 1,
     'retry_delay': timedelta(minutes=5),
 }
@@ -18,6 +17,7 @@ default_args = {
 dag = DAG(
     'snowflake_file_load_dag',
     default_args=default_args,
+    start_date=datetime(2023, 9, 20),
     description='DAG to load files into Snowflake',
     schedule_interval=None,  # Set the schedule interval according to your requirements
 )
