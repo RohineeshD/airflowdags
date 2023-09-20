@@ -3,6 +3,7 @@ from airflow.sensors.filesystem import FileSensor
 from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
 from airflow.providers.snowflake.operators.snowflake import SnowflakeFileTransferOperator
 from airflow.providers.snowflake.operators.file_to_snowflake import SnowflakeLoadFileOperator
+from airflow.providers.snowflake.operators.snowflake import SnowflakeSQLOperator
 from airflow.utils.dates import days_ago
 from datetime import datetime, timedelta
 
