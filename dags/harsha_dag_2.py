@@ -5,6 +5,8 @@ from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
 from airflow.utils.dates import days_ago
 from datetime import timedelta
 
+start_date = days_ago(1)
+
 default_args = {
     'owner': 'airflow',
     'depends_on_past': False,
