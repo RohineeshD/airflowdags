@@ -37,8 +37,8 @@ file_sensor = FileSensor(
 )
 
 # Snowflake Hook for connection
-snowflake_conn_id = 'snowflake_conn_id'  # Replace with your Snowflake connection ID
-snowflake_hook = SnowflakeHook(snowflake_conn_id=air_conn)
+snowflake_conn_id = 'air_conn'  # Replace with your Snowflake connection ID
+snowflake_hook = SnowflakeHook(snowflake_conn_id=snowflake_conn_id)
 
 def upload_csv_to_snowflake(file_path, snowflake_stage):
     try:
