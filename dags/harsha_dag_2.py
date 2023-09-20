@@ -1,6 +1,7 @@
 from airflow import DAG
 from airflow.sensors.filesystem import FileSensor
-from airflow.providers.snowflake.transfers.local_to_snowflake import LocalFilesystemToSnowflakeOperator
+from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
+from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
 from airflow.utils.dates import days_ago
 from datetime import timedelta
 
@@ -32,20 +33,21 @@ file_sensor = FileSensor(
     dag=dag,
 )
 
+# Snowflake Hook for connection
+snowflake_hook = SnowflakeHook(snowflake_conn_id='air_conn')
+
 # Snowflake Operator to load the file into Snowflake
-snowflake_load_task = LocalFilesystemToSnowflakeOperator(
+snowflake_load_task = SnowflakeOperator(
     task_id='snowflake_load_task',
-    schema='exusia_schema',
-    table='automate_table',
-    stage='my_stage_name',
-    file_path=file_directory,  # Path to the file to load
-    file_pattern='.*',  # Specify a regular expression to match the file(s) you want to load
-    file_format='your_snowflake_file_format',
-    column_transformation=[]  # Optional column transformations
+    sql='''COPY INTO automate_table FROM @my_stage_name FILE_FORMAT = (
+             TYPE = 'CSV' SKIP_HEADER = 1 FIELD_OPTIONALLY_ENCLOSED_BY = ''
+             )''',
+    snowflake_conn_id='snowflake_conn_id',
 )
 
 # Set task dependencies
 file_sensor >> snowflake_load_task
+
 
 # from airflow import DAG
 # from airflow.providers.snowflake.transfers.s3_to_snowflake import SnowflakeFileTransferOperator
