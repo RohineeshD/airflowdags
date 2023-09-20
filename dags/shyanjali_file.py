@@ -65,7 +65,7 @@ with DAG(
         print_result_task = PythonOperator(
             task_id='task_3',
             python_callable=print_result,
-            op_args=[calculate_sum_task.output],  # Pass the output from Task 2 to Task 3
+            op_args=[load_data.output],  # Pass the output from Task 2 to Task 3
            
         )
     
