@@ -72,7 +72,8 @@ list_files_task = PythonOperator(
     dag=dag,
 )
 
-file_sensor >> list_files_task
+# file_sensor >> 
+list_files_task
 
 
 # # Snowflake Operator to load data from Snowflake stage to Snowflake table
