@@ -5,6 +5,7 @@ from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
 from airflow.utils.dates import days_ago
 from datetime import datetime, timedelta
 import os
+import logging
 
 start_date = days_ago(1)
 
@@ -37,11 +38,12 @@ file_sensor = FileSensor(
 )
 
 # Snowflake Hook for connection
-snowflake_conn_id = 'air_conn'  # Replace with your Snowflake connection ID
+snowflake_conn_id = 'air_conn'  
 snowflake_hook = SnowflakeHook(snowflake_conn_id=snowflake_conn_id)
 
 def upload_csv_to_snowflake(file_path, snowflake_stage):
     try:
+        logging.info(f"Uploading CSV file: {file_path} to Snowflake stage: {snowflake_stage}")
         snowflake_hook.upload_file(
             file_path=file_path,
             schema=exusia_schema,  
@@ -49,11 +51,13 @@ def upload_csv_to_snowflake(file_path, snowflake_stage):
             table=automate_table,  
             file_format=csv
         )
+        logging.info("CSV file uploaded successfully.")
     except Exception as e:
+        logging.error(f"Error uploading CSV file to Snowflake: {str(e)}")
         raise Exception(f"Error uploading CSV file to Snowflake: {str(e)}")
 
 # Snowflake stage name
-snowflake_stage = 'my_stage_name'  # Replace with your Snowflake stage name
+snowflake_stage = 'my_stage_name'  
 
 # Snowflake Operator to load data from Snowflake stage to Snowflake table
 snowflake_load_task = SnowflakeOperator(
