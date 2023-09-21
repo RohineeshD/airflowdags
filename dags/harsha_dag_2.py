@@ -61,7 +61,7 @@ dag = DAG(
 # # Snowflake stage name
 # snowflake_stage = 'my_stage_name'  
 
-file_directory = 'C:/Users/User/Desktop/load/Downloaded_CSV_TABLES'
+file_directory = 'C:/Users/User/Desktop/load'
 
 def list_files():
     import os
