@@ -44,10 +44,10 @@ def upload_csv_to_snowflake(file_path, snowflake_stage):
     try:
         snowflake_hook.upload_file(
             file_path=file_path,
-            schema=None,  # Specify your schema if needed
+            schema=exusia_schema,  
             stage=snowflake_stage,
-            table=None,  # Specify your table if needed
-            file_format=None  # Specify your file format if needed
+            table=automate_table,  
+            file_format=(TYPE = "CSV" FIELD_OPTIONALLY_ENCLOSED_BY = "") 
         )
     except Exception as e:
         raise Exception(f"Error uploading CSV file to Snowflake: {str(e)}")
