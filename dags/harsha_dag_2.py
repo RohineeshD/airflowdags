@@ -34,7 +34,7 @@ file_sensor = FileSensor(
     task_id='file_sensor_task',
     filepath=file_directory,
     poke_interval=10,  # Check every 10 seconds if a new file has arrived
-    timeout=3600,  # Stop checking after 1 hour
+    timeout=300,  # Stop checking after 1 hour
     mode='poke',
     dag=dag,
 )
@@ -44,7 +44,6 @@ snowflake_conn_id = 'air_conn'
 snowflake_hook = SnowflakeHook(snowflake_conn_id=snowflake_conn_id)
 
 def list_files():
-    import os
     print("Current working directory:", os.getcwd())
     file_list = os.listdir(file_directory)
     print("Files in directory:", file_list)
