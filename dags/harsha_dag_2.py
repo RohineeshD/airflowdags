@@ -62,8 +62,9 @@ dag = DAG(
 # snowflake_stage = 'my_stage_name'  
 
 def list_files():
-   
-    file_list = os.listdir('C:/Users/User/Desktop/load')
+    import os
+    print("Current working directory:", os.getcwd())
+    file_list = os.listdir('C:/Users/User/Desktop/load/Downloaded_CSV_TABLES')  
     print("Files in directory:", file_list)
 
 list_files_task = PythonOperator(
@@ -71,6 +72,10 @@ list_files_task = PythonOperator(
     python_callable=list_files,
     dag=dag,
 )
+
+
+ list_files_task
+
 
 # file_sensor >> 
 list_files_task
