@@ -25,7 +25,7 @@ dag = DAG(
 )
 
 # Define the directory where CSV files will arrive
-file_directory = 'C:\Users\User\Desktop\load\Downloaded_CSV_TABLES'
+file_directory = "C:/Users/User/Desktop/load/Downloaded_CSV_TABLES"
 
 # Create a FileSensor to detect the presence of new CSV files
 file_sensor = FileSensor(
