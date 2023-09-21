@@ -63,7 +63,7 @@ dag = DAG(
 
 def list_files():
    
-    file_list = os.listdir('/C:/Users/User/Desktop/load/Downloaded_CSV_TABLES')
+    file_list = os.listdir('/C:/Users/User/Desktop/load')
     print("Files in directory:", file_list)
 
 list_files_task = PythonOperator(
