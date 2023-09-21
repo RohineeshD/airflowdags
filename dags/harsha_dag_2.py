@@ -43,7 +43,7 @@ file_sensor = FileSensor(
 snowflake_conn_id = 'air_conn'  
 snowflake_hook = SnowflakeHook(snowflake_conn_id=snowflake_conn_id)
 
-ef list_files():
+def list_files():
     import os
     print("Current working directory:", os.getcwd())
     file_list = os.listdir(file_directory)
