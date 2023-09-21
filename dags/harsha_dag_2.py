@@ -47,7 +47,7 @@ def upload_csv_to_snowflake(file_path, snowflake_stage):
             schema=exusia_schema,  
             stage=snowflake_stage,
             table=automate_table,  
-            file_format=(TYPE = "CSV" FIELD_OPTIONALLY_ENCLOSED_BY = "") 
+            file_format=csv
         )
     except Exception as e:
         raise Exception(f"Error uploading CSV file to Snowflake: {str(e)}")
