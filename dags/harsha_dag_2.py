@@ -23,82 +23,73 @@ dag = DAG(
     default_args=default_args,
     start_date=start_date,
     description='DAG to load CSV files into Snowflake',
-    schedule_interval=None,  # Set the schedule interval according to your requirements
+    schedule_interval=None,  
 )
 
 # # Define the directory where CSV files will arrive
-# file_directory = "C:/Users/User/Desktop/load/Downloaded_CSV_TABLES"
+file_directory = "C:/Users/User/Desktop/load/Downloaded_CSV_TABLES"
 
 # # Create a FileSensor to detect the presence of new CSV files
-# file_sensor = FileSensor(
-#     task_id='file_sensor_task',
-#     filepath=file_directory,
-#     poke_interval=10,  # Check every 10 seconds if a new file has arrived
-#     timeout=3600,  # Stop checking after 1 hour
-#     mode='poke',
-#     dag=dag,
-# )
+file_sensor = FileSensor(
+    task_id='file_sensor_task',
+    filepath=file_directory,
+    poke_interval=10,  # Check every 10 seconds if a new file has arrived
+    timeout=3600,  # Stop checking after 1 hour
+    mode='poke',
+    dag=dag,
+)
 
-# # Snowflake Hook for connection
-# snowflake_conn_id = 'air_conn'  
-# snowflake_hook = SnowflakeHook(snowflake_conn_id=snowflake_conn_id)
+# Snowflake Hook for connection
+snowflake_conn_id = 'air_conn'  
+snowflake_hook = SnowflakeHook(snowflake_conn_id=snowflake_conn_id)
 
-# def upload_csv_to_snowflake(file_path, snowflake_stage):
-#     try:
-#         logging.info(f"Uploading CSV file: {file_path} to Snowflake stage: {snowflake_stage}")
-#         snowflake_hook.upload_file(
-#             file_path=file_path,
-#             schema=exusia_schema,  
-#             stage=snowflake_stage,
-#             table=automate_table,  
-#             file_format=csv
-#         )
-#         logging.info("CSV file uploaded successfully.")
-#     except Exception as e:
-#         logging.error(f"Error uploading CSV file to Snowflake: {str(e)}")
-#         raise Exception(f"Error uploading CSV file to Snowflake: {str(e)}")
-
-# # Snowflake stage name
-# snowflake_stage = 'my_stage_name'  
-
-file_directory = 'C:/Users/User/Desktop/load'
-
-def list_files():
+ef list_files():
     import os
     print("Current working directory:", os.getcwd())
     file_list = os.listdir(file_directory)
     print("Files in directory:", file_list)
+
+def upload_csv_to_snowflake(file_path, snowflake_stage):
+    try:
+        logging.info(f"Uploading CSV file: {file_path} to Snowflake stage: {snowflake_stage}")
+        snowflake_hook.upload_file(
+            file_path=file_path,
+            schema=exusia_schema,  
+            stage=snowflake_stage,
+            table=automate_table,  
+            file_format=csv
+        )
+        logging.info("CSV file uploaded successfully.")
+    except Exception as e:
+        logging.error(f"Error uploading CSV file to Snowflake: {str(e)}")
+        raise Exception(f"Error uploading CSV file to Snowflake: {str(e)}")
+
+# # Snowflake stage name
+snowflake_stage = 'my_stage_name'  
+
+
+# Snowflake Operator to load data from Snowflake stage to Snowflake table
+snowflake_load_task = SnowflakeOperator(
+    task_id='snowflake_load_task',
+    sql=f'''
+        COPY INTO automate_table
+        FROM @{snowflake_stage}
+        FILE_FORMAT = (
+            TYPE = 'CSV'
+            SKIP_HEADER = 1
+            FIELD_OPTIONALLY_ENCLOSED_BY = '"'
+        );
+    ''',
+    snowflake_conn_id=snowflake_conn_id,
+)
+
 list_files_task = PythonOperator(
     task_id='list_files_task',
     python_callable=list_files,
     dag=dag,
 )
 
-
-list_files_task
-
-
-# file_sensor >> 
-list_files_task
-
-
-# # Snowflake Operator to load data from Snowflake stage to Snowflake table
-# snowflake_load_task = SnowflakeOperator(
-#     task_id='snowflake_load_task',
-#     sql=f'''
-#         COPY INTO automate_table
-#         FROM @{snowflake_stage}
-#         FILE_FORMAT = (
-#             TYPE = 'CSV'
-#             SKIP_HEADER = 1
-#             FIELD_OPTIONALLY_ENCLOSED_BY = '"'
-#         );
-#     ''',
-#     snowflake_conn_id=snowflake_conn_id,
-# )
-
-# # Set task dependencies
-# file_sensor >> snowflake_load_task
+file_sensor >> list_files_task >> snowflake_load_task
 
 
 # from airflow import DAG
