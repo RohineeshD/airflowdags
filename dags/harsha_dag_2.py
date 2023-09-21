@@ -74,7 +74,7 @@ list_files_task = PythonOperator(
 )
 
 
- list_files_task
+list_files_task
 
 
 # file_sensor >> 
