@@ -30,17 +30,17 @@ dag = DAG(
 # file_directory = '"C:/Users/User/Desktop/load"'
 
 file_directory  = r'C:/Users/User/Desktop/load'
-
-try:
-    with open(file_directory, 'r') as file:
-        # Perform operations on the file here
-        # For example, you can read its contents:
-        file_contents = file.read()
-        print(file_contents)
-except FileNotFoundError:
-    print(f"The file '{file_directory}' was not found.")
-except Exception as e:
-    print(f"An error occurred: {str(e)}")
+def list_files():
+    try:
+        with open(file_directory, 'r') as file:
+            # Perform operations on the file here
+            # For example, you can read its contents:
+            file_contents = file.read()
+            print(file_contents)
+    except FileNotFoundError:
+        print(f"The file '{file_directory}' was not found.")
+    except Exception as e:
+        print(f"An error occurred: {str(e)}")
 
 # # Create a FileSensor to detect the presence of new CSV files
 file_sensor = FileSensor(
@@ -97,13 +97,13 @@ snowflake_load_task = SnowflakeOperator(
     snowflake_conn_id=snowflake_conn_id,
 )
 
-# list_files_task = PythonOperator(
-#     task_id='list_files_task',
-#     python_callable=list_files,
-#     dag=dag,
-# )
+list_files_task = PythonOperator(
+    task_id='list_files_task',
+    python_callable=list_files,
+    dag=dag,
+)
 
-file_sensor  >> snowflake_load_task
+list_files_task >> file_sensor  >> snowflake_load_task
 
 # list_files_task
 # from airflow import DAG
