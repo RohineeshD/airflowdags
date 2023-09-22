@@ -29,11 +29,6 @@ dag = DAG(
 # # Define the directory where CSV files will arrive
 # file_directory = '"C:/Users/User/Desktop/load"'
 
-file_path = 'C:/Users/User/Desktop/data/data_table.csv'
-def list_files_task():
-    
-    list_files(file_path)
-
 
 def list_files(file_path):
     try:
@@ -49,6 +44,10 @@ def list_files(file_path):
 
 # file_path = 'C:/Users/User/Desktop/data/data_table.csv'  # Corrected variable name
 # list_files(file_path)  # Corrected function call
+
+def list_files_task():
+    file_path = 'C:/Users/User/Desktop/data/data_table.csv'
+    list_files(file_path)
 
 
 # def list_files():
