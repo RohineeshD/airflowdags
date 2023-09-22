@@ -29,8 +29,9 @@ dag = DAG(
 # # Define the directory where CSV files will arrive
 # file_directory = '"C:/Users/User/Desktop/load"'
 
+file_path = 'C:/Users/User/Desktop/data/data_table.csv'
 def list_files_task():
-    file_path = 'C:/Users/User/Desktop/data/data_table.csv'
+    
     list_files(file_path)
 
 
