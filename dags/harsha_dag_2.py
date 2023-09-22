@@ -52,7 +52,7 @@ def list_files(file_path):
 dag_directory = os.path.dirname(__file__)
 
 # Construct the relative file path
-file_path = os.path.join(dag_directory, 'data/data_table.csv')
+file_path = os.path.join(dag_directory, 'C:/Users/User/Desktop/data/data_table.csv')
 
 
 # def list_files():
