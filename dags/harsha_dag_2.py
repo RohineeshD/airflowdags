@@ -29,7 +29,7 @@ dag = DAG(
 # # Define the directory where CSV files will arrive
 # file_directory = '"C:/Users/User/Desktop/load"'
 
-
+file_path = 'C:/Users/User/Desktop/data/data_table.csv'
 def list_files(file_path):
     try:
         with open(file_path, 'r') as file:
