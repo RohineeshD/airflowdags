@@ -48,7 +48,7 @@ snowflake_hook = SnowflakeHook(snowflake_conn_id=snowflake_conn_id)
 #     file_list = os.listdir(file_directory)
 #     print("Files in directory:", file_list)
 
-file_path = r'C:/Users/User/Desktop/load'
+file_directory  = r'C:/Users/User/Desktop/load'
 
 try:
     with open(file_path, 'r') as file:
