@@ -124,7 +124,7 @@ snowflake_load_task = SnowflakeOperator(
 
 list_files_task = PythonOperator(
     task_id='list_files_task',
-    python_callable=list_files,
+    python_callable=lambda: list_files(file_path),
     dag=dag,
 )
 
