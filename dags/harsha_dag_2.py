@@ -27,7 +27,7 @@ dag = DAG(
 )
 
 # # Define the directory where CSV files will arrive
-file_directory = '"C:/Users/User/Desktop/load"'
+# file_directory = '"C:/Users/User/Desktop/load"'
 
 # # Create a FileSensor to detect the presence of new CSV files
 file_sensor = FileSensor(
@@ -43,10 +43,23 @@ file_sensor = FileSensor(
 snowflake_conn_id = 'air_conn'  
 snowflake_hook = SnowflakeHook(snowflake_conn_id=snowflake_conn_id)
 
-def list_files():
-    print("Current working directory:", os.getcwd())
-    file_list = os.listdir(file_directory)
-    print("Files in directory:", file_list)
+# def list_files():
+#     print("Current working directory:", os.getcwd())
+#     file_list = os.listdir(file_directory)
+#     print("Files in directory:", file_list)
+
+file_path = r'C:/Users/User/Desktop/load'
+
+try:
+    with open(file_path, 'r') as file:
+        # Perform operations on the file here
+        # For example, you can read its contents:
+        file_contents = file.read()
+        print(file_contents)
+except FileNotFoundError:
+    print(f"The file '{file_path}' was not found.")
+except Exception as e:
+    print(f"An error occurred: {str(e)}")
 
 def upload_csv_to_snowflake(file_path, snowflake_stage):
     try:
