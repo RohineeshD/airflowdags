@@ -60,7 +60,7 @@ list_files(file_path)  # Corrected function call
 # # Create a FileSensor to detect the presence of new CSV files
 file_sensor = FileSensor(
     task_id='file_sensor_task',
-    filepath=file_directory,
+    filepath=file_path,
     poke_interval=10,  # Check every 10 seconds if a new file has arrived
     timeout=300,  # Stop checking after 1 hour
     mode='poke',
