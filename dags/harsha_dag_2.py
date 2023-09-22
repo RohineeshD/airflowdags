@@ -29,7 +29,7 @@ dag = DAG(
 # # Define the directory where CSV files will arrive
 # file_directory = '"C:/Users/User/Desktop/load"'
 
-file_path = 'C:/Users/User/Desktop/data/data_table.csv'
+# file_path = 'C:/Users/User/Desktop/data/data_table.csv'
 def list_files(file_path):
     try:
         with open(file_path, 'r') as file:
@@ -45,9 +45,14 @@ def list_files(file_path):
 # file_path = 'C:/Users/User/Desktop/data/data_table.csv'  # Corrected variable name
 # list_files(file_path)  # Corrected function call
 
-def list_files_task():
-    file_path = 'C:/Users/User/Desktop/data/data_table.csv'
-    list_files(file_path)
+# def list_files_task():
+#     file_path = 'C:/Users/User/Desktop/data/data_table.csv'
+#     list_files(file_path)
+
+dag_directory = os.path.dirname(__file__)
+
+# Construct the relative file path
+file_path = os.path.join(dag_directory, 'data/data_table.csv')
 
 
 # def list_files():
@@ -119,7 +124,7 @@ snowflake_load_task = SnowflakeOperator(
 
 list_files_task = PythonOperator(
     task_id='list_files_task',
-    python_callable=list_files_task,
+    python_callable=list_files,
     dag=dag,
 )
 
