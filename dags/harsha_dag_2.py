@@ -97,11 +97,11 @@ snowflake_load_task = SnowflakeOperator(
     snowflake_conn_id=snowflake_conn_id,
 )
 
-list_files_task = PythonOperator(
-    task_id='list_files_task',
-    python_callable=list_files,
-    dag=dag,
-)
+# list_files_task = PythonOperator(
+#     task_id='list_files_task',
+#     python_callable=list_files,
+#     dag=dag,
+# )
 
 file_sensor  >> snowflake_load_task
 
