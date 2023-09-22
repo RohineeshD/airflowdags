@@ -29,18 +29,33 @@ dag = DAG(
 # # Define the directory where CSV files will arrive
 # file_directory = '"C:/Users/User/Desktop/load"'
 
-file_directory  = 'C:/data/data_table.csv'
-def list_files():
+def list_files(file_path):
     try:
-        with open(file_directory, 'r') as file:
+        with open(file_path, 'r') as file:
             # Perform operations on the file here
             # For example, you can read its contents:
             file_contents = file.read()
             print(file_contents)
     except FileNotFoundError:
-        print(f"The file '{file_directory}' was not found.")
+        print(f"The file '{file_path}' was not found.")
     except Exception as e:
         print(f"An error occurred: {str(e)}")
+
+file_directory = 'C:/Users/User/Desktop/data/data_table.csv'
+list_files(file_directory)
+
+
+# def list_files():
+#     try:
+#         with open(file_directory, 'r') as file:
+#             # Perform operations on the file here
+#             # For example, you can read its contents:
+#             file_contents = file.read()
+#             print(file_contents)
+#     except FileNotFoundError:
+#         print(f"The file '{file_directory}' was not found.")
+#     except Exception as e:
+#         print(f"An error occurred: {str(e)}")
 
 # # Create a FileSensor to detect the presence of new CSV files
 file_sensor = FileSensor(
