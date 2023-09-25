@@ -1,12 +1,9 @@
+import logging
 from airflow import DAG
-from airflow.sensors.http_sensor import HttpSensor
+from airflow.providers.http.sensors.http import HttpSensor
 from airflow.operators.python_operator import PythonOperator
 from airflow.utils.dates import days_ago
-from custom_sensors import GitHubFileSensor
-from airflow_sensors import GitHubFileSensor
 from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
-
-# Import statements for other dependencies (if any)
 
 default_args = {
     'owner': 'your_name',
@@ -21,25 +18,12 @@ with DAG('load_data_to_snowflake',
     # Define your GitHub file URL
     github_file_url = 'https://raw.githubusercontent.com/mukkellaharsha/harsha.repo/main/data_table.csv'
 
-    # Define your GitHubFileSensor directly if it's defined in this script
-    class GitHubFileSensor(BaseSensorOperator):
-        template_fields = ('github_file_url',)
-        ui_color = '#e4f0e8'
-
-        @apply_defaults
-        def __init__(self, github_file_url, *args, **kwargs):
-            super(GitHubFileSensor, self).__init__(*args, **kwargs)
-            self.github_file_url = github_file_url
-
-        def poke(self, context):
-            response = head(self.github_file_url)
-            return response.status_code == 200
-
-
-    # Use the GitHubFileSensor to check for the file's presence on GitHub
-    check_github_file = GitHubFileSensor(
+    # Use the HttpSensor to check for the file's presence on GitHub
+    check_github_file = HttpSensor(
         task_id='check_github_file',
-        github_file_url=github_file_url,
+        method='HEAD',
+        http_conn_id='http_default',
+        endpoint=github_file_url,
         timeout=600,
         mode='poke',
     )
@@ -51,7 +35,7 @@ with DAG('load_data_to_snowflake',
 
         try:
             logging.info(f"Uploading CSV file: {file_path} to Snowflake stage: {snowflake_stage}")
-            snowflake_hook = SnowflakeHook(snowflake_conn_id='new_conn')
+            snowflake_hook = SnowflakeHook(snowflake_conn_id='your_snowflake_conn_id')
 
             # Define the Snowflake SQL statement to load data (replace with your SQL)
             sql = f"""
