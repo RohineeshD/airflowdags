@@ -1,51 +1,63 @@
 from airflow import DAG
-from airflow.providers.http.sensors.http import HttpSensor
-from airflow.providers.snowflake.transfers.http_to_snowflake import HttpToSnowflakeOperator
-from datetime import datetime
+from airflow.sensors.http_sensor import HttpSensor
+from airflow.operators.python_operator import PythonOperator
+from airflow.utils.dates import days_ago
+from your_custom_sensor_module import GitHubFileSensor
+from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
 
 default_args = {
-    'owner': 'airflow',
-    'start_date': datetime(2023, 9, 22),
+    'owner': 'your_name',
+    'start_date': days_ago(1),
     'retries': 1,
 }
 
-dag = DAG(
-    'load_data_to_snowflake',
-    default_args=default_args,
-    schedule_interval=None,
-)
+with DAG('load_data_to_snowflake',
+         default_args=default_args,
+         schedule_interval=None) as dag:
 
-file_sensor = HttpSensor(
-    task_id='check_github_file',
-    method='HEAD',
-    http_conn_id='http_default',
-    endpoint='/mukkellaharsha/harsha.repo/data_table.csv',
-    timeout=600,
-    mode='poke',
-    dag=dag,
-)
+    # Define your GitHub file URL
+    github_file_url = 'https://raw.githubusercontent.com/mukkellaharsha/harsha.repo/main/data_table.csv'
 
-# Use the SnowflakeHook to connect to Snowflake
-snowflake_hook = SnowflakeHook(snowflake_conn_id='new_conn')
+    # Use the GitHubFileSensor to check for the file's presence on GitHub
+    check_github_file = GitHubFileSensor(
+        task_id='check_github_file',
+        github_file_url=github_file_url,
+        timeout=600,
+        mode='poke',
+    )
 
-# Define a task to load data into Snowflake
-load_to_snowflake = HttpToSnowflakeOperator(
-    task_id='load_data_to_snowflake',
-    sql="COPY INTO auto_table FROM @my_stage/file_name.csv FILE_FORMAT = (TYPE = CSV);",
-    snowflake_conn_id='snowflake_conn_id',
-    http_conn_id='http_default',
-    task_concurrency=1,
-    copy_options=['OVERWRITE = TRUE'],  # Adjust as needed
-    copy_size='Large',
-    database='exusia_db',  # Modify with your Snowflake details
-    schema='exusia_schema',
-    warehouse='compute_wh',
-    stage='my_stage',
-    file_paths=['https://github.com/mukkellaharsha/harsha.repo/data_table.csv'],  # Specify the file path
-    field_ordering='COLLECTION' 
-)
+    def upload_csv_to_snowflake():
+        # Replace with the actual file path and Snowflake stage name
+        file_path = 'https://raw.githubusercontent.com/mukkellaharsha/harsha.repo/main/data_table.csv'
+        snowflake_stage = 'my_stage'
 
-file_sensor >> load_to_snowflake
+        try:
+            logging.info(f"Uploading CSV file: {file_path} to Snowflake stage: {snowflake_stage}")
+            snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake_conn')
+
+            # Define the Snowflake SQL statement to load data (replace with your SQL)
+            sql = f"""
+            COPY INTO auto_table
+            FROM @{snowflake_stage}/file_name.csv
+            FILE_FORMAT = (TYPE = CSV);
+            """
+
+            # Execute the SQL statement
+            snowflake_hook.run(sql)
+            logging.info("CSV file uploaded successfully.")
+        except Exception as e:
+            logging.error(f"Error uploading CSV file to Snowflake: {str(e)}")
+            raise Exception(f"Error uploading CSV file to Snowflake: {str(e)}")
+
+    # Use a PythonOperator to upload data into Snowflake
+    upload_to_snowflake = PythonOperator(
+        task_id='upload_to_snowflake',
+        python_callable=upload_csv_to_snowflake,
+        op_args=[],
+        op_kwargs={},
+    )
+
+    check_github_file >> upload_to_snowflake
 
 
 # from airflow import DAG
