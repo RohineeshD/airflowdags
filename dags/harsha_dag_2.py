@@ -22,14 +22,14 @@ with DAG('load_data_to_snowflake',
     check_github_file = HttpSensor(
         task_id='check_github_file',
         http_conn_id='http_default',
-        method='GET',  # You can use 'HEAD' if you prefer to check only for existence
+        method='HEAD',  
         endpoint=github_file_url,
         timeout=600,
         mode='poke',
     )
 
     def upload_csv_to_snowflake():
-        # Replace with the actual file path and Snowflake stage name
+        #  with the actual file path and Snowflake stage name
         file_path = 'https://raw.githubusercontent.com/mukkellaharsha/harsha.repo/master/data_table.csv'
         snowflake_stage = 'my_stage'
 
