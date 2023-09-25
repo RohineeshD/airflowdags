@@ -24,6 +24,7 @@ with DAG('load_data_to_snowflake',
         task_id='check_github_file',
         method='HEAD',
         http_conn_id='http_default',
+        method='GET',
         endpoint=github_file_url,
         timeout=600,
         mode='poke',
@@ -36,7 +37,7 @@ with DAG('load_data_to_snowflake',
 
         try:
             logging.info(f"Uploading CSV file: {file_path} to Snowflake stage: {snowflake_stage}")
-            snowflake_hook = SnowflakeHook(snowflake_conn_id='your_snowflake_conn_id')
+            snowflake_hook = SnowflakeHook(snowflake_conn_id='new_conn')
 
             # Define the Snowflake SQL statement to load data (replace with your SQL)
             sql = f"""
