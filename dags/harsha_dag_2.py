@@ -25,9 +25,12 @@ with DAG('load_data_to_snowflake',
         http_conn_id='http_default',
         method='HEAD',  
         endpoint=github_file_url,
+        request_params={},
+        response_check=lambda response: "httpbin" in response.text,
         timeout=600,
         mode='poke',
     )
+
 
     def upload_csv_to_snowflake():
         #  with the actual file path and Snowflake stage name
