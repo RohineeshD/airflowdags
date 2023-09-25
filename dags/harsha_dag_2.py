@@ -1,134 +1,200 @@
 from airflow import DAG
-from airflow.sensors.filesystem import FileSensor
-from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
-from airflow.operators.python import PythonOperator
-from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
-from airflow.utils.dates import days_ago
-from datetime import datetime, timedelta
-import os
-import logging
-
-
-start_date = days_ago(1)
+from airflow.providers.http.sensors.http import HttpSensor
+from airflow.providers.snowflake.transfers.http_to_snowflake import HttpToSnowflakeOperator
+from datetime import datetime
 
 default_args = {
-    'owner': 'airflow',
-    'depends_on_past': False,
+    'owner': 'your_name',
+    'start_date': datetime(2023, 9, 22),
     'retries': 1,
-    'retry_delay': timedelta(minutes=5),
 }
 
 dag = DAG(
-    'snowflake_file_load_dag',
+    'load_data_to_snowflake',
     default_args=default_args,
-    start_date=start_date,
-    description='DAG to load CSV files into Snowflake',
-    schedule_interval=None,  
+    schedule_interval=None,
 )
 
-# # Define the directory where CSV files will arrive
-# file_directory = '"C:/Users/User/Desktop/load"'
+file_sensor = HttpSensor(
+    task_id='check_github_file',
+    method='HEAD',
+    http_conn_id='http_default',
+    endpoint='/mukkellaharsha/harsha.repo/data_table.csv',
+    timeout=600,
+    mode='poke',
+    dag=dag,
+)
 
-# file_path = 'C:/Users/User/Desktop/data/data_table.csv'
-def list_files(file_path):
-    try:
-        with open(file_path, 'r') as file:
-            # Perform operations on the file here
-            # For example, you can read its contents:
-            file_contents = file.read()
-            print(file_contents)
-    except FileNotFoundError:
-        print(f"The file '{file_path}' was not found.")
-    except Exception as e:
-        print(f"An error occurred: {str(e)}")
+# Use the SnowflakeHook to connect to Snowflake
+snowflake_hook = SnowflakeHook(snowflake_conn_id='new_conn')
 
-# file_path = 'C:/Users/User/Desktop/data/data_table.csv'  # Corrected variable name
-# list_files(file_path)  # Corrected function call
+# Define a task to load data into Snowflake
+load_to_snowflake = HttpToSnowflakeOperator(
+    task_id='load_data_to_snowflake',
+    sql="COPY INTO auto_table FROM @my_stage/file_name.csv FILE_FORMAT = (TYPE = CSV);",
+    snowflake_conn_id='snowflake_conn_id',
+    http_conn_id='http_default',
+    task_concurrency=1,
+    copy_options=['OVERWRITE = TRUE'],  # Adjust as needed
+    copy_size='Large',
+    database='exusia_db',  # Modify with your Snowflake details
+    schema='exusia_schema',
+    warehouse='compute_wh',
+    stage='my_stage',
+    file_paths=['https://github.com/mukkellaharsha/harsha.repo/data_table.csv'],  # Specify the file path
+    field_ordering='COLLECTION'
+    field_mapping={},
+    header=True,
+    column_mapping={},
+    skip_leading_rows=0,
+    delimiter=',',
+    skip_trailing_rows=0,
+    quote_character='"',
+    escape_character=None,
+    column_list=[],
+    autocommit=True,
+    parameters={},
+    pre_sql=[],
+    post_sql=[],
+    trigger_rule='all_success',
+    *args,
+    **kwargs,
+)
 
-# def list_files_task():
-#     file_path = 'C:/Users/User/Desktop/data/data_table.csv'
-#     list_files(file_path)
-
-dag_directory = os.path.dirname(__file__)
-
-# Construct the relative file path
-file_path = os.path.join(dag_directory, 'C:/Users/User/Desktop/data/data_table.csv')
+file_sensor >> load_to_snowflake
 
 
-# def list_files():
+# from airflow import DAG
+# from airflow.sensors.filesystem import FileSensor
+# from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
+# from airflow.operators.python import PythonOperator
+# from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
+# from airflow.utils.dates import days_ago
+# from datetime import datetime, timedelta
+# import os
+# import logging
+
+
+# start_date = days_ago(1)
+
+# default_args = {
+#     'owner': 'airflow',
+#     'depends_on_past': False,
+#     'retries': 1,
+#     'retry_delay': timedelta(minutes=5),
+# }
+
+# dag = DAG(
+#     'snowflake_file_load_dag',
+#     default_args=default_args,
+#     start_date=start_date,
+#     description='DAG to load CSV files into Snowflake',
+#     schedule_interval=None,  
+# )
+
+# # # Define the directory where CSV files will arrive
+# # file_directory = '"C:/Users/User/Desktop/load"'
+
+# # file_path = 'C:/Users/User/Desktop/data/data_table.csv'
+# def list_files(file_path):
 #     try:
-#         with open(file_directory, 'r') as file:
+#         with open(file_path, 'r') as file:
 #             # Perform operations on the file here
 #             # For example, you can read its contents:
 #             file_contents = file.read()
 #             print(file_contents)
 #     except FileNotFoundError:
-#         print(f"The file '{file_directory}' was not found.")
+#         print(f"The file '{file_path}' was not found.")
 #     except Exception as e:
 #         print(f"An error occurred: {str(e)}")
 
-# # Create a FileSensor to detect the presence of new CSV files
-file_sensor = FileSensor(
-    task_id='file_sensor_task',
-    filepath=file_path,
-    poke_interval=10,  # Check every 10 seconds if a new file has arrived
-    timeout=300,  # Stop checking after 1 hour
-    mode='poke',
-    dag=dag,
-)
+# # file_path = 'C:/Users/User/Desktop/data/data_table.csv'  # Corrected variable name
+# # list_files(file_path)  # Corrected function call
 
-# Snowflake Hook for connection
-snowflake_conn_id = 'air_conn'  
-snowflake_hook = SnowflakeHook(snowflake_conn_id=snowflake_conn_id)
+# # def list_files_task():
+# #     file_path = 'C:/Users/User/Desktop/data/data_table.csv'
+# #     list_files(file_path)
 
-# def list_files():
-#     print("Current working directory:", os.getcwd())
-#     file_list = os.listdir(file_directory)
-#     print("Files in directory:", file_list)
+# dag_directory = os.path.dirname(__file__)
+
+# # Construct the relative file path
+# file_path = os.path.join(dag_directory, 'C:/Users/User/Desktop/data/data_table.csv')
 
 
+# # def list_files():
+# #     try:
+# #         with open(file_directory, 'r') as file:
+# #             # Perform operations on the file here
+# #             # For example, you can read its contents:
+# #             file_contents = file.read()
+# #             print(file_contents)
+# #     except FileNotFoundError:
+# #         print(f"The file '{file_directory}' was not found.")
+# #     except Exception as e:
+# #         print(f"An error occurred: {str(e)}")
 
-def upload_csv_to_snowflake(file_path, snowflake_stage):
-    try:
-        logging.info(f"Uploading CSV file: {file_path} to Snowflake stage: {snowflake_stage}")
-        snowflake_hook.upload_file(
-            file_path=file_path,
-            schema=exusia_schema,  
-            stage=snowflake_stage,
-            table=automate_table,  
-            file_format=csv
-        )
-        logging.info("CSV file uploaded successfully.")
-    except Exception as e:
-        logging.error(f"Error uploading CSV file to Snowflake: {str(e)}")
-        raise Exception(f"Error uploading CSV file to Snowflake: {str(e)}")
+# # # Create a FileSensor to detect the presence of new CSV files
+# file_sensor = FileSensor(
+#     task_id='file_sensor_task',
+#     filepath=file_path,
+#     poke_interval=10,  # Check every 10 seconds if a new file has arrived
+#     timeout=300,  # Stop checking after 1 hour
+#     mode='poke',
+#     dag=dag,
+# )
 
-# # Snowflake stage name
-snowflake_stage = 'my_stage_name'  
+# # Snowflake Hook for connection
+# snowflake_conn_id = 'air_conn'  
+# snowflake_hook = SnowflakeHook(snowflake_conn_id=snowflake_conn_id)
+
+# # def list_files():
+# #     print("Current working directory:", os.getcwd())
+# #     file_list = os.listdir(file_directory)
+# #     print("Files in directory:", file_list)
 
 
-# Snowflake Operator to load data from Snowflake stage to Snowflake table
-snowflake_load_task = SnowflakeOperator(
-    task_id='snowflake_load_task',
-    sql=f'''
-        COPY INTO automate_table
-        FROM @{snowflake_stage}
-        FILE_FORMAT = (
-            TYPE = 'CSV'
-            SKIP_HEADER = 1
-            FIELD_OPTIONALLY_ENCLOSED_BY = '"'
-        );
-    ''',
-    snowflake_conn_id=snowflake_conn_id,
-)
 
-list_files_task = PythonOperator(
-    task_id='list_files_task',
-    python_callable=lambda: list_files(file_path),
-    dag=dag,
-)
+# def upload_csv_to_snowflake(file_path, snowflake_stage):
+#     try:
+#         logging.info(f"Uploading CSV file: {file_path} to Snowflake stage: {snowflake_stage}")
+#         snowflake_hook.upload_file(
+#             file_path=file_path,
+#             schema=exusia_schema,  
+#             stage=snowflake_stage,
+#             table=automate_table,  
+#             file_format=csv
+#         )
+#         logging.info("CSV file uploaded successfully.")
+#     except Exception as e:
+#         logging.error(f"Error uploading CSV file to Snowflake: {str(e)}")
+#         raise Exception(f"Error uploading CSV file to Snowflake: {str(e)}")
 
-list_files_task >> file_sensor  >> snowflake_load_task
+# # # Snowflake stage name
+# snowflake_stage = 'my_stage_name'  
+
+
+# # Snowflake Operator to load data from Snowflake stage to Snowflake table
+# snowflake_load_task = SnowflakeOperator(
+#     task_id='snowflake_load_task',
+#     sql=f'''
+#         COPY INTO automate_table
+#         FROM @{snowflake_stage}
+#         FILE_FORMAT = (
+#             TYPE = 'CSV'
+#             SKIP_HEADER = 1
+#             FIELD_OPTIONALLY_ENCLOSED_BY = '"'
+#         );
+#     ''',
+#     snowflake_conn_id=snowflake_conn_id,
+# )
+
+# list_files_task = PythonOperator(
+#     task_id='list_files_task',
+#     python_callable=lambda: list_files(file_path),
+#     dag=dag,
+# )
+
+# list_files_task >> file_sensor  >> snowflake_load_task
 
 # list_files_task
 # from airflow import DAG
