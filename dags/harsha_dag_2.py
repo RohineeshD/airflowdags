@@ -4,7 +4,7 @@ from airflow.providers.snowflake.transfers.http_to_snowflake import HttpToSnowfl
 from datetime import datetime
 
 default_args = {
-    'owner': 'your_name',
+    'owner': 'airflow',
     'start_date': datetime(2023, 9, 22),
     'retries': 1,
 }
