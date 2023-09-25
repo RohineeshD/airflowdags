@@ -16,7 +16,7 @@ with DAG('load_data_to_snowflake',
          schedule_interval=None) as dag:
 
     # Define your GitHub file URL
-    github_file_url = 'https://github.com/mukkellaharsha/harsha.repo/data_table.csv'
+    github_file_url = 'https://raw.githubusercontent.com/mukkellaharsha/harsha.repo/edit/master/data_table.csv'
 
     # Use the HttpSensor to check for the file's presence on GitHub
     check_github_file = HttpSensor(
@@ -30,7 +30,7 @@ with DAG('load_data_to_snowflake',
 
     def upload_csv_to_snowflake():
         # Replace with the actual file path and Snowflake stage name
-        file_path = 'https://github.com/mukkellaharsha/harsha.repo/data_table.csv'
+        file_path = 'https://raw.githubusercontent.com/mukkellaharsha/harsha.repo/edit/master/data_table.csv'
         snowflake_stage = 'my_stage'
 
         try:
