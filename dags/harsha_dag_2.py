@@ -2,7 +2,7 @@ from airflow import DAG
 from airflow.sensors.http_sensor import HttpSensor
 from airflow.operators.python_operator import PythonOperator
 from airflow.utils.dates import days_ago
-from your_custom_sensor_module import GitHubFileSensor
+from airflow.sensors.http_sensor import GitHubFileSensor
 from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
 
 # Import statements for other dependencies (if any)
