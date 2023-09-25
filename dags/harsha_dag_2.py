@@ -43,13 +43,13 @@ load_to_snowflake = HttpToSnowflakeOperator(
     stage='my_stage',
     file_paths=['https://github.com/mukkellaharsha/harsha.repo/data_table.csv'],  # Specify the file path
     field_ordering='COLLECTION' 
-    delimiter=',',
-    quote_character='"',
-    escape_character=None,
+    
+   
+   
     column_list=[],
     autocommit=True,
     pre_sql=[],
-    post_sql=[],
+   
     trigger_rule='all_success',
     *args,
     **kwargs,
