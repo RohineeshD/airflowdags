@@ -22,7 +22,7 @@ with DAG('load_data_to_snowflake',
     # Use the HttpSensor to check for the file's presence on GitHub
     check_github_file = HttpSensor(
         task_id='check_github_file',
-        method='HEAD',
+        # method='HEAD',
         http_conn_id='http_default',
         method='GET',
         endpoint=github_file_url,
