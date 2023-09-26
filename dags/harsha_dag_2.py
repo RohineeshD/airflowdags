@@ -1,6 +1,7 @@
 import logging
 from airflow import DAG
-from airflow.providers.http.sensors.http import HttpSensor
+# from airflow.providers.http.sensors.http import HttpSensor
+from airflow.sensors.http_sensor import HttpSensor
 from airflow.operators.python_operator import PythonOperator
 from airflow.utils.dates import days_ago
 from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
@@ -27,6 +28,7 @@ with DAG('data_to_snowflake',
         endpoint=github_file_url,
         request_params={},
         response_check=lambda response: "httpbin" in response.text,
+        provide_context=True
         timeout=300,
         mode='poke',
     )
