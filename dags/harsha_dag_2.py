@@ -17,7 +17,7 @@ with DAG('data_to_snowflake',
          schedule_interval=None) as dag:
 
     # Define your GitHub file URL
-    # github_file_url = "https://github.com/mukkellaharsha/harsha.repo/blob/master/data_table.csv"
+    # github_file_url = "https://raw.githubusercontent.com/mukkellaharsha/harsha.repo/blob/master/data_table.csv"
     # github_file_url  = 'data_table.csv'
 
     # Use the HttpSensor to check for the file's presence on GitHub
@@ -25,7 +25,7 @@ with DAG('data_to_snowflake',
         task_id='check_github_file',
         http_conn_id='http_default',
         method='HEAD',  
-        endpoint='/mukkellaharsha/harsha.repo/blob/master/data_table.csv',
+        endpoint='https://raw.githubusercontent.com/mukkellaharsha/harsha.repo/blob/master/data_table.csv',
         request_params={},
         response_check=lambda response: "httpbin" in response.text,
         # provide_context=True
