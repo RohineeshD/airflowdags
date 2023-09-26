@@ -28,9 +28,9 @@ with DAG('data_to_snowflake',
         endpoint=github_file_url,
         request_params={},
         response_check=lambda response: "httpbin" in response.text,
-        provide_context=True
-        # timeout=300,
-        # mode='poke',
+        # provide_context=True
+        timeout=300,
+        mode='poke',
     )
 
 
