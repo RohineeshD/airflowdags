@@ -60,8 +60,8 @@ def upload_csv_to_snowflake():
 
 
     # Use a PythonOperator to upload data into Snowflake
-    upload_to_snowflake = PythonOperator(
-        task_id='upload_to_snowflake',
+ upload_to_snowflake = PythonOperator(
+	task_id='upload_to_snowflake',
         python_callable=upload_csv_to_snowflake,
         op_args=[],
         op_kwargs={},
