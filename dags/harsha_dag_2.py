@@ -13,7 +13,7 @@ default_args = {
     'retries': 1,
 }
 
-with DAG('data_to_snowflake',
+with DAG('snowflake',
          default_args=default_args,
          schedule_interval=None) as dag:
 
@@ -22,7 +22,7 @@ with DAG('data_to_snowflake',
         task_id='check_github_file',
         http_conn_id='',  # Add your HTTP connection ID here
         method='HEAD',
-        endpoint='https://raw.githubusercontent.com/mukkellaharsha/harsha.repo/master/data_table.csv',
+        endpoint='https://raw.githubusercontent.com/mukkellaharsha/harsha.repo/master/table1.csv',
         timeout=300,
         mode='poke',
     )
@@ -65,7 +65,77 @@ with DAG('data_to_snowflake',
         op_kwargs={},
     )
 
-check_github_file >> upload_to_snowflake
+    check_github_file >> upload_to_snowflake  # Set the task dependency
+
+
+# import logging
+# from airflow import DAG
+# from airflow.providers.http.sensors.http import HttpSensor
+# from airflow.operators.python_operator import PythonOperator
+# from airflow.utils.dates import days_ago
+# from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
+# import pandas as pd
+# from io import StringIO
+
+# default_args = {
+#     'owner': 'airflow',
+#     'start_date': days_ago(1),
+#     'retries': 1,
+# }
+
+# with DAG('data_to_snowflake',
+#          default_args=default_args,
+#          schedule_interval=None) as dag:
+
+#     # Use the HttpSensor to check for the file's presence on GitHub
+#     check_github_file = HttpSensor(
+#         task_id='check_github_file',
+#         http_conn_id='',  # Add your HTTP connection ID here
+#         method='HEAD',
+#         endpoint='https://raw.githubusercontent.com/mukkellaharsha/harsha.repo/master/data_table.csv',
+#         timeout=300,
+#         mode='poke',
+#     )
+
+#     def upload_csv_to_snowflake():
+#         try:
+#             file_path = 'https://raw.githubusercontent.com/mukkellaharsha/harsha.repo/master/data_table.csv'
+#             df = pd.read_csv(file_path)
+            
+#             # Snowflake table name
+#             table_name = 'auto_table'
+
+#             # Establish a connection to Snowflake
+#             snowflake_hook = SnowflakeHook(snowflake_conn_id='air_conn')
+#             connection = snowflake_hook.get_conn()
+
+#             # Create a cursor
+#             cursor = connection.cursor()
+
+#             # Prepare and execute the SQL statement for each row in the DataFrame
+#             for index, row in df.iterrows():
+#                 sql = f"INSERT INTO {table_name} (firstname, lastname, ssn, status) VALUES (%s, %s, %s, %s)"
+#                 cursor.execute(sql, (row['FIRSTNAME'], row['LASTNAME'], row['SSN'], row['STATUS']))
+
+#             # Commit the transaction
+#             connection.commit()
+#             cursor.close()
+#             connection.close()
+
+#             logging.info("CSV file uploaded successfully.")
+#         except Exception as e:
+#             logging.error(f"Error uploading CSV file to Snowflake: {str(e)}")
+#             raise Exception(f"Error uploading CSV file to Snowflake: {str(e)}")
+
+#     # Use a PythonOperator to upload data into Snowflake
+#     upload_to_snowflake = PythonOperator(
+#         task_id='upload_to_snowflake',
+#         python_callable=upload_csv_to_snowflake,
+#         op_args=[],
+#         op_kwargs={},
+#     )
+
+# check_github_file >> upload_to_snowflake
 
 
 
