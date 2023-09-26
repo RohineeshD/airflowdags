@@ -25,7 +25,7 @@ with DAG('data_to_snowflake',
         task_id='check_github_file',
         http_conn_id='http_default',
         method='HEAD',  
-        endpoint="https://github.com/mukkellaharsha/harsha.repo/blob/master/data_table.csv",
+        endpoint='https://github.com/mukkellaharsha/harsha.repo/blob/master/data_table.csv',
         request_params={},
         response_check=lambda response: "httpbin" in response.text,
         # provide_context=True
