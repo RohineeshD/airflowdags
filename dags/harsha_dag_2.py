@@ -80,9 +80,9 @@ with DAG('data_to_snowflake',
         #     # Execute the SQL statement
             # snowflake_hook.run(sql)
         logging.info("CSV file uploaded successfully.")
-    except Exception as e:
-        logging.error(f"Error uploading CSV file to Snowflake: {str(e)}")
-        raise Exception(f"Error uploading CSV file to Snowflake: {str(e)}")
+    # except Exception as e:
+    #     logging.error(f"Error uploading CSV file to Snowflake: {str(e)}")
+    #     raise Exception(f"Error uploading CSV file to Snowflake: {str(e)}")
 
 
     #     file_path = 'https://raw.githubusercontent.com/mukkellaharsha/harsha.repo/master/data_table.csv'
