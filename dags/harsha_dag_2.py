@@ -45,7 +45,7 @@ with DAG('data_to_snowflake',
             # Prepare and execute the SQL statement for each row in the DataFrame
             for index, row in df.iterrows():
                 sql = f"INSERT INTO {table_name} (firstname, lastname, ssn, status) VALUES (%s, %s, %s, %s)"
-                cursor.execute(sql, (row['firstname'], row['lastname'], row['ssn'], row['status']))
+                cursor.execute(sql, (row['FIRSTNAME'], row['LASTNAME'], row['SSN'], row['STATUS']))
 
             # Commit the transaction
             connection.commit()
