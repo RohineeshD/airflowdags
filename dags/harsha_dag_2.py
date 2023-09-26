@@ -84,6 +84,7 @@ with DAG('data_to_snowflake',
         logging.error(f"Error uploading CSV file to Snowflake: {str(e)}")
         raise Exception(f"Error uploading CSV file to Snowflake: {str(e)}")
 
+
     #     file_path = 'https://raw.githubusercontent.com/mukkellaharsha/harsha.repo/master/data_table.csv'
     #     df = pd.read_csv(file_path)
         
