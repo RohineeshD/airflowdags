@@ -1,6 +1,6 @@
 import logging
 from airflow import DAG
-# from airflow.providers.http.sensors.http import HttpSensor
+from airflow.providers.http.sensors.http import HttpSensor
 from airflow.sensors.http_sensor import HttpSensor
 from airflow.operators.python_operator import PythonOperator
 from airflow.utils.dates import days_ago
