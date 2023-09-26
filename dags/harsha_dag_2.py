@@ -83,6 +83,7 @@ with DAG('data_to_snowflake',
         connection.commit()
         cursor.close()
         connection.close()
+        
         print("Data loaded successfully.")
         return True
     except Exception as e:
