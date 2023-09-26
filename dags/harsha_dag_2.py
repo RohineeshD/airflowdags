@@ -18,10 +18,10 @@ with DAG('data_to_snowflake',
          default_args=default_args,
          schedule_interval='@daily') as dag:
 
-    # Use the HttpSensor to check for the file's presence on GitHub
+    # the HttpSensor to check for the file's presence on GitHub
     check_github_file = HttpSensor(
         task_id='check_github_file',
-        http_conn_id='',  # Add your HTTP connection ID here
+        http_conn_id='', 
         method='HEAD',
         endpoint='https://raw.githubusercontent.com/mukkellaharsha/harsha.repo/master/data_table.csv',
         timeout=300,
@@ -43,7 +43,7 @@ with DAG('data_to_snowflake',
             # Create a cursor
             cursor = connection.cursor()
 
-            # Prepare and execute the SQL statement for each row in the DataFrame
+           # execute the SQL statement for each row in the DataFrame
             for index, row in df.iterrows():
                 sql = f"INSERT INTO {table_name} (firstname, lastname, ssn, status) VALUES (%s, %s, %s, %s)"
                 cursor.execute(sql, (row['FIRSTNAME'], row['LASTNAME'], row['SSN'], row['STATUS']))
@@ -58,7 +58,7 @@ with DAG('data_to_snowflake',
             logging.error(f"Error uploading CSV file to Snowflake: {str(e)}")
             raise Exception(f"Error uploading CSV file to Snowflake: {str(e)}")
 
-    # Use a PythonOperator to upload data into Snowflake
+    # PythonOperator to upload data into Snowflake
     upload_to_snowflake = PythonOperator(
         task_id='upload_to_snowflake',
         python_callable=upload_csv_to_snowflake,
