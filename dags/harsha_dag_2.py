@@ -11,7 +11,7 @@ default_args = {
     'retries': 1,
 }
 
-with DAG('load_data_to_snowflake',
+with DAG('data_to_snowflake',
          default_args=default_args,
          schedule_interval=None) as dag:
 
