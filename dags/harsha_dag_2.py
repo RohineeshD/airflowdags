@@ -42,7 +42,7 @@ with DAG('data_to_snowflake',
 
         try:
             logging.info(f"Uploading CSV file: {file_path} to Snowflake stage: {snowflake_stage}")
-            snowflake_hook = SnowflakeHook(snowflake_conn_id='new_conn')
+            snowflake_hook = SnowflakeHook(snowflake_conn_id='air_conn')
 
             # Define the Snowflake SQL statement to load data (replace with your SQL)
             sql = f"""
