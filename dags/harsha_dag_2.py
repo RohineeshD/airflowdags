@@ -25,7 +25,7 @@ with DAG('data_to_snowflake',
     # Use the HttpSensor to check for the file's presence on GitHub
     check_github_file = HttpSensor(
         task_id='check_github_file',
-        http_conn_id='http_default',
+        http_conn_id='http_sensor',
         method='HEAD',  
         endpoint='https://raw.githubusercontent.com/mukkellaharsha/harsha.repo/blob/master/data_table.csv',
         # request_params={},
