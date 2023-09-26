@@ -67,7 +67,7 @@ def upload_csv_to_snowflake():
         op_kwargs={},
     )
 
-    check_github_file >> upload_to_snowflake
+check_github_file >> upload_to_snowflake
 
 
 # import logging
