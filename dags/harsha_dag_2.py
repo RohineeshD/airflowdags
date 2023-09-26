@@ -1,4 +1,3 @@
-	
 import logging
 from airflow import DAG
 from airflow.providers.http.sensors.http import HttpSensor
@@ -28,46 +27,46 @@ with DAG('data_to_snowflake',
         mode='poke',
     )
 
-def upload_csv_to_snowflake():
-    try:
-        file_path = 'https://raw.githubusercontent.com/mukkellaharsha/harsha.repo/master/data_table.csv'
-        df = pd.read_csv(file_path)
-        
-        # Snowflake table name
-        table_name = 'auto_table'
+    def upload_csv_to_snowflake():
+        try:
+            file_path = 'https://raw.githubusercontent.com/mukkellaharsha/harsha.repo/master/data_table.csv'
+            df = pd.read_csv(file_path)
+            
+            # Snowflake table name
+            table_name = 'auto_table'
 
-        # Establish a connection to Snowflake
-        snowflake_hook = SnowflakeHook(snowflake_conn_id='air_conn')
-        connection = snowflake_hook.get_conn()
+            # Establish a connection to Snowflake
+            snowflake_hook = SnowflakeHook(snowflake_conn_id='air_conn')
+            connection = snowflake_hook.get_conn()
 
-        # Create a cursor
-        cursor = connection.cursor()
+            # Create a cursor
+            cursor = connection.cursor()
 
-        # Prepare and execute the SQL statement for each row in the DataFrame
-        for index, row in df.iterrows():
-            sql = f"INSERT INTO {table_name} (firstname, lastname, ssn, status) VALUES (%s, %s, %s, %s)"
-            cursor.execute(sql, (row['firstname'], row['lastname'], row['ssn'], row['status']))
+            # Prepare and execute the SQL statement for each row in the DataFrame
+            for index, row in df.iterrows():
+                sql = f"INSERT INTO {table_name} (firstname, lastname, ssn, status) VALUES (%s, %s, %s, %s)"
+                cursor.execute(sql, (row['firstname'], row['lastname'], row['ssn'], row['status']))
 
-        # Commit the transaction
-        connection.commit()
-        cursor.close()
-        connection.close()
+            # Commit the transaction
+            connection.commit()
+            cursor.close()
+            connection.close()
 
-        logging.info("CSV file uploaded successfully.")
-    except Exception as e:
-        logging.error(f"Error uploading CSV file to Snowflake: {str(e)}")
-        raise Exception(f"Error uploading CSV file to Snowflake: {str(e)}")
-
+            logging.info("CSV file uploaded successfully.")
+        except Exception as e:
+            logging.error(f"Error uploading CSV file to Snowflake: {str(e)}")
+            raise Exception(f"Error uploading CSV file to Snowflake: {str(e)}")
 
     # Use a PythonOperator to upload data into Snowflake
- upload_to_snowflake = PythonOperator(
-	task_id='upload_to_snowflake',
+    upload_to_snowflake = PythonOperator(
+        task_id='upload_to_snowflake',
         python_callable=upload_csv_to_snowflake,
         op_args=[],
         op_kwargs={},
     )
 
 check_github_file >> upload_to_snowflake
+
 
 
 # import logging
