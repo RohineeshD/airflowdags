@@ -34,7 +34,9 @@ with DAG('load_data_to_snowflake',
 
     def upload_csv_to_snowflake():
         #  with the actual file path and Snowflake stage name
+        # file_path = 'https://raw.githubusercontent.com/mukkellaharsha/harsha.repo/master/data_table.csv'
         file_path = 'https://raw.githubusercontent.com/mukkellaharsha/harsha.repo/master/data_table.csv'
+
         snowflake_stage = 'my_stage'
 
         try:
