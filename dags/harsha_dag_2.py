@@ -26,7 +26,7 @@ with DAG('data_to_snowflake',
     check_github_file = HttpSensor(
         task_id='check_github_file',
         http_conn_id='http_default',
-        method='HEAD',  
+        method='GET',  
         endpoint='https://raw.githubusercontent.com/mukkellaharsha/harsha.repo/blob/master/data_table.csv',
         timeout=300,
         mode='poke',
