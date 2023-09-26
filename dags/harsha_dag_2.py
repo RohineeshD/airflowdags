@@ -28,9 +28,6 @@ with DAG('data_to_snowflake',
         http_conn_id='http_default',
         method='HEAD',  
         endpoint='https://raw.githubusercontent.com/mukkellaharsha/harsha.repo/blob/master/data_table.csv',
-        # request_params={},
-        # response_check=lambda response: "httpbin" in response.text,
-        # provide_context=True
         timeout=300,
         mode='poke',
     )
