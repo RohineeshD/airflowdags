@@ -30,7 +30,7 @@ with DAG('data_to_snowflake',
         response_check=lambda response: "httpbin" in response.text,
         provide_context=True
         # timeout=300,
-        mode='poke',
+        # mode='poke',
     )
 
 
