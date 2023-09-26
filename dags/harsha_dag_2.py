@@ -7,6 +7,9 @@ from airflow.sensors.http_sensor import HttpSensor
 from airflow.operators.python_operator import PythonOperator
 from airflow.utils.dates import days_ago
 from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
+from airflow.exceptions import AirflowException
+import pandas as pd
+from io import StringIO
 
 default_args = {
     'owner': 'airflow',
