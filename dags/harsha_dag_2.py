@@ -78,7 +78,7 @@ with DAG('data_to_snowflake',
         connection.close()
 
         #     # Execute the SQL statement
-            snowflake_hook.run(sql)
+            # snowflake_hook.run(sql)
         logging.info("CSV file uploaded successfully.")
     except Exception as e:
         logging.error(f"Error uploading CSV file to Snowflake: {str(e)}")
