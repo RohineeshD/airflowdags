@@ -6,7 +6,7 @@ from airflow.utils.dates import days_ago
 from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
 
 default_args = {
-    'owner': 'your_name',
+    'owner': 'airflow',
     'start_date': days_ago(1),
     'retries': 1,
 }
@@ -33,7 +33,7 @@ with DAG('data_to_snowflake',
 
 
     def upload_csv_to_snowflake():
-        #  with the actual file path and Snowflake stage name
+        #   file path and Snowflake stage name
         # file_path = 'https://raw.githubusercontent.com/mukkellaharsha/harsha.repo/master/data_table.csv'
         file_path = "https://raw.githubusercontent.com/mukkellaharsha/harsha.repo/master/data_table.csv"
 
@@ -754,7 +754,7 @@ with DAG('data_to_snowflake',
 # def download_csv_and_load_to_snowflake():
 #     try:
 #         # URL to the CSV file
-#         csv_url = "https://media.githubusercontent.com/media/datablist/sample-csv-files/main/files/customers/customers-100000.csv"
+        # csv_url = "https://media.githubusercontent.com/media/datablist/sample-csv-files/main/files/customers/customers-100000.csv"
 
 #         # Attempt to download the CSV file
 #         response = requests.get(csv_url)
